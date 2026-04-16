@@ -1,0 +1,374 @@
+{
+  "version": 1,
+  "exported": "2026-04-16T12:48:15.358Z",
+  "goals": [
+    {
+      "id": 1,
+      "name": "Health & Fitness",
+      "icon": "💪",
+      "current": 20,
+      "target": 60,
+      "color": "#22c55e",
+      "notes": "Exercise 4x/week, better diet",
+      "metrics": [
+        {
+          "label": "pushups",
+          "current": 0,
+          "target": 20,
+          "unit": "count",
+          "key": "pushups"
+        },
+        {
+          "label": "squats",
+          "current": 0,
+          "target": 20,
+          "unit": "count",
+          "key": "squats"
+        },
+        {
+          "label": "crunches",
+          "current": 0,
+          "target": 20,
+          "unit": "count",
+          "key": "crunches"
+        },
+        {
+          "label": "leg lift",
+          "current": 0,
+          "target": 20,
+          "unit": "count",
+          "key": "leg_lift"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Wealth & Finance",
+      "icon": "💰",
+      "current": 15,
+      "target": 50,
+      "color": "#f59e0b",
+      "notes": "Save, invest, grow income"
+    },
+    {
+      "id": 3,
+      "name": "Personality & Mindset",
+      "icon": "🧠",
+      "current": 25,
+      "target": 55,
+      "color": "#8b5cf6",
+      "notes": "Read, meditate, grow"
+    },
+    {
+      "id": 4,
+      "name": "Career & Skills",
+      "icon": "🚀",
+      "current": 30,
+      "target": 70,
+      "color": "#3b82f6",
+      "notes": "Land new job, upskill"
+    },
+    {
+      "id": 5,
+      "name": "Social & Relationships",
+      "icon": "🤝",
+      "current": 35,
+      "target": 60,
+      "color": "#ec4899",
+      "notes": "Network, nurture relationships"
+    },
+    {
+      "id": 6,
+      "name": "Travel & Experiences",
+      "icon": "✈️",
+      "current": 10,
+      "target": 40,
+      "color": "#14b8a6",
+      "notes": "Visit 3+ new places"
+    }
+  ],
+  "certs": [
+    {
+      "id": 1,
+      "name": "AWS Solutions Architect",
+      "category": "Cloud",
+      "status": "In Progress",
+      "progress": 45,
+      "targetDate": "2026-06-30",
+      "studyHours": 32,
+      "totalHours": 80,
+      "color": "#f59e0b"
+    },
+    {
+      "name": "SAP",
+      "category": "",
+      "status": "Planned",
+      "progress": 0,
+      "targetDate": "",
+      "studyHours": 0,
+      "totalHours": 55,
+      "color": "#3bf7d8",
+      "id": 1776170828394
+    }
+  ],
+  "projects": [
+    {
+      "id": 1,
+      "name": "Personal Portfolio Website",
+      "category": "Web",
+      "status": "In Progress",
+      "progress": 20,
+      "startDate": "2026-01-15",
+      "targetDate": "2026-06-30",
+      "notes": "Ionic + Angular (TypeScript)",
+      "milestones": [
+        "Design ✅",
+        "Frontend 🔄",
+        "Backend ⬜",
+        "Deploy ⬜"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Budget Tracker App",
+      "category": "Mobile",
+      "status": "Planned",
+      "progress": 0,
+      "startDate": "2026-05-01",
+      "targetDate": "2026-09-01",
+      "notes": "React Native",
+      "milestones": [
+        "Wireframes ⬜",
+        "MVP ⬜",
+        "Launch ⬜"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ML Side Project",
+      "category": "AI/ML",
+      "status": "Planned",
+      "progress": 10,
+      "startDate": "2026-03-01",
+      "targetDate": "2026-12-01",
+      "notes": "Python + scikit-learn",
+      "milestones": [
+        "Research ✅",
+        "Dataset ⬜",
+        "Model ⬜",
+        "Deploy ⬜"
+      ]
+    }
+  ],
+  "travel": [],
+  "jobs": [
+    {
+      "company": "bb-net",
+      "role": "PHP Softwareentwickler",
+      "status": "Rejected",
+      "date": "2026-04-14",
+      "notes": "",
+      "id": 1776197130379
+    },
+    {
+      "company": "Zalion",
+      "role": "Python",
+      "status": "Applied",
+      "date": "2026-04-14",
+      "notes": "",
+      "id": 1776197153488
+    },
+    {
+      "company": "Fenmo",
+      "role": "python",
+      "status": "Applied",
+      "date": "2026-04-13",
+      "notes": "",
+      "id": 1776197167697
+    },
+    {
+      "company": "SAP",
+      "role": "python",
+      "status": "Applied",
+      "date": "2026-04-13",
+      "notes": "",
+      "id": 1776197178861
+    },
+    {
+      "company": "penguin",
+      "role": "PHP",
+      "status": "Applied",
+      "date": "2026-04-12",
+      "notes": "",
+      "id": 1776197195494
+    },
+    {
+      "company": "Datasquard",
+      "role": "PHP",
+      "status": "Applied",
+      "date": "2026-04-12",
+      "notes": "",
+      "id": 1776197207840
+    },
+    {
+      "company": "Repertus",
+      "role": "PHP",
+      "status": "Applied",
+      "date": "2026-04-10",
+      "notes": "",
+      "id": 1776197225399
+    },
+    {
+      "company": "tenhil",
+      "role": "Typescript",
+      "status": "Applied",
+      "date": "2026-04-14",
+      "notes": "",
+      "id": 1776199305491
+    }
+  ],
+  "investments": [
+    {
+      "id": 2,
+      "name": "Mutual Funds SIP",
+      "category": "Investment",
+      "current": 5000,
+      "target": 60000,
+      "status": "In Progress",
+      "notes": "Monthly SIP ₹5000",
+      "icon": "📈"
+    },
+    {
+      "id": 3,
+      "name": "Crypto (BTC/ETH)",
+      "category": "Investment",
+      "current": 150,
+      "target": 2000,
+      "status": "Planned",
+      "notes": "Max 5% of portfolio",
+      "icon": "🪙"
+    },
+    {
+      "id": 4,
+      "name": "Term Insurance",
+      "category": "Protection",
+      "current": 0,
+      "target": 1,
+      "status": "Planned",
+      "notes": "Get insured ASAP",
+      "icon": "🛡️"
+    }
+  ],
+  "ideas": [
+    {
+      "id": 1,
+      "title": "SaaS expense tracker for freelancers",
+      "tag": "Business",
+      "status": "Idea",
+      "date": "2026-03-10",
+      "notes": "Gap in Indian market"
+    },
+    {
+      "id": 2,
+      "title": "YouTube channel on personal finance",
+      "tag": "Career",
+      "status": "In Progress",
+      "date": "2026-02-15",
+      "notes": "Record first video"
+    },
+    {
+      "id": 3,
+      "title": "Blog on system design",
+      "tag": "Tech",
+      "status": "Idea",
+      "date": "2026-04-01",
+      "notes": "Target Indian developers"
+    }
+  ],
+  "skills": [
+    {
+      "id": 1,
+      "name": "Angular",
+      "category": "Frontend",
+      "current": 3,
+      "target": 4,
+      "hours": 120,
+      "lastPracticed": "2026-04-10",
+      "notes": "Building portfolio"
+    },
+    {
+      "id": 2,
+      "name": "Python",
+      "category": "Backend",
+      "current": 2,
+      "target": 4,
+      "hours": 60,
+      "lastPracticed": "2026-04-05",
+      "notes": "ML projects"
+    },
+    {
+      "id": 3,
+      "name": "AWS",
+      "category": "Cloud",
+      "current": 1,
+      "target": 3,
+      "hours": 32,
+      "lastPracticed": "2026-04-12",
+      "notes": "Cert prep"
+    },
+    {
+      "id": 4,
+      "name": "SQL",
+      "category": "Database",
+      "current": 3,
+      "target": 4,
+      "hours": 80,
+      "lastPracticed": "2026-04-08",
+      "notes": "Query optimization"
+    },
+    {
+      "id": 5,
+      "name": "System Design",
+      "category": "Architecture",
+      "current": 2,
+      "target": 4,
+      "hours": 20,
+      "lastPracticed": "2026-04-01",
+      "notes": "Reading books"
+    },
+    {
+      "name": "PHP",
+      "category": "Backend",
+      "current": 3,
+      "target": 4,
+      "hours": 0,
+      "lastPracticed": "",
+      "notes": "",
+      "id": 1776197821846
+    }
+  ],
+  "checkins": {
+    "2026-04-14": {
+      "wrkMin": 30,
+      "water": 4,
+      "score": 42,
+      "note": "",
+      "workout": true,
+      "jobApps": 2,
+      "reading": 10,
+      "expenses": true,
+      "study": 1
+    },
+    "2026-04-15": {
+      "jobApps": 4,
+      "workout": true,
+      "wrkMin": 30,
+      "water": 3,
+      "score": 35,
+      "note": "",
+      "steps": 5000,
+      "study": 1
+    }
+  },
+  "reviews": {}
+}
