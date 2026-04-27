@@ -1,0 +1,5 @@
+.claude/ 
+.git/worktrees/ 
+node_modules/ 
+.DS_Store 
+Thumbs.db
