@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Pramod's 2026 Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Crect x='7' y='18' width='4' height='8' fill='white' rx='1'/%3E%3Crect x='14' y='12' width='4' height='14' fill='white' rx='1'/%3E%3Crect x='21' y='7' width='4' height='19' fill='white' rx='1'/%3E%3C/svg%3E"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -546,36 +547,67 @@ function HabitRow({habit,value,onChange}){
 
 function DailyTab({checkins,setCheckins,toast}){
   const td=today();
-  const[data,setData]=useState(checkins[td]||{});
-  const[note,setNote]=useState(checkins[td]?.note||"");
+  const[selDate,setSelDate]=useState(td);
+  const[data,setData]=useState(checkins[selDate]||{});
+  const[note,setNote]=useState(checkins[selDate]?.note||"");
+
+  useEffect(()=>{
+    setData(checkins[selDate]||{});
+    setNote(checkins[selDate]?.note||"");
+  },[selDate]);
+
   const score=calcScore(data);
   const scoreColor=score>=75?"#22c55e":score>=50?"#f59e0b":"#ef4444";
   const scoreLabel=score>=75?"Excellent day! 🔥":score>=50?"Good progress 👍":score>=25?"Keep going! 💪":"Just getting started";
+  const isToday=selDate===td;
 
   const update=(id,val)=>{
     const nd={...data,[id]:val};
     const sc=calcScore(nd);
     const full={...nd,score:sc,note};
     setData(nd);
-    setCheckins(c=>({...c,[td]:full}));
+    setCheckins(c=>({...c,[selDate]:full}));
   };
   const saveNote=()=>{
-    setCheckins(c=>({...c,[td]:{...data,score,note}}));
+    setCheckins(c=>({...c,[selDate]:{...data,score,note}}));
     toast("Note saved");
   };
+  const prevDay=()=>{const d=new Date(selDate);d.setDate(d.getDate()-1);setSelDate(d.toISOString().split('T')[0]);};
+  const nextDay=()=>{const d=new Date(selDate);d.setDate(d.getDate()+1);const nk=d.toISOString().split('T')[0];if(nk<=td)setSelDate(nk);};
 
   const cats=[...new Set(HABITS.map(h=>h.cat))];
+  const navBtn=(label,onClick,disabled)=>(
+    <button onClick={onClick} disabled={disabled}
+      style={{background:"#f3f4f6",border:"none",borderRadius:8,padding:"5px 12px",fontSize:13,cursor:disabled?"default":"pointer",fontWeight:700,opacity:disabled?0.4:1,color:"#374151"}}>
+      {label}
+    </button>
+  );
 
   return<div className="fade">
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-      <div><div style={{fontSize:20,fontWeight:900}}>📅 Daily Check-in</div><div style={{fontSize:11,color:"#9ca3af"}}>{td}</div></div>
+      <div>
+        <div style={{fontSize:20,fontWeight:900}}>📅 Daily Check-in</div>
+        <div style={{fontSize:11,color:"#9ca3af"}}>{selDate}{isToday?" · Today":""}</div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        {navBtn("←",prevDay,false)}
+        <button onClick={()=>setSelDate(td)} disabled={isToday}
+          style={{background:isToday?"#e5e7eb":"#2563eb",color:isToday?"#9ca3af":"white",border:"none",borderRadius:8,padding:"5px 12px",fontSize:12,cursor:isToday?"default":"pointer",fontWeight:700}}>
+          Today
+        </button>
+        {navBtn("→",nextDay,isToday)}
+      </div>
     </div>
+
+    {!isToday&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:"8px 14px",marginBottom:12,fontSize:12,color:"#92400e",fontWeight:600}}>
+      ✏️ Editing past day — changes save immediately
+    </div>}
 
     <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16,marginBottom:14,display:"flex",alignItems:"center",gap:20}}>
       <Ring current={score} target={100} color={scoreColor} size={90}/>
       <div>
         <div style={{fontSize:20,fontWeight:900,color:scoreColor}}>{score}%</div>
-        <div style={{fontSize:14,fontWeight:700,color:"#374151"}}>Today's Score</div>
+        <div style={{fontSize:14,fontWeight:700,color:"#374151"}}>{isToday?"Today's Score":"Day Score"}</div>
         <div style={{fontSize:12,color:"#9ca3af"}}>{scoreLabel}</div>
       </div>
       <div style={{flex:1}}>
@@ -593,7 +625,7 @@ function DailyTab({checkins,setCheckins,toast}){
     ))}
 
     <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16}}>
-      <div style={{fontWeight:700,fontSize:14,marginBottom:8}}>✍️ Today's Reflection</div>
+      <div style={{fontWeight:700,fontSize:14,marginBottom:8}}>✍️ {isToday?"Today's":"Day's"} Reflection</div>
       <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="What went well? What will you improve tomorrow?" rows={3}
         style={{width:"100%",border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,background:"#f9fafb",resize:"vertical"}}/>
       <button onClick={saveNote} style={{marginTop:8,background:"#2563eb",color:"white",border:"none",borderRadius:10,padding:"7px 18px",fontWeight:700,fontSize:13,cursor:"pointer"}}>Save Note</button>
@@ -606,40 +638,67 @@ function DailyTab({checkins,setCheckins,toast}){
 ══════════════════════════════════════════════════════ */
 function CalendarTab({checkins,reviews,setReviews,toast}){
   const[view,setView]=useState("year");
-  const wk=getWeekKey();
-  const[rev,setRev]=useState(reviews[wk]||{rating:0,wentWell:"",improve:"",goals:["","",""]});
+  const[weekOffset,setWeekOffset]=useState(0);
+  const[monthOffset,setMonthOffset]=useState(0);
 
-  const saveReview=()=>{setReviews(r=>({...r,[wk]:{...rev,date:today()}}));toast("Weekly review saved!");};
+  // Week helpers
+  const getWeekKeyForDate=d=>{
+    const dt=new Date(d);dt.setHours(0,0,0,0);
+    dt.setDate(dt.getDate()+3-(dt.getDay()+6)%7);
+    const w1=new Date(dt.getFullYear(),0,4);
+    return`${dt.getFullYear()}-W${(1+Math.round(((dt-w1)/86400000-3+(w1.getDay()+6)%7)/7)).toString().padStart(2,'0')}`;
+  };
+  const getWeekSunday=offset=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay()+offset*7);return d;};
+  const selWeekSunday=getWeekSunday(weekOffset);
+  const selWk=getWeekKeyForDate(selWeekSunday);
+  const weekRangeLabel=()=>{const end=new Date(selWeekSunday);end.setDate(end.getDate()+6);return`${selWeekSunday.toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`;};
+
+  // Month helpers
+  const selMonthDate=new Date();selMonthDate.setDate(1);selMonthDate.setMonth(selMonthDate.getMonth()+monthOffset);
+  const selMonthPfx=`${selMonthDate.getFullYear()}-${(selMonthDate.getMonth()+1).toString().padStart(2,'0')}`;
+  const monthLabel=selMonthDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+
+  // Weekly review state — reload when week changes
+  const[rev,setRev]=useState(reviews[selWk]||{rating:0,wentWell:"",improve:"",goals:["","",""]});
+  useEffect(()=>{setRev(reviews[selWk]||{rating:0,wentWell:"",improve:"",goals:["","",""]});},[selWk]);
+
+  const saveReview=()=>{setReviews(r=>({...r,[selWk]:{...rev,date:today()}}));toast("Weekly review saved!");};
 
   // Stats
   const allKeys=Object.keys(checkins);
   const tdKey=today();
-  const monthPfx=tdKey.slice(0,7);
-  const monthKeys=allKeys.filter(k=>k.startsWith(monthPfx));
+  const monthKeys=allKeys.filter(k=>k.startsWith(selMonthPfx));
   const monthAvg=monthKeys.length?Math.round(monthKeys.reduce((a,k)=>a+checkins[k].score,0)/monthKeys.length):0;
   const yearAvg=allKeys.length?Math.round(allKeys.reduce((a,k)=>a+checkins[k].score,0)/allKeys.length):0;
 
   let streak=0,d=new Date();d.setHours(0,0,0,0);
-  while(true){
-    const k=d.toISOString().split('T')[0];
-    if(checkins[k]&&checkins[k].score>0){streak++;d=new Date(d.getTime()-86400000);}else break;
-  }
+  while(true){const k=d.toISOString().split('T')[0];if(checkins[k]&&checkins[k].score>0){streak++;d=new Date(d.getTime()-86400000);}else break;}
 
-  // This week bar data
-  const now2=new Date(),dow=now2.getDay();
+  // Week bar chart for selected week
   const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const tdDate=new Date();tdDate.setHours(0,0,0,0);
   const weekBar=DAYS.map((label,i)=>{
-    const dt=new Date(now2);dt.setDate(dt.getDate()-(dow-i));
+    const dt=new Date(selWeekSunday);dt.setDate(selWeekSunday.getDate()+i);
+    if(dt>tdDate)return null;
     const k=dt.toISOString().split('T')[0];
-    return{name:label,Score:i<=dow?(checkins[k]?.score||0):null};
-  }).filter(d=>d.Score!==null);
+    return{name:label,Score:checkins[k]?.score||0};
+  }).filter(Boolean);
 
   const stats2=[
     {l:"Current Streak",v:`${streak} 🔥`,bg:"#fff7ed",tc:"#c2410c"},
-    {l:"This Month Avg",v:`${monthAvg}%`,bg:"#eff6ff",tc:"#1d4ed8"},
+    {l:`${monthOffset===0?"This":"Sel."} Month Avg`,v:`${monthAvg}%`,bg:"#eff6ff",tc:"#1d4ed8"},
     {l:"Year Avg",v:`${yearAvg}%`,bg:"#f0fdf4",tc:"#15803d"},
     {l:"Check-ins Done",v:allKeys.length,bg:"#faf5ff",tc:"#7c3aed"},
   ];
+
+  const NavBar=({offset,setOffset,label,isCurrentMax})=>(
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <button onClick={()=>setOffset(o=>o-1)} style={{background:"#f3f4f6",border:"none",borderRadius:7,padding:"4px 10px",fontSize:13,cursor:"pointer",fontWeight:700,color:"#374151"}}>←</button>
+      <span style={{fontSize:12,fontWeight:600,color:"#374151",minWidth:130,textAlign:"center"}}>{label}</span>
+      <button onClick={()=>setOffset(o=>Math.min(o+1,0))} disabled={isCurrentMax}
+        style={{background:"#f3f4f6",border:"none",borderRadius:7,padding:"4px 10px",fontSize:13,cursor:isCurrentMax?"default":"pointer",fontWeight:700,color:"#374151",opacity:isCurrentMax?0.4:1}}>→</button>
+    </div>
+  );
 
   return<div className="fade">
     <SectionTitle title="📊 Calendar & History" sub="Your activity over time"/>
@@ -655,13 +714,47 @@ function CalendarTab({checkins,reviews,setReviews,toast}){
       <Heatmap checkins={checkins}/>
     </div>
 
+    {/* Monthly overview with navigation */}
     <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16,marginBottom:14}}>
-      <div style={{fontWeight:700,fontSize:13,marginBottom:8}}>This Week's Daily Scores</div>
-      <SvgBar data={weekBar.map(d=>({name:d.name,Score:d.Score}))} keys={["Score"]} colors={weekBar.map(d=>d.Score>=75?"#22c55e":d.Score>=50?"#f59e0b":"#3b82f6")} h={140} maxV={100}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontWeight:700,fontSize:13}}>📆 Monthly Overview</div>
+        <NavBar offset={monthOffset} setOffset={setMonthOffset} label={monthLabel} isCurrentMax={monthOffset===0}/>
+      </div>
+      <div style={{display:"flex",gap:12}}>
+        <div style={{background:"#eff6ff",borderRadius:12,padding:"12px 16px",textAlign:"center",flex:1}}>
+          <div style={{fontSize:24,fontWeight:900,color:"#1d4ed8"}}>{monthAvg}%</div>
+          <div style={{fontSize:11,color:"#6b7280",fontWeight:600}}>Avg Score</div>
+        </div>
+        <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 16px",textAlign:"center",flex:1}}>
+          <div style={{fontSize:24,fontWeight:900,color:"#15803d"}}>{monthKeys.length}</div>
+          <div style={{fontSize:11,color:"#6b7280",fontWeight:600}}>Days Logged</div>
+        </div>
+        <div style={{background:"#faf5ff",borderRadius:12,padding:"12px 16px",textAlign:"center",flex:1}}>
+          <div style={{fontSize:24,fontWeight:900,color:"#7c3aed"}}>{monthKeys.filter(k=>checkins[k]?.score>=75).length}</div>
+          <div style={{fontSize:11,color:"#6b7280",fontWeight:600}}>Excellent Days</div>
+        </div>
+      </div>
     </div>
 
+    {/* Weekly bar chart with navigation */}
+    <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16,marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{fontWeight:700,fontSize:13}}>Weekly Daily Scores</div>
+        <NavBar offset={weekOffset} setOffset={setWeekOffset} label={weekRangeLabel()} isCurrentMax={weekOffset===0}/>
+      </div>
+      {weekBar.length?<SvgBar data={weekBar.map(d=>({name:d.name,Score:d.Score}))} keys={["Score"]} colors={weekBar.map(d=>d.Score>=75?"#22c55e":d.Score>=50?"#f59e0b":"#3b82f6")} h={140} maxV={100}/>
+        :<p style={{textAlign:"center",color:"#9ca3af",fontSize:13,padding:16}}>No data for this week</p>}
+    </div>
+
+    {/* Weekly review with navigation (same week as bar chart) */}
     <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16}}>
-      <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>⭐ Weekly Review — {wk}</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontWeight:700,fontSize:14}}>⭐ Weekly Review</div>
+        <span style={{fontSize:11,color:"#9ca3af"}}>{selWk} · {weekRangeLabel()}</span>
+      </div>
+      {weekOffset<0&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"7px 12px",marginBottom:10,fontSize:12,color:"#92400e",fontWeight:600}}>
+        ✏️ Editing past week — save when done
+      </div>}
       <div style={{marginBottom:10}}>
         <div style={{fontSize:11,fontWeight:700,color:"#6b7280",textTransform:"uppercase",marginBottom:6}}>Rate your week</div>
         <div style={{display:"flex",gap:8}}>
