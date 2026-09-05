@@ -9,6 +9,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc}
@@ -16,6 +18,26 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
 .fade{animation:fi .18s ease}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 input:focus,select:focus,textarea:focus{outline:2px solid #3b82f6;outline-offset:1px}
+.hunter-font{font-family:'Orbitron',sans-serif}
+.rajdhani{font-family:'Rajdhani',sans-serif}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 12px rgba(96,165,250,.35),inset 0 0 24px rgba(96,165,250,.08)}50%{box-shadow:0 0 30px rgba(96,165,250,.7),inset 0 0 34px rgba(96,165,250,.18)}}
+@keyframes xpShimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes levelBurst{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.15);opacity:1}55%{transform:scale(.95)}100%{transform:scale(1);opacity:1}}
+@keyframes ringExpand{0%{transform:scale(.2);opacity:1}100%{transform:scale(3.4);opacity:0}}
+@keyframes fadeOutOverlay{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+@keyframes starTwinkle{0%,100%{opacity:.2}50%{opacity:1}}
+.hunter-panel{background:radial-gradient(ellipse at top,#131c3d 0%,#0a0e27 60%,#060814 100%);position:relative;overflow:hidden;border-radius:22px;color:#e0e7ff}
+.hunter-panel::before{content:'';position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.55) 50%,transparent),radial-gradient(1px 1px at 70% 65%,rgba(255,255,255,.4) 50%,transparent),radial-gradient(1.5px 1.5px at 40% 80%,rgba(147,197,253,.6) 50%,transparent),radial-gradient(1px 1px at 90% 20%,rgba(255,255,255,.4) 50%,transparent),radial-gradient(1.5px 1.5px at 55% 12%,rgba(167,139,250,.55) 50%,transparent),radial-gradient(1px 1px at 12% 55%,rgba(255,255,255,.35) 50%,transparent);animation:starTwinkle 4s ease-in-out infinite;pointer-events:none}
+.system-card{background:linear-gradient(180deg,rgba(30,41,82,.55),rgba(15,20,45,.7));border:1px solid rgba(96,165,250,.35);border-radius:16px}
+.quest-glow{animation:glowPulse 2.6s ease-in-out infinite}
+.xp-track{background:rgba(15,23,42,.8);border:1px solid rgba(96,165,250,.3);border-radius:999px;overflow:hidden}
+.xp-fill{background:linear-gradient(90deg,#1d4ed8,#3b82f6,#93c5fd,#3b82f6,#1d4ed8);background-size:200px 100%;animation:xpShimmer 2.2s linear infinite;border-radius:999px}
+.levelup-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(30,58,138,.4),rgba(3,7,18,.95));animation:fadeOutOverlay 3s ease forwards;cursor:pointer}
+.levelup-ring{position:absolute;width:140px;height:140px;border-radius:999px;border:2px solid rgba(96,165,250,.8)}
+.levelup-ring.r2{animation:ringExpand 1.8s ease-out infinite}
+.levelup-ring.r3{animation:ringExpand 1.8s ease-out .5s infinite}
+.levelup-ring.r4{animation:ringExpand 1.8s ease-out 1s infinite}
+.levelup-text{animation:levelBurst .8s cubic-bezier(.34,1.56,.64,1) both;text-align:center;position:relative;z-index:1}
 </style>
 </head>
 <body><div id="root"></div>
@@ -35,7 +57,7 @@ function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open('p26bk'
 async function idbGet(k){const db=await openIDB();return new Promise((res,rej)=>{const t=db.transaction('meta','readonly');const q=t.objectStore('meta').get(k);q.onsuccess=e=>res(e.target.result);q.onerror=rej;});}
 async function idbSet(k,v){const db=await openIDB();return new Promise((res,rej)=>{const t=db.transaction('meta','readwrite');t.objectStore('meta').put(v,k);t.oncomplete=res;t.onerror=rej;});}
 async function writeFile(handle,data){try{const w=await handle.createWritable();await w.write(JSON.stringify(data,null,2));await w.close();return true;}catch{return false;}}
-const BKKEYS={goals:'p26_goals',certs:'p26_certs',projects:'p26_projects',travel:'p26_travel',jobs:'p26_jobs',investments:'p26_invest',ideas:'p26_ideas',skills:'p26_skills',checkins:'p26_checkins',reviews:'p26_reviews'};
+const BKKEYS={goals:'p26_goals',certs:'p26_certs',projects:'p26_projects',travel:'p26_travel',jobs:'p26_jobs',investments:'p26_invest',ideas:'p26_ideas',skills:'p26_skills',checkins:'p26_checkins',reviews:'p26_reviews',hunter:'p26_hunter'};
 function lsSnapshot(){const d={version:1,exported:new Date().toISOString()};Object.entries(BKKEYS).forEach(([k,lk])=>{try{d[k]=JSON.parse(localStorage.getItem(lk)||'null')}catch{}});return d;}
 
 /* ── CONSTANTS ── */
@@ -139,6 +161,40 @@ const getWeekKey=()=>{
   return`${d.getFullYear()}-W${(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7)).toString().padStart(2,'0')}`;
 };
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})};
+
+/* ── HUNTER / LEVEL SYSTEM (Solo Leveling style) ── */
+const RANKS=[
+  {min:1,  name:"E-Rank Hunter",       color:"#9ca3af",emoji:"🔰"},
+  {min:5,  name:"D-Rank Hunter",       color:"#22c55e",emoji:"🟢"},
+  {min:10, name:"C-Rank Hunter",       color:"#3b82f6",emoji:"🔵"},
+  {min:15, name:"B-Rank Hunter",       color:"#8b5cf6",emoji:"🟣"},
+  {min:20, name:"A-Rank Hunter",       color:"#f59e0b",emoji:"🟠"},
+  {min:30, name:"S-Rank Hunter",       color:"#ef4444",emoji:"🔴"},
+  {min:50, name:"National Level Hunter",color:"#facc15",emoji:"👑"},
+  {min:100,name:"Shadow Monarch",      color:"#a78bfa",emoji:"🖤"},
+];
+const rankForLevel=lvl=>[...RANKS].reverse().find(r=>lvl>=r.min)||RANKS[0];
+const xpForLevel=lvl=>Math.round(60*Math.pow(lvl,1.3)+40);
+const STAT_META=[
+  {key:"STR",label:"Strength",    icon:"💪",color:"#ef4444"},
+  {key:"VIT",label:"Vitality",    icon:"❤️",color:"#22c55e"},
+  {key:"INT",label:"Intelligence",icon:"🧠",color:"#3b82f6"},
+  {key:"PER",label:"Perception",  icon:"👁️",color:"#8b5cf6"},
+  {key:"AGI",label:"Agility",     icon:"⚡",color:"#f59e0b"},
+];
+const DAILY_QUESTS=[
+  {id:"q_train",     icon:"🏃",label:"Physical Training",    hint:"Workout, run, gym, sports",           xp:25,stat:"STR"},
+  {id:"q_learn",     icon:"📚",label:"Skill Grinding",       hint:"Learn something new, study, code",    xp:25,stat:"INT"},
+  {id:"q_hunt",      icon:"💼",label:"Hunter Association",   hint:"Job applications, networking",        xp:20,stat:"PER"},
+  {id:"q_recover",   icon:"🧘",label:"Recovery Ritual",      hint:"Sleep well, meditate, journal",       xp:15,stat:"VIT"},
+  {id:"q_discipline",icon:"✅",label:"Daily Discipline",     hint:"Any other habit or task completed",   xp:10,stat:"AGI"},
+];
+const DEFAULT_HUNTER={
+  name:"", level:1, xp:0, statPoints:0,
+  stats:{STR:10,VIT:10,INT:10,PER:10,AGI:10},
+  completedToday:{}, lastQuestDate:new Date().toISOString().split('T')[0],
+  streak:0, syncedDate:null, log:[],
+};
 
 /* ── SVG CHARTS ── */
 function SvgRadar({data}){
@@ -1171,10 +1227,183 @@ function IdeasTab({ideas,setIdeas,toast}){
 }
 
 /* ══════════════════════════════════════════════════════
+   LEVEL UP — Solo Leveling style hunter system
+══════════════════════════════════════════════════════ */
+function LevelUpOverlay({data,onClose}){
+  useEffect(()=>{const t=setTimeout(onClose,3000);return()=>clearTimeout(t)},[]);
+  return<div className="levelup-overlay" onClick={onClose}>
+    <div className="levelup-ring r2"/><div className="levelup-ring r3"/><div className="levelup-ring r4"/>
+    <div className="levelup-text">
+      <div className="rajdhani" style={{color:"#93c5fd",fontSize:13,letterSpacing:".3em",fontWeight:700,textTransform:"uppercase",marginBottom:8}}>System Notification</div>
+      <div className="hunter-font" style={{fontSize:clamp(40,"9vw",56),fontWeight:900,color:"#fff",textShadow:"0 0 30px rgba(96,165,250,.9),0 0 60px rgba(96,165,250,.5)"}}>LEVEL UP!</div>
+      <div className="hunter-font" style={{fontSize:24,fontWeight:800,color:"#60a5fa",marginTop:8}}>You have reached Level {data.level}</div>
+      {data.rankUp&&<div style={{marginTop:12,fontSize:16,fontWeight:800,color:data.rank.color}}>🎉 Rank Up: {data.rank.emoji} {data.rank.name}</div>}
+      <div style={{marginTop:12,fontSize:13,color:"#cbd5e1"}}>+{data.gained*3} stat points earned · {data.statPts} available to allocate</div>
+      <div style={{marginTop:18,fontSize:11,color:"#64748b"}}>tap anywhere to dismiss</div>
+    </div>
+  </div>
+}
+const clamp=(a,b,c)=>`clamp(${a}px,${b},${c}px)`;
+
+function HunterTab({hunter,setHunter,checkins,toast}){
+  const[burst,setBurst]=useState(null);
+  const[logForm,setLogForm]=useState({label:"",stat:"STR",xp:15});
+
+  useEffect(()=>{
+    const td=today();
+    if(hunter.lastQuestDate!==td){
+      const anyDoneYesterday=Object.values(hunter.completedToday||{}).some(Boolean);
+      setHunter(h=>({...h,completedToday:{},lastQuestDate:td,streak:anyDoneYesterday?(h.streak||0)+1:0}));
+    }
+  },[]);
+
+  const grantXP=(amount,statKey,label)=>{
+    setHunter(h=>{
+      let xp=(h.xp||0)+amount,level=h.level||1,statPoints=h.statPoints||0,gained=0;
+      let need=xpForLevel(level);
+      while(xp>=need){xp-=need;level++;gained++;statPoints+=3;need=xpForLevel(level);}
+      const stats={...h.stats,[statKey]:(h.stats?.[statKey]||0)+1};
+      const entry={id:Date.now()+Math.random(),date:new Date().toISOString(),label,xp:amount,stat:statKey};
+      const log=[entry,...(h.log||[])].slice(0,40);
+      if(gained>0){
+        const newRank=rankForLevel(level),oldRank=rankForLevel(h.level||1);
+        setTimeout(()=>setBurst({level,rank:newRank,rankUp:newRank.name!==oldRank.name,gained,statPts:statPoints}),50);
+      }
+      return{...h,xp,level,statPoints,stats,log};
+    });
+  };
+
+  const claimQuest=q=>{
+    if(hunter.completedToday?.[q.id])return;
+    grantXP(q.xp,q.stat,q.label);
+    setHunter(h=>({...h,completedToday:{...h.completedToday,[q.id]:true}}));
+    toast(`+${q.xp} XP · ${q.label}`);
+  };
+
+  const logCustom=()=>{
+    if(!logForm.label.trim())return;
+    const xp=Number(logForm.xp)||10;
+    grantXP(xp,logForm.stat,logForm.label.trim());
+    toast(`+${xp} XP logged`);
+    setLogForm(p=>({label:"",stat:p.stat,xp:15}));
+  };
+
+  const allocateStat=key=>{
+    if((hunter.statPoints||0)<=0)return;
+    setHunter(h=>({...h,statPoints:h.statPoints-1,stats:{...h.stats,[key]:(h.stats[key]||0)+1}}));
+  };
+
+  const syncCheckin=()=>{
+    const td=today();
+    if(hunter.syncedDate===td){toast("Already synced today");return;}
+    const data=checkins[td]||{};
+    const catStat={"💪 Health":"STR","📚 Study":"INT","💼 Career":"PER","🧘 Mindset":"VIT","💰 Finance":"AGI"};
+    let gained=0;
+    HABITS.forEach(hb=>{
+      const v=data[hb.id];
+      const done=hb.type==='check'?!!v:hb.target?(v||0)>=hb.target:false;
+      if(done){grantXP(8,catStat[hb.cat]||"AGI",`Check-in: ${hb.label}`);gained+=8;}
+    });
+    setHunter(h=>({...h,syncedDate:td}));
+    toast(gained?`Synced! +${gained} XP from today's check-in`:"No completed habits yet today");
+  };
+
+  const rank=rankForLevel(hunter.level||1);
+  const need=xpForLevel(hunter.level||1);
+  const pct=Math.min(100,Math.round(((hunter.xp||0)/need)*100));
+  const td=today();
+
+  return<div className="fade">
+    <div className="hunter-panel quest-glow" style={{padding:22,marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:14,position:"relative",zIndex:1}}>
+        <div>
+          <div className="rajdhani" style={{fontSize:11,letterSpacing:".15em",color:"#93c5fd",fontWeight:700,textTransform:"uppercase"}}>Hunter Status Window</div>
+          <div className="hunter-font" style={{fontSize:24,fontWeight:900,color:"#fff",marginTop:2}}>{hunter.name||"Unnamed Hunter"}</div>
+          <div style={{fontSize:13,color:rank.color,fontWeight:700,marginTop:2}}>{rank.emoji} {rank.name}</div>
+          <button onClick={()=>{const n=prompt("Hunter name:",hunter.name||"");if(n!==null)setHunter(h=>({...h,name:n}))}} style={{background:"none",border:"none",color:"#93c5fd",fontSize:11,cursor:"pointer",padding:0,marginTop:4}}>✏️ rename</button>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div className="rajdhani" style={{fontSize:11,color:"#93c5fd",fontWeight:700,textTransform:"uppercase"}}>Level</div>
+          <div className="hunter-font" style={{fontSize:44,fontWeight:900,color:"#60a5fa",lineHeight:1,textShadow:"0 0 20px rgba(96,165,250,.7)"}}>{hunter.level||1}</div>
+        </div>
+      </div>
+
+      <div style={{marginTop:16,position:"relative",zIndex:1}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#93c5fd",marginBottom:4,fontWeight:700}}>
+          <span>EXP</span><span>{hunter.xp||0} / {need}</span>
+        </div>
+        <div className="xp-track" style={{height:14}}>
+          <div className="xp-fill" style={{height:"100%",width:`${pct}%`,transition:"width .6s ease"}}/>
+        </div>
+        {hunter.streak>0&&<div style={{fontSize:11,color:"#fbbf24",marginTop:6,fontWeight:700}}>🔥 {hunter.streak} day streak</div>}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:10,marginTop:18,position:"relative",zIndex:1}}>
+        {STAT_META.map(s=>(
+          <div key={s.key} className="system-card" style={{padding:"10px 12px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:11,color:"#cbd5e1",fontWeight:700}}>{s.icon} {s.label}</span>
+              {hunter.statPoints>0&&<button onClick={()=>allocateStat(s.key)} style={{background:"rgba(96,165,250,.2)",border:"1px solid rgba(96,165,250,.5)",color:"#93c5fd",borderRadius:6,width:20,height:20,fontSize:13,cursor:"pointer",lineHeight:1}}>+</button>}
+            </div>
+            <div className="hunter-font" style={{fontSize:22,fontWeight:900,color:s.color,marginTop:2}}>{hunter.stats?.[s.key]??10}</div>
+          </div>
+        ))}
+      </div>
+      {hunter.statPoints>0&&<div style={{fontSize:11,color:"#fbbf24",marginTop:8,fontWeight:700,position:"relative",zIndex:1}}>✨ {hunter.statPoints} stat point{hunter.statPoints>1?'s':''} to allocate</div>}
+    </div>
+
+    <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16,marginBottom:14}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+        <div style={{fontWeight:800,fontSize:15}}>⚔️ Daily Quests</div>
+        <button onClick={syncCheckin} style={{fontSize:11,fontWeight:700,padding:"5px 10px",borderRadius:8,border:"1px solid #bfdbfe",background:hunter.syncedDate===td?"#f3f4f6":"#eff6ff",color:hunter.syncedDate===td?"#9ca3af":"#1d4ed8",cursor:"pointer"}}>{hunter.syncedDate===td?"✓ Synced today":"⚡ Sync today's check-in"}</button>
+      </div>
+      {DAILY_QUESTS.map(q=>{
+        const done=!!hunter.completedToday?.[q.id];
+        const sm=STAT_META.find(s=>s.key===q.stat);
+        return<div key={q.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #f9fafb",gap:10}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>{q.icon} {q.label}</div>
+            <div style={{fontSize:11,color:"#9ca3af"}}>{q.hint} · +{q.xp} XP · {sm.icon} {q.stat}</div>
+          </div>
+          <button onClick={()=>claimQuest(q)} disabled={done} style={{background:done?"#f0fdf4":"#2563eb",color:done?"#15803d":"white",border:done?"1px solid #86efac":"none",borderRadius:10,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:done?"default":"pointer",flexShrink:0}}>{done?"✓ Done":"Claim"}</button>
+        </div>
+      })}
+    </div>
+
+    <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16,marginBottom:14}}>
+      <div style={{fontWeight:800,fontSize:15,marginBottom:4}}>📝 Log an Activity</div>
+      <div style={{fontSize:11,color:"#9ca3af",marginBottom:10}}>Quick-log anything — a run, a job app, a Garmin/Apple Health session — at the end of your day.</div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <input value={logForm.label} onChange={e=>setLogForm(p=>({...p,label:e.target.value}))} placeholder="e.g. 5K run, applied to 3 jobs..." style={{flex:"2 1 160px",border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 12px",fontSize:13,background:"#f9fafb"}}/>
+        <select value={logForm.stat} onChange={e=>setLogForm(p=>({...p,stat:e.target.value}))} style={{flex:"1 1 110px",border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 10px",fontSize:13,background:"#f9fafb"}}>
+          {STAT_META.map(s=><option key={s.key} value={s.key}>{s.icon} {s.label}</option>)}
+        </select>
+        <input type="number" value={logForm.xp} onChange={e=>setLogForm(p=>({...p,xp:+e.target.value}))} style={{width:70,border:"1px solid #e5e7eb",borderRadius:10,padding:"8px 8px",fontSize:13,background:"#f9fafb",textAlign:"center"}}/>
+        <button onClick={logCustom} style={{background:"#2563eb",color:"white",border:"none",borderRadius:10,padding:"8px 16px",fontWeight:700,fontSize:13,cursor:"pointer"}}>+ Log XP</button>
+      </div>
+    </div>
+
+    <div style={{background:"white",borderRadius:16,border:"1px solid #f0f0f0",padding:16}}>
+      <div style={{fontWeight:800,fontSize:15,marginBottom:10}}>📜 Recent Activity</div>
+      {(hunter.log||[]).slice(0,10).map(e=>(
+        <div key={e.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #f9fafb",fontSize:12,gap:8}}>
+          <span style={{color:"#374151"}}>{e.label}</span>
+          <span style={{color:"#3b82f6",fontWeight:700,flexShrink:0}}>+{e.xp} XP · {e.stat}</span>
+        </div>
+      ))}
+      {!(hunter.log||[]).length&&<div style={{textAlign:"center",padding:24,color:"#9ca3af",fontSize:13}}>No activity yet — claim a quest above to begin your hunt.</div>}
+    </div>
+
+    {burst&&<LevelUpOverlay data={burst} onClose={()=>setBurst(null)}/>}
+  </div>
+}
+
+/* ══════════════════════════════════════════════════════
    APP ROOT
 ══════════════════════════════════════════════════════ */
 const TABS=[
   {id:"overview", label:"Overview",     icon:"🏠"},
+  {id:"levelup",  label:"Level Up",     icon:"⚔️"},
   {id:"daily",    label:"Daily",        icon:"📅"},
   {id:"calendar", label:"Calendar",     icon:"📊"},
   {id:"goals",    label:"Goals",        icon:"🎯"},
@@ -1198,6 +1427,7 @@ function App(){
   const[ideas,setIdeas]         =useSaved("p26_ideas",DID);
   const[skills,setSkills]       =useSaved("p26_skills",DSKILLS);
   const[checkins,setCheckins]   =useSaved("p26_checkins",{});
+  const[hunter,setHunter]       =useSaved("p26_hunter",DEFAULT_HUNTER);
   const[reviews,setReviews]     =useSaved("p26_reviews",{});
   const[toast,setToast]         =useState(null);
   const T=msg=>setToast(msg);
@@ -1220,6 +1450,7 @@ function App(){
     if(d.skills)setSkills(d.skills);
     if(d.checkins)setCheckins(d.checkins);
     if(d.reviews)setReviews(d.reviews);
+    if(d.hunter)setHunter(d.hunter);
   };
 
   // Auto-save 2s after any data change
@@ -1227,7 +1458,7 @@ function App(){
     if(!fhRef.current||bkSt!=='ready')return;
     clearTimeout(saveTimer.current);
     saveTimer.current=setTimeout(()=>writeFile(fhRef.current,lsSnapshot()),2000);
-  },[goals,certs,projects,travel,jobs,investments,ideas,skills,checkins,reviews]);
+  },[goals,certs,projects,travel,jobs,investments,ideas,skills,checkins,reviews,hunter]);
 
   // Save on tab hide / close (fires before beforeunload, allows async)
   useEffect(()=>{
@@ -1309,6 +1540,7 @@ function App(){
         </button>)}
       </div>
       {tab==="overview" &&<OverviewTab goals={goals} certs={certs} jobs={jobs} investments={investments} checkins={checkins}/>}
+      {tab==="levelup"  &&<HunterTab hunter={hunter} setHunter={setHunter} checkins={checkins} toast={T}/>}
       {tab==="daily"    &&<DailyTab checkins={checkins} setCheckins={setCheckins} toast={T}/>}
       {tab==="calendar" &&<CalendarTab checkins={checkins} reviews={reviews} setReviews={setReviews} toast={T}/>}
       {tab==="goals"    &&<GoalsTab goals={goals} setGoals={setGoals} toast={T}/>}
