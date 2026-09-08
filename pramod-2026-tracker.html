@@ -9,6 +9,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -80,6 +83,40 @@ async function idbSet(k,v){const db=await openIDB();return new Promise((res,rej)
 async function writeFile(handle,data){try{const w=await handle.createWritable();await w.write(JSON.stringify(data,null,2));await w.close();return true;}catch{return false;}}
 const BKKEYS={goals:'p26_goals',certs:'p26_certs',projects:'p26_projects',travel:'p26_travel',jobs:'p26_jobs',investments:'p26_invest',ideas:'p26_ideas',skills:'p26_skills',checkins:'p26_checkins',reviews:'p26_reviews',hunter:'p26_hunter'};
 function lsSnapshot(){const d={version:1,exported:new Date().toISOString()};Object.entries(BKKEYS).forEach(([k,lk])=>{try{d[k]=JSON.parse(localStorage.getItem(lk)||'null')}catch{}});return d;}
+
+/* ── CLOUD SYNC (Firebase) ──
+   1. Create a free project at https://console.firebase.google.com
+   2. Build > Authentication > Get started > Sign-in method > enable "Email/Password"
+   3. Build > Firestore Database > Create database > Start in production mode
+   4. Firestore > Rules, paste:
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /trackers/{uid} {
+              allow read, write: if request.auth != null && request.auth.uid == uid;
+            }
+          }
+        }
+   5. Project settings (gear icon) > General > "Your apps" > Add app > Web (</>) >
+      register it, copy the firebaseConfig object, and paste its values below.
+   Until you do, SYNC_ENABLED stays false and the app works exactly as before
+   (localStorage only) — nothing here can break the offline experience. ── */
+const FIREBASE_CONFIG={
+  apiKey:"PASTE_YOUR_API_KEY",
+  authDomain:"PASTE_YOUR_PROJECT.firebaseapp.com",
+  projectId:"PASTE_YOUR_PROJECT_ID",
+  storageBucket:"PASTE_YOUR_PROJECT.appspot.com",
+  messagingSenderId:"PASTE_YOUR_SENDER_ID",
+  appId:"PASTE_YOUR_APP_ID",
+};
+const SYNC_ENABLED=typeof firebase!=='undefined'&&!!FIREBASE_CONFIG.apiKey&&!FIREBASE_CONFIG.apiKey.startsWith('PASTE_');
+let fbAuth=null,fbDb=null;
+if(SYNC_ENABLED){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fbAuth=firebase.auth();
+  fbDb=firebase.firestore();
+  fbDb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+}
 
 /* ── CONSTANTS ── */
 const LEVELS=['Beginner','Intermediate','Advanced','Expert'];
@@ -1508,6 +1545,38 @@ const TABS=[
   {id:"ideas",    label:"Ideas",        icon:"💡"},
 ];
 
+function CloudSyncBadge({enabled,status,user,onOpen}){
+  if(!enabled)return null;
+  const label=!user?"☁️ Set up sync":status==='syncing'?"☁️ Syncing…":status==='synced'?"☁️ Synced":status==='error'?"☁️ Sync error":"☁️ Connecting…";
+  const bg=!user?"#eff6ff":status==='synced'?"#f0fdf4":status==='error'?"#fef2f2":"#eff6ff";
+  const col=!user?"#1d4ed8":status==='synced'?"#15803d":status==='error'?"#b91c1c":"#1d4ed8";
+  return<button onClick={onOpen} style={{fontSize:10,fontWeight:700,padding:"4px 9px",borderRadius:8,border:"1px solid #e5e7eb",background:bg,color:col,cursor:"pointer"}}>{label}</button>
+}
+
+function CloudSyncModal({user,onClose,onSignIn,onSignUp,onSignOut,busy,err}){
+  const[mode,setMode]=useState('signin');
+  const[email,setEmail]=useState('');
+  const[pass,setPass]=useState('');
+  if(user){
+    return<Modal title="☁️ Cloud Sync" onClose={onClose}>
+      <p style={{fontSize:13,color:"#374151",marginBottom:4}}>Signed in as <b>{user.email}</b></p>
+      <p style={{fontSize:11,color:"#9ca3af",marginBottom:16}}>Sign in with this same email + password on your phone and it'll sync automatically — no export/import needed.</p>
+      <button onClick={onSignOut} style={{width:"100%",background:"#fef2f2",color:"#b91c1c",border:"1px solid #fecaca",borderRadius:12,padding:"10px 16px",fontWeight:700,fontSize:14,cursor:"pointer"}}>Sign Out</button>
+    </Modal>
+  }
+  return<Modal title="☁️ Set Up Cloud Sync" onClose={onClose}>
+    <p style={{fontSize:11,color:"#9ca3af",marginBottom:12}}>Create one login here, then sign in with the exact same email + password on your other device. Your data syncs between them automatically.</p>
+    <div style={{display:"flex",gap:6,marginBottom:12}}>
+      <button onClick={()=>setMode('signin')} style={{flex:1,padding:"6px 0",borderRadius:8,border:"none",fontWeight:700,fontSize:12,cursor:"pointer",background:mode==='signin'?"#2563eb":"#f3f4f6",color:mode==='signin'?"white":"#6b7280"}}>Sign In</button>
+      <button onClick={()=>setMode('signup')} style={{flex:1,padding:"6px 0",borderRadius:8,border:"none",fontWeight:700,fontSize:12,cursor:"pointer",background:mode==='signup'?"#2563eb":"#f3f4f6",color:mode==='signup'?"white":"#6b7280"}}>Create Login</button>
+    </div>
+    <Field label="Email" name="email" type="email" value={email} onChange={(_,v)=>setEmail(v)}/>
+    <Field label="Password" name="pass" type="password" value={pass} onChange={(_,v)=>setPass(v)}/>
+    {err&&<p style={{fontSize:12,color:"#b91c1c",marginBottom:8}}>{err}</p>}
+    <button disabled={busy} onClick={()=>mode==='signin'?onSignIn(email,pass):onSignUp(email,pass)} style={{width:"100%",background:"#2563eb",color:"white",border:"none",borderRadius:12,padding:"10px 16px",fontWeight:700,fontSize:14,cursor:busy?"default":"pointer",opacity:busy?.6:1}}>{busy?"Please wait…":mode==='signin'?"Sign In & Sync":"Create Login & Sync"}</button>
+  </Modal>
+}
+
 function App(){
   const[tab,setTab]=useState("overview");
   const[goals,setGoals]         =useSaved("p26_goals",DG);
@@ -1545,12 +1614,67 @@ function App(){
     if(d.hunter)setHunter(d.hunter);
   };
 
-  // Auto-save 2s after any data change
+  /* ── CLOUD SYNC (Firebase) ── */
+  const[cloudUser,setCloudUser]=useState(null);
+  const[cloudStatus,setCloudStatus]=useState('idle'); // idle|syncing|synced|error
+  const[showSync,setShowSync]=useState(false);
+  const[syncBusy,setSyncBusy]=useState(false);
+  const[syncErr,setSyncErr]=useState('');
+  const applyingRemote=useRef(false);
+  const cloudSaveTimer=useRef(null);
+
+  // Watch auth state; when signed in, subscribe to this user's cloud doc
   useEffect(()=>{
-    if(!fhRef.current||bkSt!=='ready')return;
-    clearTimeout(saveTimer.current);
-    saveTimer.current=setTimeout(()=>writeFile(fhRef.current,lsSnapshot()),2000);
-  },[goals,certs,projects,travel,jobs,investments,ideas,skills,checkins,reviews,hunter]);
+    if(!SYNC_ENABLED)return;
+    return fbAuth.onAuthStateChanged(u=>{
+      setCloudUser(u);
+      if(!u)return;
+      setCloudStatus('syncing');
+      const unsub=fbDb.collection('trackers').doc(u.uid).onSnapshot(snap=>{
+        if(snap.exists){
+          applyingRemote.current=true;
+          restoreAll(snap.data());
+          setTimeout(()=>{applyingRemote.current=false},400);
+        }
+        setCloudStatus('synced');
+      },e=>{setCloudStatus('error');setSyncErr(e.message);});
+      return unsub;
+    });
+  },[]);
+
+  const cloudSignIn=(email,pass)=>{
+    setSyncBusy(true);setSyncErr('');
+    fbAuth.signInWithEmailAndPassword(email,pass)
+      .then(()=>{setShowSync(false);T('☁️ Signed in — syncing');})
+      .catch(e=>setSyncErr(e.message)).finally(()=>setSyncBusy(false));
+  };
+  const cloudSignUp=(email,pass)=>{
+    setSyncBusy(true);setSyncErr('');
+    fbAuth.createUserWithEmailAndPassword(email,pass)
+      .then(()=>{setShowSync(false);T('☁️ Login created — syncing');})
+      .catch(e=>setSyncErr(e.message)).finally(()=>setSyncBusy(false));
+  };
+  const cloudSignOut=()=>{fbAuth.signOut();setShowSync(false);T('Signed out of sync');};
+
+  // Auto-save 2s after any data change (local file backup + cloud, when connected)
+  useEffect(()=>{
+    if(fhRef.current&&bkSt==='ready'){
+      clearTimeout(saveTimer.current);
+      saveTimer.current=setTimeout(()=>writeFile(fhRef.current,lsSnapshot()),2000);
+    }
+    if(SYNC_ENABLED&&cloudUser){
+      clearTimeout(cloudSaveTimer.current);
+      if(!applyingRemote.current){
+        setCloudStatus('syncing');
+        cloudSaveTimer.current=setTimeout(()=>{
+          fbDb.collection('trackers').doc(cloudUser.uid)
+            .set({...lsSnapshot(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+            .then(()=>setCloudStatus('synced'))
+            .catch(e=>{setCloudStatus('error');setSyncErr(e.message);});
+        },1200);
+      }
+    }
+  },[goals,certs,projects,travel,jobs,investments,ideas,skills,checkins,reviews,hunter,cloudUser]);
 
   // Save on tab hide / close (fires before beforeunload, allows async)
   useEffect(()=>{
@@ -1620,6 +1744,7 @@ function App(){
             {bkSt==='needs-perm'&&<button onClick={connectBackup} style={{fontSize:10,fontWeight:700,padding:"4px 9px",borderRadius:8,border:"1px solid #fcd34d",background:"#fffbeb",color:"#92400e",cursor:"pointer"}}>🔄 Load Backup</button>}
             {bkSt==='ready'&&<div style={{fontSize:10,fontWeight:700,padding:"4px 9px",borderRadius:8,background:"#f0fdf4",color:"#15803d",border:"1px solid #86efac"}}>💾 Auto-sync ON</div>}
             {bkSt==='no-api'&&<span style={{fontSize:9,color:"#9ca3af"}}>Auto-sync needs Chrome/Edge</span>}
+            <CloudSyncBadge enabled={SYNC_ENABLED} status={cloudStatus} user={cloudUser} onOpen={()=>setShowSync(true)}/>
             <button onClick={manualExport} style={{fontSize:10,fontWeight:700,padding:"4px 9px",borderRadius:8,border:"1px solid #e5e7eb",background:"white",color:"#374151",cursor:"pointer"}}>⬇️ Export</button>
             <button onClick={()=>importRef.current.click()} style={{fontSize:10,fontWeight:700,padding:"4px 9px",borderRadius:8,border:"1px solid #e5e7eb",background:"white",color:"#374151",cursor:"pointer"}}>⬆️ Import</button>
             <input ref={importRef} type="file" accept=".json" onChange={manualImport} style={{display:"none"}}/>
@@ -1645,6 +1770,7 @@ function App(){
       {tab==="ideas"    &&<IdeasTab ideas={ideas} setIdeas={setIdeas} toast={T}/>}
     </div>
     {toast&&<Toast msg={toast} done={()=>setToast(null)}/>}
+    {showSync&&<CloudSyncModal user={cloudUser} onClose={()=>setShowSync(false)} onSignIn={cloudSignIn} onSignUp={cloudSignUp} onSignOut={cloudSignOut} busy={syncBusy} err={syncErr}/>}
   </div>
 }
 
