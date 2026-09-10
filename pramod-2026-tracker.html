@@ -233,6 +233,12 @@ const RANKS=[
 ];
 const rankForLevel=lvl=>[...RANKS].reverse().find(r=>lvl>=r.min)||RANKS[0];
 const xpForLevel=lvl=>Math.round(60*Math.pow(lvl,1.3)+40);
+const applyXPGain=(xp,level,statPoints,amount)=>{
+  let newXp=(xp||0)+amount,newLevel=level||1,newStatPoints=statPoints||0,gained=0;
+  let need=xpForLevel(newLevel);
+  while(newXp>=need){newXp-=need;newLevel++;gained++;newStatPoints+=3;need=xpForLevel(newLevel);}
+  return{xp:newXp,level:newLevel,statPoints:newStatPoints,gained};
+};
 const STAT_META=[
   {key:"STR",label:"Strength",    icon:"💪",color:"#ef4444"},
   {key:"VIT",label:"Vitality",    icon:"❤️",color:"#22c55e"},
@@ -1415,11 +1421,18 @@ function HunterTab({hunter,setHunter,checkins,toast}){
     }
   },[]);
 
+  useEffect(()=>{
+    setHunter(h=>{
+      if(!h.activeGate||!isGateExpired(h.activeGate))return h;
+      const entry={id:Date.now()+Math.random(),date:new Date().toISOString(),label:`Gate failed: ${h.activeGate.name}`,xp:0,stat:"GATE"};
+      const log=[entry,...(h.log||[])].slice(0,40);
+      return{...h,activeGate:null,log};
+    });
+  },[]);
+
   const grantXP=(amount,statKey,label)=>{
     setHunter(h=>{
-      let xp=(h.xp||0)+amount,level=h.level||1,statPoints=h.statPoints||0,gained=0;
-      let need=xpForLevel(level);
-      while(xp>=need){xp-=need;level++;gained++;statPoints+=3;need=xpForLevel(level);}
+      const{xp,level,statPoints,gained}=applyXPGain(h.xp,h.level,h.statPoints,amount);
       const stats={...h.stats,[statKey]:(h.stats?.[statKey]||0)+1};
       const entry={id:Date.now()+Math.random(),date:new Date().toISOString(),label,xp:amount,stat:statKey};
       const log=[entry,...(h.log||[])].slice(0,40);
@@ -1473,10 +1486,40 @@ function HunterTab({hunter,setHunter,checkins,toast}){
     toast(gained?`Synced! +${gained} XP from today's check-in`:"No completed habits yet today");
   };
 
+  const startGateAction=()=>{
+    if(hunter.activeGate||!availableGate)return;
+    setHunter(h=>h.activeGate?h:{...h,activeGate:startGate(availableGate)});
+    toast(`🌀 Gate opened: ${availableGate.name}`);
+  };
+
+  const completeGateTaskAction=taskId=>{
+    setHunter(h=>{
+      if(!h.activeGate)return h;
+      const template=GATE_TEMPLATES.find(g=>g.id===h.activeGate.templateId);
+      if(!template||!template.tasks.some(t=>t.id===taskId))return h;
+      if(h.activeGate.completedTasks?.[taskId])return h;
+      const completedTasks={...h.activeGate.completedTasks,[taskId]:true};
+      const allDone=template.tasks.every(t=>completedTasks[t.id]);
+      if(!allDone)return{...h,activeGate:{...h.activeGate,completedTasks}};
+
+      const bonus=resolveGateBonusXP(template);
+      const{xp,level,statPoints,gained}=applyXPGain(h.xp,h.level,h.statPoints,bonus);
+      const entry={id:Date.now()+Math.random(),date:new Date().toISOString(),label:`Gate cleared: ${template.name}`,xp:bonus,stat:"GATE"};
+      const log=[entry,...(h.log||[])].slice(0,40);
+      const clearedGates=[...(h.clearedGates||[]),template.id];
+      if(gained>0){
+        const newRank=rankForLevel(level),oldRank=rankForLevel(h.level||1);
+        setTimeout(()=>setBurst({level,rank:newRank,rankUp:newRank.name!==oldRank.name,gained,statPts:statPoints}),50);
+      }
+      return{...h,xp,level,statPoints,log,clearedGates,activeGate:null};
+    });
+  };
+
   const rank=rankForLevel(hunter.level||1);
   const need=xpForLevel(hunter.level||1);
   const pct=Math.min(100,Math.round(((hunter.xp||0)/need)*100));
   const td=today();
+  const availableGate=hunter.activeGate?null:checkGateUnlock(hunter.level||1,hunter.clearedGates||[]);
 
   return<div className="fade portal-bg" style={{padding:20}}>
     <MagicCircle className="magic-circle mc1"/>
