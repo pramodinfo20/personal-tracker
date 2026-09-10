@@ -219,6 +219,13 @@ const getWeekKey=()=>{
   return`${d.getFullYear()}-W${(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7)).toString().padStart(2,'0')}`;
 };
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})};
+const fmtCountdown=ms=>{
+  const s=Math.max(0,Math.floor(ms/1000));
+  const hh=String(Math.floor(s/3600)).padStart(2,'0');
+  const mm=String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const ss=String(s%60).padStart(2,'0');
+  return`${hh}:${mm}:${ss}`;
+};
 
 /* ── HUNTER / LEVEL SYSTEM (Solo Leveling style) ── */
 const RANKS=[
@@ -1408,10 +1415,28 @@ function ShadowRevealOverlay({data,onClose}){
   </div>
 }
 
+function GateClearOverlay({data,onClose}){
+  useEffect(()=>{const t=setTimeout(onClose,3000);return()=>clearTimeout(t)},[]);
+  return<div className="levelup-overlay" onClick={onClose}>
+    <div className="levelup-ring r2"/><div className="levelup-ring r3"/><div className="levelup-ring r4"/>
+    <div className="levelup-text">
+      <div className="rajdhani" style={{color:"#93c5fd",fontSize:13,letterSpacing:".3em",fontWeight:700,textTransform:"uppercase",marginBottom:8}}>System Notification</div>
+      <div className="hunter-font" style={{fontSize:clamp(36,"8vw",50),fontWeight:900,color:"#fff",textShadow:"0 0 30px rgba(96,165,250,.9),0 0 60px rgba(96,165,250,.5)"}}>GATE CLEARED!</div>
+      <div className="hunter-font" style={{fontSize:22,fontWeight:800,color:"#60a5fa",marginTop:8}}>{data.name}</div>
+      <div style={{marginTop:12,fontSize:16,fontWeight:800,color:"#fbbf24"}}>+{data.xp} Bonus XP</div>
+      <div style={{marginTop:18,fontSize:11,color:"#64748b"}}>tap anywhere to dismiss</div>
+    </div>
+  </div>
+}
+
 function HunterTab({hunter,setHunter,checkins,toast}){
   const[burst,setBurst]=useState(null);
   const[shadowBurst,setShadowBurst]=useState(null);
+  const[gateBurst,setGateBurst]=useState(null);
+  const[gateFailBurst,setGateFailBurst]=useState(null);
   const[logForm,setLogForm]=useState({label:"",stat:"STR",xp:15});
+  const[nowTick,setNowTick]=useState(()=>Date.now());
+  const lastGateLogId=useRef((hunter.log||[])[0]?.id??null);
 
   useEffect(()=>{
     const td=today();
@@ -1429,6 +1454,30 @@ function HunterTab({hunter,setHunter,checkins,toast}){
       return{...h,activeGate:null,log};
     });
   },[]);
+
+  useEffect(()=>{
+    if(!hunter.activeGate)return;
+    const t=setInterval(()=>setNowTick(Date.now()),1000);
+    return()=>clearInterval(t);
+  },[hunter.activeGate?.expiresAt]);
+
+  useEffect(()=>{
+    const entry=(hunter.log||[])[0];
+    if(!entry||entry.id===lastGateLogId.current)return;
+    lastGateLogId.current=entry.id;
+    if(typeof entry.label!=='string')return;
+    if(entry.label.startsWith('Gate cleared:')){
+      setGateBurst({name:entry.label.replace('Gate cleared: ',''),xp:entry.xp});
+    }else if(entry.label.startsWith('Gate failed:')){
+      setGateFailBurst({name:entry.label.replace('Gate failed: ','')});
+    }
+  },[hunter.log]);
+
+  useEffect(()=>{
+    if(!gateFailBurst)return;
+    const t=setTimeout(()=>setGateFailBurst(null),4000);
+    return()=>clearTimeout(t);
+  },[gateFailBurst]);
 
   const grantXP=(amount,statKey,label)=>{
     setHunter(h=>{
@@ -1520,6 +1569,10 @@ function HunterTab({hunter,setHunter,checkins,toast}){
   const pct=Math.min(100,Math.round(((hunter.xp||0)/need)*100));
   const td=today();
   const availableGate=hunter.activeGate?null:checkGateUnlock(hunter.level||1,hunter.clearedGates||[]);
+  const tierRank=t=>RANKS.find(r=>r.name.startsWith(`${t}-Rank`));
+  const activeTemplate=hunter.activeGate?GATE_TEMPLATES.find(g=>g.id===hunter.activeGate.templateId):null;
+  const gateExpired=!!hunter.activeGate&&isGateExpired(hunter.activeGate);
+  const remainMs=hunter.activeGate?Math.max(0,hunter.activeGate.expiresAt-nowTick):0;
 
   return<div className="fade portal-bg" style={{padding:20}}>
     <MagicCircle className="magic-circle mc1"/>
@@ -1578,6 +1631,68 @@ function HunterTab({hunter,setHunter,checkins,toast}){
       </div>
     </div>
 
+    <div className="dark-card quest-glow" style={{padding:16,marginBottom:14}}>
+      <div style={{fontWeight:800,fontSize:15,marginBottom:2,color:"#fff"}}>🌀 Gate</div>
+
+      {(gateExpired||gateFailBurst)&&<div>
+        <div style={{fontSize:11,color:"#8fa3c9",marginBottom:10}}>The gate closed before you could clear it.</div>
+        <div style={{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.4)",borderRadius:12,padding:"14px 12px",textAlign:"center"}}>
+          <div style={{fontSize:13,fontWeight:800,color:"#ef4444"}}>⚠️ Gate Collapsed</div>
+          <div style={{fontSize:12,color:"#cbd5e1",marginTop:4}}>{gateExpired?`${hunter.activeGate.tier}-Rank · `:""}{gateExpired?hunter.activeGate.name:gateFailBurst.name}</div>
+        </div>
+      </div>}
+
+      {!gateExpired&&!gateFailBurst&&hunter.activeGate&&activeTemplate&&<div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:800,color:(tierRank(hunter.activeGate.tier)||{}).color||"#60a5fa"}}>{(tierRank(hunter.activeGate.tier)||{}).emoji} {hunter.activeGate.tier}-Rank · {hunter.activeGate.name}</div>
+            <div style={{fontSize:11,color:"#8fa3c9",marginTop:2}}>Clear every task before it closes for +{resolveGateBonusXP(activeTemplate)} XP</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:10,color:"#93c5fd",fontWeight:700,textTransform:"uppercase"}}>Closes in</div>
+            <div className="hunter-font" style={{fontSize:18,fontWeight:900,color:remainMs<60000?"#ef4444":"#60a5fa"}}>{fmtCountdown(remainMs)}</div>
+          </div>
+        </div>
+        {activeTemplate.tasks.map(t=>{
+          const done=!!hunter.activeGate.completedTasks?.[t.id];
+          const sm=STAT_META.find(s=>s.key===t.stat);
+          return<div key={t.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(148,163,184,.15)",gap:10}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>{done?"☑":"☐"} {t.label}</div>
+              <div style={{fontSize:11,color:"#8fa3c9"}}>+{t.xp} XP · {sm?.icon} {t.stat}</div>
+            </div>
+            <button onClick={()=>completeGateTaskAction(t.id)} disabled={done} style={{background:done?"rgba(34,197,94,.15)":"#2563eb",color:done?"#4ade80":"white",border:done?"1px solid rgba(74,222,128,.4)":"none",borderRadius:10,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:done?"default":"pointer",flexShrink:0}}>{done?"✓ Done":"Complete"}</button>
+          </div>
+        })}
+      </div>}
+
+      {!gateExpired&&!gateFailBurst&&!hunter.activeGate&&availableGate&&<div>
+        <div style={{fontSize:11,color:"#8fa3c9",marginBottom:12}}>A gate has opened. Clear its bundled tasks before time runs out for a big XP payout.</div>
+        <div style={{background:"rgba(59,130,246,.1)",border:`1px solid ${((tierRank(availableGate.tier)||{}).color)||"#3b82f6"}66`,borderRadius:14,padding:14,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:800,color:(tierRank(availableGate.tier)||{}).color||"#93c5fd"}}>{(tierRank(availableGate.tier)||{}).emoji} {availableGate.tier}-Rank · {availableGate.name}</div>
+            <div style={{fontSize:11,color:"#8fa3c9",marginTop:2}}>{availableGate.tasks.length} tasks · {availableGate.duration_hours}h to clear · +{resolveGateBonusXP(availableGate)} XP bonus</div>
+          </div>
+          <button onClick={startGateAction} style={{background:"#2563eb",color:"white",border:"none",borderRadius:10,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0}}>Start Gate</button>
+        </div>
+      </div>}
+
+      {!gateExpired&&!gateFailBurst&&!hunter.activeGate&&!availableGate&&<div style={{textAlign:"center",padding:16,color:"#64748b",fontSize:12}}>No gate open right now. Keep leveling up — a new gate unlocks at higher ranks.</div>}
+    </div>
+
+    {(hunter.clearedGates||[]).length>0&&
+    <div className="dark-card" style={{padding:16,marginBottom:14}}>
+      <div style={{fontWeight:700,fontSize:12,marginBottom:8,color:"#8fa3c9",textTransform:"uppercase",letterSpacing:".05em"}}>🏁 Cleared Gates</div>
+      {(hunter.clearedGates||[]).slice().reverse().map((id,i)=>{
+        const t=GATE_TEMPLATES.find(g=>g.id===id);
+        const tr=t?tierRank(t.tier):null;
+        return<div key={id+i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid rgba(148,163,184,.12)",fontSize:12,gap:8}}>
+          <span style={{color:"#cbd5e1"}}>{tr?.emoji||"🌀"} {t?t.name:id}</span>
+          <span style={{color:"#64748b",fontWeight:700,flexShrink:0}}>cleared</span>
+        </div>
+      })}
+    </div>}
+
     <div className="dark-card" style={{padding:16,marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
         <div style={{fontWeight:800,fontSize:15,color:"#fff"}}>⚔️ Daily Quests</div>
@@ -1624,6 +1739,7 @@ function HunterTab({hunter,setHunter,checkins,toast}){
 
     {burst&&<LevelUpOverlay data={burst} onClose={()=>setBurst(null)}/>}
     {shadowBurst&&<ShadowRevealOverlay data={shadowBurst} onClose={()=>setShadowBurst(null)}/>}
+    {gateBurst&&<GateClearOverlay data={gateBurst} onClose={()=>setGateBurst(null)}/>}
   </div>
 }
 
