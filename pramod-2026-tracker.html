@@ -253,6 +253,12 @@ const STAT_META=[
   {key:"PER",label:"Perception",  icon:"👁️",color:"#8b5cf6"},
   {key:"AGI",label:"Agility",     icon:"⚡",color:"#f59e0b"},
 ];
+const LOG_XP_TIERS=[
+  {key:"light",   label:"Light",    xp:10},
+  {key:"moderate",label:"Moderate", xp:20},
+  {key:"intense", label:"Intense",  xp:35},
+];
+const DAILY_LOG_CAP=3;
 const DAILY_QUESTS=[
   {id:"q_train",     icon:"🏃",label:"Physical Training",    hint:"Workout, run, gym, sports",           xp:25,stat:"STR"},
   {id:"q_learn",     icon:"📚",label:"Skill Grinding",       hint:"Learn something new, study, code",    xp:25,stat:"INT"},
@@ -314,6 +320,7 @@ const DEFAULT_HUNTER={
   completedToday:{}, lastQuestDate:new Date().toISOString().split('T')[0],
   streak:0, syncedDate:null, log:[], unlockedShadows:[],
   activeGate:null, clearedGates:[],
+  logCount:0,
 };
 
 /* ── GATE SYSTEM (pure logic, not wired up yet) ──
@@ -1434,7 +1441,7 @@ function HunterTab({hunter,setHunter,checkins,toast}){
   const[shadowBurst,setShadowBurst]=useState(null);
   const[gateBurst,setGateBurst]=useState(null);
   const[gateFailBurst,setGateFailBurst]=useState(null);
-  const[logForm,setLogForm]=useState({label:"",stat:"STR",xp:15});
+  const[logForm,setLogForm]=useState({label:"",stat:"STR"});
   const[nowTick,setNowTick]=useState(()=>Date.now());
   const lastGateLogId=useRef((hunter.log||[])[0]?.id??null);
 
@@ -1442,7 +1449,7 @@ function HunterTab({hunter,setHunter,checkins,toast}){
     const td=today();
     if(hunter.lastQuestDate!==td){
       const anyDoneYesterday=Object.values(hunter.completedToday||{}).some(Boolean);
-      setHunter(h=>({...h,completedToday:{},lastQuestDate:td,streak:anyDoneYesterday?(h.streak||0)+1:0}));
+      setHunter(h=>({...h,completedToday:{},lastQuestDate:td,streak:anyDoneYesterday?(h.streak||0)+1:0,logCount:0}));
     }
   },[]);
 
@@ -1507,12 +1514,13 @@ function HunterTab({hunter,setHunter,checkins,toast}){
     toast(`+${q.xp} XP · ${q.label}`);
   };
 
-  const logCustom=()=>{
+  const logTierAction=tier=>{
     if(!logForm.label.trim())return;
-    const xp=Number(logForm.xp)||10;
-    grantXP(xp,logForm.stat,logForm.label.trim());
-    toast(`+${xp} XP logged`);
-    setLogForm(p=>({label:"",stat:p.stat,xp:15}));
+    if((hunter.logCount||0)>=DAILY_LOG_CAP)return;
+    grantXP(tier.xp,logForm.stat,logForm.label.trim());
+    setHunter(h=>({...h,logCount:(h.logCount||0)+1}));
+    toast(`+${tier.xp} XP logged`);
+    setLogForm(p=>({label:"",stat:p.stat}));
   };
 
   const allocateStat=key=>{
@@ -1586,6 +1594,8 @@ function HunterTab({hunter,setHunter,checkins,toast}){
   const pct=Math.min(100,Math.round(((hunter.xp||0)/need)*100));
   const td=today();
   const availableGate=hunter.activeGate?null:checkGateUnlock(hunter.level||1,hunter.clearedGates||[]);
+  const logsUsedToday=hunter.logCount||0;
+  const logCapReached=logsUsedToday>=DAILY_LOG_CAP;
   const tierRank=t=>RANKS.find(r=>r.name.startsWith(`${t}-Rank`));
   const activeTemplate=hunter.activeGate?GATE_TEMPLATES.find(g=>g.id===hunter.activeGate.templateId):null;
   const gateExpired=!!hunter.activeGate&&isGateExpired(hunter.activeGate);
@@ -1731,14 +1741,23 @@ function HunterTab({hunter,setHunter,checkins,toast}){
     <div className="dark-card" style={{padding:16,marginBottom:14}}>
       <div style={{fontWeight:800,fontSize:15,marginBottom:4,color:"#fff"}}>📝 Log an Activity</div>
       <div style={{fontSize:11,color:"#8fa3c9",marginBottom:10}}>Quick-log anything — a run, a job app, a Garmin/Apple Health session — at the end of your day.</div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
         <input value={logForm.label} onChange={e=>setLogForm(p=>({...p,label:e.target.value}))} placeholder="e.g. 5K run, applied to 3 jobs..." style={{flex:"2 1 160px",border:"1px solid rgba(96,165,250,.3)",borderRadius:10,padding:"8px 12px",fontSize:13,background:"rgba(15,23,42,.6)",color:"#e2e8f0"}}/>
         <select value={logForm.stat} onChange={e=>setLogForm(p=>({...p,stat:e.target.value}))} style={{flex:"1 1 110px",border:"1px solid rgba(96,165,250,.3)",borderRadius:10,padding:"8px 10px",fontSize:13,background:"rgba(15,23,42,.6)",color:"#e2e8f0"}}>
           {STAT_META.map(s=><option key={s.key} value={s.key}>{s.icon} {s.label}</option>)}
         </select>
-        <input type="number" value={logForm.xp} onChange={e=>setLogForm(p=>({...p,xp:+e.target.value}))} style={{width:70,border:"1px solid rgba(96,165,250,.3)",borderRadius:10,padding:"8px 8px",fontSize:13,background:"rgba(15,23,42,.6)",color:"#e2e8f0",textAlign:"center"}}/>
-        <button onClick={logCustom} style={{background:"#2563eb",color:"white",border:"none",borderRadius:10,padding:"8px 16px",fontWeight:700,fontSize:13,cursor:"pointer"}}>+ Log XP</button>
       </div>
+      {logCapReached?
+        <div style={{fontSize:12,color:"#64748b",background:"rgba(100,116,139,.12)",border:"1px dashed rgba(100,116,139,.35)",borderRadius:10,padding:"8px 12px",textAlign:"center"}}>You've logged your {DAILY_LOG_CAP} activities for today.</div>
+      :
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {LOG_XP_TIERS.map(t=>{
+            const disabled=!logForm.label.trim();
+            return<button key={t.key} onClick={()=>logTierAction(t)} disabled={disabled} style={{flex:"1 1 100px",background:disabled?"rgba(37,99,235,.3)":"#2563eb",color:"white",border:"none",borderRadius:10,padding:"8px 10px",fontWeight:700,fontSize:12,cursor:disabled?"default":"pointer"}}>{t.label} +{t.xp}</button>
+          })}
+        </div>
+      }
+      <div style={{fontSize:10,color:"#64748b",marginTop:6}}>{logsUsedToday}/{DAILY_LOG_CAP} logged today</div>
     </div>
 
     <div className="dark-card" style={{padding:16}}>
