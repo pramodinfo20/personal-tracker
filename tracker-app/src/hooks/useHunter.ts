@@ -33,6 +33,44 @@ import { useSaved } from './useSaved'
 const HUNTER_STORAGE_KEY = 'p26_hunter'
 const LOG_LIMIT = 40
 
+// Always assigns the key (even to add 0), so a day with only a 0-XP entry
+// (a failed gate) still registers as "active" in dailyXP the same way it
+// always did as a log entry — see Hunter.dailyXP's doc comment.
+const addDailyXP = (
+  dailyXP: Record<string, number> | undefined,
+  date: string,
+  amount: number,
+): Record<string, number> => {
+  const key = date.slice(0, 10)
+  const base = dailyXP || {}
+  return { ...base, [key]: (base[key] || 0) + amount }
+}
+
+// Undo's counterpart to addDailyXP — same-day only (undo is already
+// restricted to today's claims), so this only ever touches today's key.
+const subtractDailyXP = (
+  dailyXP: Record<string, number> | undefined,
+  date: string,
+  amount: number,
+): Record<string, number> => {
+  const key = date.slice(0, 10)
+  const base = dailyXP || {}
+  return { ...base, [key]: (base[key] || 0) - amount }
+}
+
+// One-time recovery for hunters saved before dailyXP existed: sums whatever
+// is still in the (already-capped) log so Year/Month view isn't empty from
+// today's launch onward. Can't recover entries that already rolled off the
+// 40-entry cap before this ran — only what's still present right now.
+const backfillDailyXP = (log: LogEntry[]): Record<string, number> => {
+  const totals: Record<string, number> = {}
+  for (const entry of log) {
+    const key = entry.date.slice(0, 10)
+    totals[key] = (totals[key] || 0) + entry.xp
+  }
+  return totals
+}
+
 export interface LevelUpEvent {
   level: number
   rank: RankInfo
@@ -76,6 +114,15 @@ export function useHunter() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // One-time migration: hunters saved before dailyXP existed load with it
+  // `undefined` (useSaved does a plain JSON.parse, no default-merging), which
+  // is how this is distinguished from a real, already-backfilled `{}`.
+  useEffect(() => {
+    setHunter((h) => (h.dailyXP ? h : { ...h, dailyXP: backfillDailyXP(h.log || []) }))
+    // Only ever needs to run once, on mount — matches the daily-rollover effect above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Detect a freshly-appended "Gate cleared:" log entry and surface it as a
   // one-shot overlay event, the same way the original watched hunter.log.
   useEffect(() => {
@@ -100,6 +147,7 @@ export function useHunter() {
         ...(questId ? { questId } : {}),
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
+      const dailyXP = addDailyXP(h.dailyXP, entry.date, amount)
       const prevUnlocked = h.unlockedShadows || []
       const newlyUnlocked = SHADOW_MILESTONES.filter(
         (s) => level >= s.level && !prevUnlocked.includes(s.level),
@@ -122,7 +170,7 @@ export function useHunter() {
           50,
         )
       }
-      return { ...h, xp, level, statPoints, stats, log, unlockedShadows }
+      return { ...h, xp, level, statPoints, stats, log, unlockedShadows, dailyXP }
     })
   }
 
@@ -169,9 +217,10 @@ export function useHunter() {
         [quest.stat]: Math.max(0, (h.stats?.[quest.stat] || 0) - 1),
       }
       const log = h.log.filter((e) => e !== liveEntry)
+      const dailyXP = subtractDailyXP(h.dailyXP, liveEntry.date, liveEntry.xp)
       const completedToday = { ...h.completedToday }
       delete completedToday[quest.id]
-      return { ...h, xp, level, statPoints, stats, log, completedToday }
+      return { ...h, xp, level, statPoints, stats, log, dailyXP, completedToday }
     })
 
     return { ok: true }
@@ -229,6 +278,7 @@ export function useHunter() {
         stat: 'GATE',
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
+      const dailyXP = addDailyXP(h.dailyXP, entry.date, bonus)
       const clearedGates = [...(h.clearedGates || []), template.id]
       if (gained > 0) {
         const newRank = rankForLevel(level)
@@ -245,7 +295,7 @@ export function useHunter() {
           50,
         )
       }
-      return { ...h, xp, level, statPoints, log, clearedGates, activeGate: null }
+      return { ...h, xp, level, statPoints, log, clearedGates, dailyXP, activeGate: null }
     })
   }
 
@@ -260,7 +310,9 @@ export function useHunter() {
         stat: 'GATE',
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
-      return { ...h, activeGate: null, log }
+      // 0 XP, but still registers the day as active — see addDailyXP's comment.
+      const dailyXP = addDailyXP(h.dailyXP, entry.date, 0)
+      return { ...h, activeGate: null, log, dailyXP }
     })
   }
 

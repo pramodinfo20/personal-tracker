@@ -42,6 +42,16 @@ export interface Hunter {
   streak: number
   syncedDate: string | null
   log: LogEntry[]
+  /**
+   * Uncapped per-day XP totals, keyed by the same UTC date string
+   * today()/LogEntry.date use ("YYYY-MM-DD"). Updated alongside every
+   * hunter.log write (grantXP, completeGateTask, handleGateExpire) so it
+   * never loses history to the 40-entry log cap — this is what the
+   * Progress screen's Week/Month/Year aggregation reads from. A key is
+   * always present for any day with an entry, even a 0-XP one (e.g. a
+   * failed gate), so "days active" stays correct.
+   */
+  dailyXP: Record<string, number>
   unlockedShadows: number[]
   activeGate: ActiveGate | null
   clearedGates: string[]
@@ -61,6 +71,7 @@ export const DEFAULT_HUNTER: Hunter = {
   streak: 0,
   syncedDate: null,
   log: [],
+  dailyXP: {},
   unlockedShadows: [],
   activeGate: null,
   clearedGates: [],

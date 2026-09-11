@@ -1,15 +1,15 @@
 import { cn } from '../../lib/cn'
 import { RANGE_LABELS, type RangeKey } from '../../lib/progress'
 
-const RANGES: RangeKey[] = ['week', 'month']
+const RANGES: RangeKey[] = ['week', 'month', 'year']
 
 export interface RangeSelectorProps {
   value: RangeKey
   onChange: (range: RangeKey) => void
 }
 
-// Deliberately just Week/Month for now — Last Week and a custom range are
-// future options, not stubbed here as disabled buttons.
+// Deliberately just Week/Month/Year for now — Last Week and a custom range
+// are future options, not stubbed here as disabled buttons.
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   return (
     <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface-2 p-1">
