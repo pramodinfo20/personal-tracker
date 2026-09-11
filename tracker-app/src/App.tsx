@@ -1,9 +1,16 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useHunter } from './hooks/useHunter'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
 import { GateClearedOverlay, LevelUpOverlay } from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
+
+// Code-split: recharts (Progress screen's chart library) is a meaningful
+// chunk of weight that Today/Level Up/More never need — only load it once
+// someone actually opens the Progress tab.
+const ProgressScreen = lazy(() =>
+  import('./components/screens/ProgressScreen').then((m) => ({ default: m.ProgressScreen })),
+)
 
 function App() {
   const [tab, setTab] = useState<Tab>('today')
@@ -50,6 +57,17 @@ function App() {
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
         />
+      )}
+      {tab === 'progress' && (
+        <Suspense
+          fallback={
+            <div className="flex min-h-dvh items-center justify-center bg-bg text-sm font-bold text-text-muted">
+              Loading…
+            </div>
+          }
+        >
+          <ProgressScreen hunter={hunter} />
+        </Suspense>
       )}
       {tab === 'more' && <MoreScreen />}
 
