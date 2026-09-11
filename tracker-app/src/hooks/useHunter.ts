@@ -1,8 +1,13 @@
 // Wires the ported hunter/gate/quest/shadow logic from src/lib into real,
 // localStorage-persisted state. Mirrors the handler logic from the
 // HunterTab section of pramod-2026-tracker.html (grantXP, claimQuest,
-// logTierAction, allocateStat, startGateAction, completeGateTaskAction, and
-// the gate-expiry / daily-rollover effects), adapted to hooks + TypeScript.
+// logTierAction, startGateAction, completeGateTaskAction, and the
+// gate-expiry / daily-rollover effects), adapted to hooks + TypeScript.
+//
+// Note: the original's manual stat-point allocation (allocateStat) has been
+// intentionally dropped — stats are read-only now, auto-incremented by
+// grantXP. hunter.statPoints keeps accumulating (applyXPGain still returns
+// it) purely for backward-compatible data shape; nothing spends it.
 
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -131,15 +136,6 @@ export function useHunter() {
     setHunter((h) => ({ ...h, name }))
   }
 
-  const allocateStat = (key: StatKey) => {
-    if ((hunter.statPoints || 0) <= 0) return
-    setHunter((h) => ({
-      ...h,
-      statPoints: h.statPoints - 1,
-      stats: { ...h.stats, [key]: (h.stats[key] || 0) + 1 },
-    }))
-  }
-
   const startGateAction = () => {
     const availableGate = hunter.activeGate
       ? null
@@ -208,7 +204,6 @@ export function useHunter() {
     hunter,
     claimQuest,
     logActivity,
-    allocateStat,
     renameHunter,
     startGate: startGateAction,
     completeGateTask,

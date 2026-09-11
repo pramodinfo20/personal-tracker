@@ -7,6 +7,8 @@ export interface CountdownTimerProps {
   expiresAt: number
   /** Fired once, the first tick remaining time hits zero. */
   onExpire?: () => void
+  /** Fired every second with the current remaining ms — for callers that need to react to the countdown themselves (e.g. changing their own layout once under an hour remains). */
+  onTick?: (remainingMs: number) => void
   /** Below this many ms remaining, the timer switches to an urgent pulsing red. */
   urgentThresholdMs?: number
   className?: string
@@ -22,6 +24,7 @@ const URGENT_PULSE_STYLE: CSSProperties = {
 export function CountdownTimer({
   expiresAt,
   onExpire,
+  onTick,
   urgentThresholdMs = 60_000,
   className,
 }: CountdownTimerProps) {
@@ -44,6 +47,13 @@ export function CountdownTimer({
       onExpire?.()
     }
   }, [expired, onExpire])
+
+  useEffect(() => {
+    onTick?.(remaining)
+    // Only the remaining value (derived from `now`) should re-trigger this — onTick
+    // is expected to be a fresh closure on every render, not a stable dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remaining])
 
   return (
     <span
