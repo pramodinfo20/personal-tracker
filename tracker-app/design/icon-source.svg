@@ -10,8 +10,12 @@
       <stop offset="100%" stop-color="#2f8fff" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- full-bleed background: required for maskable icons -->
+  <rect width="512" height="512" fill="url(#bg)"/>
   <circle cx="256" cy="256" r="230" fill="url(#glow)"/>
+
+  <!-- gate/vortex rings, echoing the app's 🌀 Gate motif -->
   <g fill="none" stroke-linecap="round">
     <circle cx="256" cy="256" r="170" stroke="#2f8fff" stroke-opacity="0.55" stroke-width="22"
       stroke-dasharray="769.06 299.08" transform="rotate(-20 256 256)"/>
@@ -20,5 +24,6 @@
     <circle cx="256" cy="256" r="70" stroke="#57a6ff" stroke-width="18"
       stroke-dasharray="316.67 123.15" transform="rotate(240 256 256)"/>
   </g>
+
   <circle cx="256" cy="256" r="15" fill="#e8edf9"/>
 </svg>
