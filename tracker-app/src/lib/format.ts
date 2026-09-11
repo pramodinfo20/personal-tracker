@@ -1,4 +1,4 @@
-// Ported as-is from pramod-2026-tracker.html (fmtCountdown).
+// Ported as-is from pramod-2026-tracker.html (fmtCountdown, today).
 
 export const formatCountdown = (ms: number): string => {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -7,3 +7,5 @@ export const formatCountdown = (ms: number): string => {
   const ss = String(s % 60).padStart(2, '0')
   return `${hh}:${mm}:${ss}`
 }
+
+export const today = (): string => new Date().toISOString().split('T')[0]

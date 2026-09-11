@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyXPGain, xpForLevel } from './leveling'
+import { applyXPGain, rankForLevel, xpForLevel } from './leveling'
 
 describe('xpForLevel', () => {
   it('matches the original formula output at known levels', () => {
@@ -45,5 +45,22 @@ describe('applyXPGain', () => {
       statPoints: 12,
       gained: 4,
     })
+  })
+})
+
+describe('rankForLevel', () => {
+  it('starts new hunters at E-Rank', () => {
+    expect(rankForLevel(1)).toMatchObject({ name: 'E-Rank Hunter' })
+  })
+
+  it('picks the highest rank whose threshold has been reached', () => {
+    expect(rankForLevel(24)).toMatchObject({ name: 'A-Rank Hunter' })
+    expect(rankForLevel(29)).toMatchObject({ name: 'A-Rank Hunter' })
+    expect(rankForLevel(30)).toMatchObject({ name: 'S-Rank Hunter' })
+  })
+
+  it('caps out at Shadow Monarch at level 100', () => {
+    expect(rankForLevel(100)).toMatchObject({ name: 'Shadow Monarch' })
+    expect(rankForLevel(250)).toMatchObject({ name: 'Shadow Monarch' })
   })
 })
