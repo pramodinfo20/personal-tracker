@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { UndoResult } from '../../hooks/useHunter'
 import type { Hunter, StatKey } from '../../lib/hunterState'
 import { allQuestsClaimed, type DailyQuest, type LogXPTier } from '../../lib/quests'
 import {
@@ -13,6 +14,7 @@ import {
 export interface TodayScreenProps {
   hunter: Hunter
   onClaimQuest: (quest: DailyQuest) => void
+  onUndoQuest: (quest: DailyQuest) => UndoResult
   onLogActivity: (tier: LogXPTier, label: string, stat: StatKey) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
@@ -25,12 +27,19 @@ export interface TodayScreenProps {
 export function TodayScreen({
   hunter,
   onClaimQuest,
+  onUndoQuest,
   onLogActivity,
   onStartGate,
   onCompleteGateTask,
   onGateExpire,
 }: TodayScreenProps) {
   const [logSheetOpen, setLogSheetOpen] = useState(false)
+  // Once every quest is claimed, DayCompleteCard normally replaces the
+  // quest list — this lets the player peek back at it (to undo a claim)
+  // without losing the celebratory state on every future visit.
+  const [showQuestsAnyway, setShowQuestsAnyway] = useState(false)
+
+  const allDone = allQuestsClaimed(hunter.completedToday)
 
   return (
     <div className="min-h-dvh bg-bg pb-28 text-text-primary">
@@ -44,10 +53,14 @@ export function TodayScreen({
           onGateExpire={onGateExpire}
         />
         <QuestsResetTimer />
-        {allQuestsClaimed(hunter.completedToday) ? (
-          <DayCompleteCard streak={hunter.streak} />
+        {allDone && !showQuestsAnyway ? (
+          <DayCompleteCard streak={hunter.streak} onEditClaims={() => setShowQuestsAnyway(true)} />
         ) : (
-          <DailyQuestCards completedToday={hunter.completedToday} onClaim={onClaimQuest} />
+          <DailyQuestCards
+            completedToday={hunter.completedToday}
+            onClaim={onClaimQuest}
+            onUndo={onUndoQuest}
+          />
         )}
       </div>
 

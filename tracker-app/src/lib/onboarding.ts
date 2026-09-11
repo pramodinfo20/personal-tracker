@@ -1,6 +1,7 @@
-// Onboarding's "pick your focus" options — a cosmetic-only choice. Each maps
-// to the stat that gets slight visual emphasis (see focusStat on Hunter);
-// "Balanced" maps to no stat at all.
+// Onboarding's "pick your focus" options — a cosmetic-only, multi-select
+// choice. Each maps to a stat that gets slight visual emphasis (see
+// focusStats on Hunter — one entry per selected option's stat, in any
+// combination); "Balanced" maps to no stat at all.
 
 import type { StatKey } from './types'
 

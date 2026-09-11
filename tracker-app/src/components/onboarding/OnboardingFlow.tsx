@@ -5,25 +5,32 @@ import { FOCUS_OPTIONS } from '../../lib/onboarding'
 import { Button } from '../ui'
 
 export interface OnboardingFlowProps {
-  onComplete: (name: string, focusStat: StatKey | null) => void
+  onComplete: (name: string, focusStats: StatKey[]) => void
 }
 
 type Step = 'name' | 'focus'
 
-const DEFAULT_FOCUS_KEY = 'balanced'
+const DEFAULT_FOCUS_KEYS = ['balanced']
 
 // First-launch only (gated on hunter.name being empty — see App.tsx). Two
 // screens, completable in a handful of taps: a name, then a cosmetic
-// "focus" pick. Both are skippable — this is about making day one feel
-// like a choice, not about collecting real data.
+// "focus" pick (multi-select — any number of options, including all four).
+// Both are skippable — this is about making day one feel like a choice,
+// not about collecting real data.
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState<Step>('name')
   const [name, setName] = useState('')
-  const [focusKey, setFocusKey] = useState(DEFAULT_FOCUS_KEY)
+  const [focusKeys, setFocusKeys] = useState<string[]>(DEFAULT_FOCUS_KEYS)
 
-  const finish = (chosenFocusKey: string) => {
-    const focusStat = FOCUS_OPTIONS.find((o) => o.key === chosenFocusKey)?.statKey ?? null
-    onComplete(name, focusStat)
+  const toggleFocus = (key: string) => {
+    setFocusKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
+  }
+
+  const finish = (chosenFocusKeys: string[]) => {
+    const focusStats = chosenFocusKeys
+      .map((key) => FOCUS_OPTIONS.find((o) => o.key === key)?.statKey ?? null)
+      .filter((s): s is StatKey => s !== null)
+    onComplete(name, focusStats)
   }
 
   return (
@@ -34,7 +41,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             <div className="mb-6 flex justify-end">
               <button
                 type="button"
-                onClick={() => finish(DEFAULT_FOCUS_KEY)}
+                onClick={() => finish(DEFAULT_FOCUS_KEYS)}
                 className="cursor-pointer text-xs font-bold text-text-muted hover:text-text-secondary"
               >
                 Skip intro
@@ -77,16 +84,17 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             </div>
             <h1 className="mt-3 text-2xl font-extrabold text-text-primary">Pick your focus</h1>
             <p className="mt-2 text-sm text-text-secondary">
-              Just for flavor — a small visual nod to what you're here for.
+              Just for flavor — tap all that apply. A small visual nod to what you're here for.
             </p>
             <div className="mt-6 flex flex-col gap-2">
               {FOCUS_OPTIONS.map((opt) => {
-                const selected = focusKey === opt.key
+                const selected = focusKeys.includes(opt.key)
                 return (
                   <button
                     key={opt.key}
                     type="button"
-                    onClick={() => setFocusKey(opt.key)}
+                    aria-pressed={selected}
+                    onClick={() => toggleFocus(opt.key)}
                     className={cn(
                       'flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-colors',
                       selected
@@ -103,16 +111,22 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                       </span>
                       <span className="block text-xs text-text-secondary">{opt.description}</span>
                     </span>
-                    {selected && (
-                      <span className="shrink-0 text-accent" aria-hidden="true">
-                        ✓
-                      </span>
-                    )}
+                    <span
+                      className={cn(
+                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs',
+                        selected
+                          ? 'border-accent bg-accent text-white'
+                          : 'border-border-strong text-transparent',
+                      )}
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
                   </button>
                 )
               })}
             </div>
-            <Button onClick={() => finish(focusKey)} className="mt-6 w-full">
+            <Button onClick={() => finish(focusKeys)} className="mt-6 w-full">
               Start Hunting
             </Button>
           </div>

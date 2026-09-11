@@ -12,6 +12,8 @@ export interface LogEntry {
   label: string
   xp: number
   stat: StatKey | 'GATE'
+  /** Present only for entries created by claiming a daily quest — lets undo find the exact entry to reverse without guessing from label/xp/stat. */
+  questId?: string
 }
 
 export interface StatMeta {
@@ -44,8 +46,8 @@ export interface Hunter {
   activeGate: ActiveGate | null
   clearedGates: string[]
   logCount: number
-  /** Cosmetic-only "focus" chosen during onboarding — which stat gets slight visual emphasis. null means no preference (e.g. "Balanced", or a hunter who predates onboarding). */
-  focusStat: StatKey | null
+  /** Cosmetic-only "focus" chosen during onboarding — which stats get slight visual emphasis. Multi-select: any number of stats, including none (e.g. only "Balanced" picked, or a hunter who predates onboarding). */
+  focusStats: StatKey[]
 }
 
 export const DEFAULT_HUNTER: Hunter = {
@@ -63,5 +65,5 @@ export const DEFAULT_HUNTER: Hunter = {
   activeGate: null,
   clearedGates: [],
   logCount: 0,
-  focusStat: null,
+  focusStats: [],
 }

@@ -1,6 +1,6 @@
 import { cn } from '../../lib/cn'
 
-export type Tab = 'today' | 'levelup' | 'more'
+export type Tab = 'today' | 'levelup' | 'progress' | 'more'
 
 export interface BottomTabBarProps {
   active: Tab
@@ -10,6 +10,7 @@ export interface BottomTabBarProps {
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'today', label: 'Today', icon: '🏠' },
   { id: 'levelup', label: 'Level Up', icon: '⚔️' },
+  { id: 'progress', label: 'Progress', icon: '📈' },
   { id: 'more', label: 'More', icon: '☰' },
 ]
 
