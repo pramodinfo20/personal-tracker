@@ -1,3 +1,4 @@
+import { cn } from '../../lib/cn'
 import { STAT_META, type Hunter } from '../../lib/hunterState'
 import { rankForLevel, xpForLevel } from '../../lib/leveling'
 import { Badge, Card, ProgressBar } from '../ui'
@@ -58,10 +59,24 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
         {STAT_META.map((s) => {
           const value = hunter.stats?.[s.key] ?? 10
           const milestoneTier = statMilestoneTier(value)
+          const isFocus = hunter.focusStat === s.key
           return (
-            <div key={s.key} className="rounded-xl border border-border bg-surface-2 px-3 py-2">
-              <div className="text-[11px] font-bold text-text-secondary">
-                {s.icon} {s.label}
+            <div
+              key={s.key}
+              className={cn(
+                'rounded-xl border px-3 py-2',
+                isFocus ? 'border-accent/60 bg-accent-muted' : 'border-border bg-surface-2',
+              )}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold text-text-secondary">
+                <span>
+                  {s.icon} {s.label}
+                </span>
+                {isFocus && (
+                  <span className="text-accent" title="Your onboarding focus" aria-label="Focus stat">
+                    ✦
+                  </span>
+                )}
               </div>
               <div className="mt-1 flex items-center gap-1.5">
                 <span className="font-mono text-xl font-bold" style={{ color: s.color }}>

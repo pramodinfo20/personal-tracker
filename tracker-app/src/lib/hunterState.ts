@@ -44,6 +44,8 @@ export interface Hunter {
   activeGate: ActiveGate | null
   clearedGates: string[]
   logCount: number
+  /** Cosmetic-only "focus" chosen during onboarding — which stat gets slight visual emphasis. null means no preference (e.g. "Balanced", or a hunter who predates onboarding). */
+  focusStat: StatKey | null
 }
 
 export const DEFAULT_HUNTER: Hunter = {
@@ -61,4 +63,5 @@ export const DEFAULT_HUNTER: Hunter = {
   activeGate: null,
   clearedGates: [],
   logCount: 0,
+  focusStat: null,
 }

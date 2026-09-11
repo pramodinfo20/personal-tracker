@@ -133,7 +133,18 @@ export function useHunter() {
   }
 
   const renameHunter = (name: string) => {
-    setHunter((h) => ({ ...h, name }))
+    const trimmed = name.trim()
+    // A blank name would make the onboarding gate (hunter.name === '') true
+    // again on next launch — never allow renaming back to empty.
+    if (!trimmed) return
+    setHunter((h) => ({ ...h, name: trimmed }))
+  }
+
+  // Onboarding's two screens land as one atomic update so there's no
+  // intermediate render with a name but no focus (or vice versa).
+  const completeOnboarding = (name: string, focusStat: StatKey | null) => {
+    const trimmed = name.trim() || 'Hunter'
+    setHunter((h) => ({ ...h, name: trimmed, focusStat }))
   }
 
   const startGateAction = () => {
@@ -205,6 +216,7 @@ export function useHunter() {
     claimQuest,
     logActivity,
     renameHunter,
+    completeOnboarding,
     startGate: startGateAction,
     completeGateTask,
     handleGateExpire,
