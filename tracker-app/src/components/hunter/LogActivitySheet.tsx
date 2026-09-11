@@ -9,11 +9,6 @@ export interface LogActivitySheetProps {
 }
 
 export function LogActivitySheet({ logCount, onLog, onClose }: LogActivitySheetProps) {
-  const handleLog = (tier: LogXPTier, label: string, stat: StatKey) => {
-    onLog(tier, label, stat)
-    onClose()
-  }
-
   return (
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-bg/80 backdrop-blur-sm"
@@ -37,7 +32,9 @@ export function LogActivitySheet({ logCount, onLog, onClose }: LogActivitySheetP
             ×
           </button>
         </div>
-        <LogActivityForm logCount={logCount} onLog={handleLog} bare />
+        {/* onAfterLog (not onLog) closes the sheet, so the claim-feedback
+            animation on the tapped tier button gets to play first. */}
+        <LogActivityForm logCount={logCount} onLog={onLog} onAfterLog={onClose} bare />
       </div>
     </div>
   )
