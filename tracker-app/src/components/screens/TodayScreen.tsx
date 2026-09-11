@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { Hunter, StatKey } from '../../lib/hunterState'
-import type { DailyQuest, LogXPTier } from '../../lib/quests'
+import { allQuestsClaimed, type DailyQuest, type LogXPTier } from '../../lib/quests'
 import {
   DailyQuestCards,
+  DayCompleteCard,
   GateBanner,
   HunterHeader,
   LogActivitySheet,
+  QuestsResetTimer,
 } from '../hunter'
 
 export interface TodayScreenProps {
@@ -41,7 +43,12 @@ export function TodayScreen({
           onCompleteTask={onCompleteGateTask}
           onGateExpire={onGateExpire}
         />
-        <DailyQuestCards completedToday={hunter.completedToday} onClaim={onClaimQuest} />
+        <QuestsResetTimer />
+        {allQuestsClaimed(hunter.completedToday) ? (
+          <DayCompleteCard streak={hunter.streak} />
+        ) : (
+          <DailyQuestCards completedToday={hunter.completedToday} onClaim={onClaimQuest} />
+        )}
       </div>
 
       <button

@@ -30,6 +30,15 @@ export function HunterHeader({ hunter }: HunterHeaderProps) {
             Lv {hunter.level || 1} · {rank.name}
           </div>
         </div>
+        {hunter.streak > 0 && (
+          <div
+            className="flex shrink-0 items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-bold text-warning"
+            title={`${hunter.streak} day streak`}
+          >
+            <span aria-hidden="true">🔥</span>
+            {hunter.streak}
+          </div>
+        )}
         <div className="shrink-0 font-mono text-[11px] text-text-secondary">
           {hunter.xp || 0}/{need}
         </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DAILY_LOG_CAP, DAILY_QUESTS, LOG_XP_TIERS } from './quests'
+import { allQuestsClaimed, DAILY_LOG_CAP, DAILY_QUESTS, LOG_XP_TIERS, totalDailyQuestXP } from './quests'
 
 describe('quest/log constants', () => {
   it('has 3 log XP tiers in ascending order: light, moderate, intense', () => {
@@ -16,5 +16,28 @@ describe('quest/log constants', () => {
     expect(DAILY_QUESTS.map((q) => q.stat).sort()).toEqual(
       ['AGI', 'INT', 'PER', 'STR', 'VIT'].sort(),
     )
+  })
+})
+
+describe('allQuestsClaimed', () => {
+  it('is false when nothing is claimed', () => {
+    expect(allQuestsClaimed({})).toBe(false)
+  })
+
+  it('is false when some but not all quests are claimed', () => {
+    const partial = Object.fromEntries(DAILY_QUESTS.slice(0, 3).map((q) => [q.id, true]))
+    expect(allQuestsClaimed(partial)).toBe(false)
+  })
+
+  it('is true only once every quest id is claimed', () => {
+    const all = Object.fromEntries(DAILY_QUESTS.map((q) => [q.id, true]))
+    expect(allQuestsClaimed(all)).toBe(true)
+  })
+})
+
+describe('totalDailyQuestXP', () => {
+  it('sums every quest xp value', () => {
+    expect(totalDailyQuestXP()).toBe(DAILY_QUESTS.reduce((s, q) => s + q.xp, 0))
+    expect(totalDailyQuestXP()).toBe(95)
   })
 })

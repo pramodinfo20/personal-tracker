@@ -32,3 +32,8 @@ export const DAILY_QUESTS: DailyQuest[] = [
   { id: 'q_recover', icon: '🧘', label: 'Recovery Ritual', hint: 'Sleep well, meditate, journal', xp: 15, stat: 'VIT' },
   { id: 'q_discipline', icon: '✅', label: 'Daily Discipline', hint: 'Any other habit or task completed', xp: 10, stat: 'AGI' },
 ]
+
+export const allQuestsClaimed = (completedToday: Record<string, boolean>): boolean =>
+  DAILY_QUESTS.every((q) => !!completedToday?.[q.id])
+
+export const totalDailyQuestXP = (): number => DAILY_QUESTS.reduce((sum, q) => sum + q.xp, 0)
