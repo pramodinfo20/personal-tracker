@@ -142,9 +142,9 @@ export function useHunter() {
 
   // Onboarding's two screens land as one atomic update so there's no
   // intermediate render with a name but no focus (or vice versa).
-  const completeOnboarding = (name: string, focusStat: StatKey | null) => {
+  const completeOnboarding = (name: string, focusStats: StatKey[]) => {
     const trimmed = name.trim() || 'Hunter'
-    setHunter((h) => ({ ...h, name: trimmed, focusStat }))
+    setHunter((h) => ({ ...h, name: trimmed, focusStats }))
   }
 
   const startGateAction = () => {

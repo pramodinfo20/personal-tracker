@@ -59,7 +59,7 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
         {STAT_META.map((s) => {
           const value = hunter.stats?.[s.key] ?? 10
           const milestoneTier = statMilestoneTier(value)
-          const isFocus = hunter.focusStat === s.key
+          const isFocus = (hunter.focusStats || []).includes(s.key)
           return (
             <div
               key={s.key}
