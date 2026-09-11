@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { cn } from '../../lib/cn'
-import { formatCountdown } from '../../lib/format'
+import { formatCountdown, formatCountdownCompact } from '../../lib/format'
 
 export interface CountdownTimerProps {
   /** Timestamp (ms) the countdown ends at — e.g. an ActiveGate's expiresAt. */
@@ -9,8 +9,10 @@ export interface CountdownTimerProps {
   onExpire?: () => void
   /** Fired every second with the current remaining ms — for callers that need to react to the countdown themselves (e.g. changing their own layout once under an hour remains). */
   onTick?: (remainingMs: number) => void
-  /** Below this many ms remaining, the timer switches to an urgent pulsing red. */
+  /** Below this many ms remaining, the timer switches to an urgent pulsing red. Pass 0 to disable — appropriate for a low-stakes countdown like a daily reset. */
   urgentThresholdMs?: number
+  /** 'clock' (default): HH:MM:SS. 'compact': "4h 12m" / "45m" / "30s" — for a lower-key indicator that doesn't need second-precision digits. */
+  variant?: 'clock' | 'compact'
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function CountdownTimer({
   onExpire,
   onTick,
   urgentThresholdMs = 60_000,
+  variant = 'clock',
   className,
 }: CountdownTimerProps) {
   const [now, setNow] = useState(() => Date.now())
@@ -68,7 +71,7 @@ export function CountdownTimer({
       )}
       style={urgent ? URGENT_PULSE_STYLE : undefined}
     >
-      {formatCountdown(remaining)}
+      {variant === 'compact' ? formatCountdownCompact(remaining) : formatCountdown(remaining)}
     </span>
   )
 }

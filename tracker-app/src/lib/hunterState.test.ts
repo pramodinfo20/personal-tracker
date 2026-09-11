@@ -17,6 +17,7 @@ describe('DEFAULT_HUNTER', () => {
       activeGate: null,
       clearedGates: [],
       logCount: 0,
+      focusStat: null,
     })
     expect(DEFAULT_HUNTER.lastQuestDate).toBe(new Date().toISOString().split('T')[0])
   })

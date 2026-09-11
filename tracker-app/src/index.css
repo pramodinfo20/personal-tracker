@@ -55,6 +55,9 @@
   /* motion */
   --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
   --animate-shimmer: shimmer 2.2s linear infinite;
+  /* one-shot claim feedback: reuses glow-pulse's keyframes but runs twice, fast, then stops — not the ambient infinite loop */
+  --animate-claim-pulse: glow-pulse 0.5s ease-out 2;
+  --animate-float-up: float-up-fade 0.9s ease-out forwards;
 }
 
 /*
@@ -82,6 +85,21 @@
   }
   100% {
     background-position: 200px 0;
+  }
+}
+
+/* the claim-moment "+XP" text — rises a little and fades out, once */
+@keyframes float-up-fade {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-28px);
+    opacity: 0;
   }
 }
 
