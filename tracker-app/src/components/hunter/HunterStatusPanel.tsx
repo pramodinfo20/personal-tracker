@@ -1,18 +1,16 @@
-import { STAT_META, type Hunter, type StatKey } from '../../lib/hunterState'
+import { STAT_META, type Hunter } from '../../lib/hunterState'
 import { rankForLevel, xpForLevel } from '../../lib/leveling'
 import { Badge, Card, ProgressBar } from '../ui'
-import { rankTierColor } from './tierMapping'
+import { rankTierColor, statMilestoneTier } from './tierMapping'
 
 export interface HunterStatusPanelProps {
   hunter: Hunter
-  onAllocateStat: (key: StatKey) => void
   onRename: (name: string) => void
 }
 
-export function HunterStatusPanel({ hunter, onAllocateStat, onRename }: HunterStatusPanelProps) {
+export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) {
   const rank = rankForLevel(hunter.level || 1)
   const need = xpForLevel(hunter.level || 1)
-  const statPoints = hunter.statPoints || 0
 
   const rename = () => {
     const name = window.prompt('Hunter name:', hunter.name || '')
@@ -57,34 +55,32 @@ export function HunterStatusPanel({ hunter, onAllocateStat, onRename }: HunterSt
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        {STAT_META.map((s) => (
-          <div key={s.key} className="rounded-xl border border-border bg-surface-2 px-3 py-2">
-            <div className="flex items-center justify-between gap-1">
-              <span className="text-[11px] font-bold text-text-secondary">
+        {STAT_META.map((s) => {
+          const value = hunter.stats?.[s.key] ?? 10
+          const milestoneTier = statMilestoneTier(value)
+          return (
+            <div key={s.key} className="rounded-xl border border-border bg-surface-2 px-3 py-2">
+              <div className="text-[11px] font-bold text-text-secondary">
                 {s.icon} {s.label}
-              </span>
-              {statPoints > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onAllocateStat(s.key)}
-                  className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border border-accent/50 bg-accent-muted text-xs text-accent hover:bg-accent/20"
-                  aria-label={`Allocate a stat point to ${s.label}`}
-                >
-                  +
-                </button>
-              )}
+              </div>
+              <div className="mt-1 flex items-center gap-1.5">
+                <span className="font-mono text-xl font-bold" style={{ color: s.color }}>
+                  {value}
+                </span>
+                {milestoneTier && (
+                  <Badge
+                    tier={milestoneTier}
+                    className="px-1.5 py-0 text-[9px] leading-4"
+                    title={`${s.label} milestone reached`}
+                  >
+                    ★
+                  </Badge>
+                )}
+              </div>
             </div>
-            <div className="mt-1 font-mono text-xl font-bold" style={{ color: s.color }}>
-              {hunter.stats?.[s.key] ?? 10}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
-      {statPoints > 0 && (
-        <div className="mt-3 text-xs font-bold text-warning">
-          ✨ {statPoints} stat point{statPoints > 1 ? 's' : ''} to allocate
-        </div>
-      )}
     </Card>
   )
 }

@@ -1,11 +1,6 @@
 import { cn } from '../../lib/cn'
-import {
-  GATE_TEMPLATES,
-  checkGateUnlock,
-  resolveGateBonusXP,
-  type ActiveGate,
-  type GateTemplate,
-} from '../../lib/gates'
+import { GATE_TEMPLATES, resolveGateBonusXP, type ActiveGate, type GateTemplate } from '../../lib/gates'
+import { deriveGateState } from '../../lib/gateState'
 import { STAT_META, type Hunter } from '../../lib/hunterState'
 import { Badge, Button, Card, CountdownTimer, TIER_CLASSES } from '../ui'
 import { gateTierColor } from './tierMapping'
@@ -18,13 +13,7 @@ export interface GateCardProps {
 }
 
 export function GateCard({ hunter, onStartGate, onCompleteTask, onGateExpire }: GateCardProps) {
-  const activeGate = hunter.activeGate
-  const activeTemplate = activeGate
-    ? (GATE_TEMPLATES.find((g) => g.id === activeGate.templateId) ?? null)
-    : null
-  const availableGate = activeGate
-    ? null
-    : checkGateUnlock(hunter.level || 1, hunter.clearedGates || [])
+  const { activeGate, activeTemplate, availableGate } = deriveGateState(hunter)
   const clearedGates = hunter.clearedGates || []
 
   return (

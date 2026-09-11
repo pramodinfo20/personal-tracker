@@ -33,7 +33,7 @@ export function LevelUpOverlay({ event, onDismiss }: LevelUpOverlayProps) {
           </div>
         )}
         <div className="mt-3 text-sm text-text-secondary">
-          +{event.gained * 3} stat points earned · {event.statPoints} available to allocate
+          +{event.gained * 3} stat points earned
         </div>
         <div className="mt-4 text-xs text-text-muted">tap anywhere to dismiss</div>
       </div>
