@@ -12,6 +12,8 @@ export interface LogEntry {
   label: string
   xp: number
   stat: StatKey | 'GATE'
+  /** Present only for entries created by claiming a daily quest — lets undo find the exact entry to reverse without guessing from label/xp/stat. */
+  questId?: string
 }
 
 export interface StatMeta {

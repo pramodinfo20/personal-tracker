@@ -3,11 +3,13 @@ import { Card } from '../ui'
 
 export interface DayCompleteCardProps {
   streak: number
+  /** Lets the player peek back at (and undo) today's claims instead of losing access to them once this card replaces the quest list. */
+  onEditClaims: () => void
 }
 
 // Shown instead of the 5 quest cards once every daily quest is claimed —
 // a distinct "you're done" moment rather than just 5 green cards.
-export function DayCompleteCard({ streak }: DayCompleteCardProps) {
+export function DayCompleteCard({ streak, onEditClaims }: DayCompleteCardProps) {
   return (
     <Card glow className="text-center">
       <div className="text-4xl" aria-hidden="true">
@@ -26,6 +28,13 @@ export function DayCompleteCard({ streak }: DayCompleteCardProps) {
       <p className="mt-4 text-xs text-text-muted">
         Come back tomorrow for a fresh set — or log something extra below.
       </p>
+      <button
+        type="button"
+        onClick={onEditClaims}
+        className="mt-3 cursor-pointer text-xs font-bold text-accent hover:text-accent-hover"
+      >
+        View/undo today's claims
+      </button>
     </Card>
   )
 }

@@ -23,10 +23,11 @@ import {
   type LogEntry,
   type StatKey,
 } from '../lib/hunterState'
-import { applyXPGain, rankForLevel, type RankInfo } from '../lib/leveling'
+import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
 import { DAILY_LOG_CAP, type DailyQuest, type LogXPTier } from '../lib/quests'
 import { SHADOW_MILESTONES } from '../lib/shadows'
 import { today } from '../lib/format'
+import { wouldStrandProgress } from '../lib/undoGuard'
 import { useSaved } from './useSaved'
 
 const HUNTER_STORAGE_KEY = 'p26_hunter'
@@ -43,6 +44,12 @@ export interface LevelUpEvent {
 export interface GateClearedEvent {
   name: string
   xp: number
+}
+
+export interface UndoResult {
+  ok: boolean
+  /** Set only when ok is false — why the undo was refused, for the UI to show. */
+  reason?: string
 }
 
 export function useHunter() {
@@ -80,7 +87,7 @@ export function useHunter() {
     }
   }, [hunter.log])
 
-  const grantXP = (amount: number, stat: StatKey, label: string) => {
+  const grantXP = (amount: number, stat: StatKey, label: string, questId?: string) => {
     setHunter((h) => {
       const { xp, level, statPoints, gained } = applyXPGain(h.xp, h.level, h.statPoints, amount)
       const stats = { ...h.stats, [stat]: (h.stats?.[stat] || 0) + 1 }
@@ -90,6 +97,7 @@ export function useHunter() {
         label,
         xp: amount,
         stat,
+        ...(questId ? { questId } : {}),
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
       const prevUnlocked = h.unlockedShadows || []
@@ -120,8 +128,53 @@ export function useHunter() {
 
   const claimQuest = (quest: DailyQuest) => {
     if (hunter.completedToday?.[quest.id]) return
-    grantXP(quest.xp, quest.stat, quest.label)
+    grantXP(quest.xp, quest.stat, quest.label, quest.id)
     setHunter((h) => ({ ...h, completedToday: { ...h.completedToday, [quest.id]: true } }))
+  }
+
+  // Undo a quest claimed earlier TODAY (respects the same midnight-reset
+  // boundary the daily-rollover effect uses — completedToday/lastQuestDate
+  // are only ever "today's" by construction). Does the guard checks against
+  // the current snapshot for an immediate synchronous result the UI can
+  // show, then re-validates inside the updater against the freshest state
+  // before actually mutating anything.
+  const undoQuestClaim = (quest: DailyQuest): UndoResult => {
+    if (hunter.lastQuestDate !== today()) {
+      return { ok: false, reason: "That claim wasn't from today." }
+    }
+    if (!hunter.completedToday?.[quest.id]) {
+      return { ok: false, reason: 'Nothing to undo.' }
+    }
+    const entry = hunter.log.find((e) => e.questId === quest.id)
+    if (!entry) {
+      return { ok: false, reason: "Couldn't find that claim in the log." }
+    }
+
+    const { level: newLevel } = reverseXPGain(hunter.xp, hunter.level, hunter.statPoints, entry.xp)
+    const conflict = wouldStrandProgress(hunter, newLevel)
+    if (conflict) {
+      return {
+        ok: false,
+        reason: `Undoing this would drop you below the level needed for ${conflict} — not undoing automatically.`,
+      }
+    }
+
+    setHunter((h) => {
+      if (h.lastQuestDate !== today() || !h.completedToday?.[quest.id]) return h
+      const liveEntry = h.log.find((e) => e.questId === quest.id)
+      if (!liveEntry) return h
+      const { xp, level, statPoints } = reverseXPGain(h.xp, h.level, h.statPoints, liveEntry.xp)
+      const stats = {
+        ...h.stats,
+        [quest.stat]: Math.max(0, (h.stats?.[quest.stat] || 0) - 1),
+      }
+      const log = h.log.filter((e) => e !== liveEntry)
+      const completedToday = { ...h.completedToday }
+      delete completedToday[quest.id]
+      return { ...h, xp, level, statPoints, stats, log, completedToday }
+    })
+
+    return { ok: true }
   }
 
   const logActivity = (tier: LogXPTier, label: string, stat: StatKey) => {
@@ -214,6 +267,7 @@ export function useHunter() {
   return {
     hunter,
     claimQuest,
+    undoQuestClaim,
     logActivity,
     renameHunter,
     completeOnboarding,

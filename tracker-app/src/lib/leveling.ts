@@ -31,6 +31,39 @@ export const applyXPGain = (
   return { xp: newXp, level: newLevel, statPoints: newStatPoints, gained }
 }
 
+export interface XPReversalResult {
+  xp: number
+  level: number
+  statPoints: number
+  /** How many levels were rolled back (>= 0). */
+  lost: number
+}
+
+// The proper inverse of applyXPGain: undoes a single XP grant of `amount`,
+// walking back down through as many level thresholds as necessary (the
+// down-leveling mirror of applyXPGain's up-leveling while-loop) rather than
+// just subtracting xp and clamping. Floors at level 1 / 0 xp — never goes
+// negative even if `amount` exceeds everything currently banked.
+export const reverseXPGain = (
+  xp: number,
+  level: number,
+  statPoints: number,
+  amount: number,
+): XPReversalResult => {
+  let newXp = (xp || 0) - amount
+  let newLevel = level || 1
+  let newStatPoints = statPoints || 0
+  let lost = 0
+  while (newXp < 0 && newLevel > 1) {
+    newLevel--
+    newXp += xpForLevel(newLevel)
+    newStatPoints = Math.max(0, newStatPoints - 3)
+    lost++
+  }
+  if (newXp < 0) newXp = 0
+  return { xp: newXp, level: newLevel, statPoints: newStatPoints, lost }
+}
+
 export interface RankInfo {
   min: number
   name: string

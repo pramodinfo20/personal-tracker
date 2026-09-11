@@ -10,6 +10,7 @@ function App() {
   const {
     hunter,
     claimQuest,
+    undoQuestClaim,
     logActivity,
     renameHunter,
     completeOnboarding,
@@ -34,6 +35,7 @@ function App() {
         <TodayScreen
           hunter={hunter}
           onClaimQuest={claimQuest}
+          onUndoQuest={undoQuestClaim}
           onLogActivity={logActivity}
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
