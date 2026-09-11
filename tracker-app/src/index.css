@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — placeholder dark theme palette.
+ * This is a first pass so Tailwind utilities like `bg-surface` or
+ * `text-accent` are available; the real palette gets refined in Part B.
+ */
+@theme {
+  --color-bg: #060814;
+  --color-bg-elevated: #0a0e27;
+  --color-surface: #131c3d;
+  --color-surface-hover: #1e2a5e;
+  --color-border: #2a3868;
+
+  --color-text-primary: #e0e7ff;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-accent: #3b82f6;
+  --color-accent-strong: #1d4ed8;
+  --color-accent-soft: #93c5fd;
+
+  --color-secondary: #8b5cf6;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
