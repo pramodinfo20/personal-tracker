@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCountdown } from './format'
+import { formatCountdown, today } from './format'
 
 describe('formatCountdown', () => {
   it('formats zero and sub-second remainders as 00:00:00', () => {
@@ -15,5 +15,12 @@ describe('formatCountdown', () => {
 
   it('pads all segments to 2 digits', () => {
     expect(formatCountdown(9000)).toBe('00:00:09')
+  })
+})
+
+describe('today', () => {
+  it('returns the current date as YYYY-MM-DD', () => {
+    expect(today()).toBe(new Date().toISOString().split('T')[0])
+    expect(today()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })

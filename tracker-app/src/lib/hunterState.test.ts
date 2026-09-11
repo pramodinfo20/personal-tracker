@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_HUNTER } from './hunterState'
+import { DEFAULT_HUNTER, STAT_META } from './hunterState'
 
 describe('DEFAULT_HUNTER', () => {
   it('matches the shape from pramod-2026-tracker.html', () => {
@@ -19,5 +19,11 @@ describe('DEFAULT_HUNTER', () => {
       logCount: 0,
     })
     expect(DEFAULT_HUNTER.lastQuestDate).toBe(new Date().toISOString().split('T')[0])
+  })
+})
+
+describe('STAT_META', () => {
+  it('has one entry per stat key, matching DEFAULT_HUNTER.stats', () => {
+    expect(STAT_META.map((s) => s.key).sort()).toEqual(Object.keys(DEFAULT_HUNTER.stats).sort())
   })
 })

@@ -14,6 +14,21 @@ export interface LogEntry {
   stat: StatKey | 'GATE'
 }
 
+export interface StatMeta {
+  key: StatKey
+  label: string
+  icon: string
+  color: string
+}
+
+export const STAT_META: StatMeta[] = [
+  { key: 'STR', label: 'Strength', icon: '💪', color: '#ef4444' },
+  { key: 'VIT', label: 'Vitality', icon: '❤️', color: '#22c55e' },
+  { key: 'INT', label: 'Intelligence', icon: '🧠', color: '#3b82f6' },
+  { key: 'PER', label: 'Perception', icon: '👁️', color: '#8b5cf6' },
+  { key: 'AGI', label: 'Agility', icon: '⚡', color: '#f59e0b' },
+]
+
 export interface Hunter {
   name: string
   level: number
