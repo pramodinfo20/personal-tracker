@@ -3,6 +3,7 @@ export { HunterStatusPanel, type HunterStatusPanelProps } from './HunterStatusPa
 export { ShadowArmyGrid, type ShadowArmyGridProps } from './ShadowArmyGrid'
 export { GateCard, type GateCardProps } from './GateCard'
 export { GateBanner, type GateBannerProps } from './GateBanner'
+export { QuestCard, type QuestCardProps, type QuestCardClaim } from './QuestCard'
 export { DailyQuestCards, type DailyQuestCardsProps } from './DailyQuestCards'
 export { CustomQuestCards, type CustomQuestCardsProps } from './CustomQuestCards'
 export { MyQuestsSection, type MyQuestsSectionProps } from './MyQuestsSection'
