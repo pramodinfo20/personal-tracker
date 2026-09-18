@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
+import { useCustomQuests } from './hooks/useCustomQuests'
 import { useHunter } from './hooks/useHunter'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
@@ -18,6 +19,8 @@ function App() {
     hunter,
     claimQuest,
     undoQuestClaim,
+    claimCustomQuest,
+    undoCustomQuestClaim,
     logActivity,
     renameHunter,
     completeOnboarding,
@@ -29,6 +32,7 @@ function App() {
     gateClearedEvent,
     dismissGateCleared,
   } = useHunter()
+  const { customQuests, addQuest, updateQuest, setQuestActive, deleteQuest } = useCustomQuests()
 
   // First launch only — hunter.name stays '' (the DEFAULT_HUNTER value)
   // until onboarding finishes, so this never reappears afterward.
@@ -41,8 +45,11 @@ function App() {
       {tab === 'today' && (
         <TodayScreen
           hunter={hunter}
+          customQuests={customQuests}
           onClaimQuest={claimQuest}
           onUndoQuest={undoQuestClaim}
+          onClaimCustomQuest={claimCustomQuest}
+          onUndoCustomQuest={undoCustomQuestClaim}
           onLogActivity={logActivity}
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
@@ -52,10 +59,15 @@ function App() {
       {tab === 'levelup' && (
         <LevelUpScreen
           hunter={hunter}
+          customQuests={customQuests}
           onRename={renameHunter}
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
+          onAddCustomQuest={addQuest}
+          onUpdateCustomQuest={updateQuest}
+          onSetCustomQuestActive={setQuestActive}
+          onDeleteCustomQuest={deleteQuest}
         />
       )}
       {tab === 'progress' && (
