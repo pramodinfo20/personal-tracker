@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
+import type { CustomQuest, CustomQuestTier } from '../../lib/customQuests'
 import type { Hunter, StatKey } from '../../lib/hunterState'
 import { allQuestsClaimed, type DailyQuest, type LogXPTier } from '../../lib/quests'
 import {
+  CustomQuestCards,
   DailyQuestCards,
   DayCompleteCard,
   GateBanner,
@@ -13,8 +15,11 @@ import {
 
 export interface TodayScreenProps {
   hunter: Hunter
+  customQuests: CustomQuest[]
   onClaimQuest: (quest: DailyQuest) => void
   onUndoQuest: (quest: DailyQuest) => UndoResult
+  onClaimCustomQuest: (quest: CustomQuest, tier: CustomQuestTier) => void
+  onUndoCustomQuest: (quest: CustomQuest) => UndoResult
   onLogActivity: (tier: LogXPTier, label: string, stat: StatKey) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
@@ -26,8 +31,11 @@ export interface TodayScreenProps {
 // quick-logging a custom activity without leaving the screen.
 export function TodayScreen({
   hunter,
+  customQuests,
   onClaimQuest,
   onUndoQuest,
+  onClaimCustomQuest,
+  onUndoCustomQuest,
   onLogActivity,
   onStartGate,
   onCompleteGateTask,
@@ -62,6 +70,16 @@ export function TodayScreen({
             onUndo={onUndoQuest}
           />
         )}
+        {/* Custom quests are independent of the fixed 5's "all done" state
+            above — they stay visible either way, since allQuestsClaimed /
+            DayCompleteCard are deliberately scoped to DAILY_QUESTS only. */}
+        <CustomQuestCards
+          quests={customQuests}
+          completedToday={hunter.completedToday}
+          log={hunter.log}
+          onClaim={onClaimCustomQuest}
+          onUndo={onUndoCustomQuest}
+        />
       </div>
 
       <button

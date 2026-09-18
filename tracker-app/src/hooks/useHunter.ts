@@ -10,6 +10,7 @@
 // it) purely for backward-compatible data shape; nothing spends it.
 
 import { useEffect, useRef, useState } from 'react'
+import type { CustomQuest, CustomQuestTier } from '../lib/customQuests'
 import {
   GATE_TEMPLATES,
   checkGateUnlock,
@@ -226,6 +227,67 @@ export function useHunter() {
     return { ok: true }
   }
 
+  // Custom quests reuse the exact same grantXP path as the fixed 5 — the
+  // only difference is which tier's xp/label gets passed in, since a
+  // custom quest's XP depends on which tier the user picked rather than a
+  // single fixed amount. completedToday/log/dailyXP are the same shared
+  // structures the fixed quests use (keyed by quest.id either way), so the
+  // midnight-reset effect and the one-claim-per-day rule apply unchanged.
+  const claimCustomQuest = (quest: CustomQuest, tier: CustomQuestTier) => {
+    if (!quest.active) return
+    if (hunter.completedToday?.[quest.id]) return
+    grantXP(tier.xp, quest.statKey, `${quest.name} — ${tier.label}`, quest.id)
+    setHunter((h) => ({ ...h, completedToday: { ...h.completedToday, [quest.id]: true } }))
+  }
+
+  // Same-day undo for a custom quest claim — mirrors undoQuestClaim above,
+  // with one deliberate difference: the stat to decrement comes from the
+  // LOGGED entry (liveEntry.stat), not from quest.statKey. A custom quest's
+  // stat can be edited after today's claim (fixed quests' stat never
+  // changes), so reading it live could decrement the wrong stat if the
+  // quest was edited between claiming and undoing — the log entry is the
+  // one thing that still reflects exactly what was granted.
+  const undoCustomQuestClaim = (quest: CustomQuest): UndoResult => {
+    if (hunter.lastQuestDate !== today()) {
+      return { ok: false, reason: "That claim wasn't from today." }
+    }
+    if (!hunter.completedToday?.[quest.id]) {
+      return { ok: false, reason: 'Nothing to undo.' }
+    }
+    const entry = hunter.log.find((e) => e.questId === quest.id)
+    if (!entry) {
+      return { ok: false, reason: "Couldn't find that claim in the log." }
+    }
+
+    const { level: newLevel } = reverseXPGain(hunter.xp, hunter.level, hunter.statPoints, entry.xp)
+    const conflict = wouldStrandProgress(hunter, newLevel)
+    if (conflict) {
+      return {
+        ok: false,
+        reason: `Undoing this would drop you below the level needed for ${conflict} — not undoing automatically.`,
+      }
+    }
+
+    setHunter((h) => {
+      if (h.lastQuestDate !== today() || !h.completedToday?.[quest.id]) return h
+      const liveEntry = h.log.find((e) => e.questId === quest.id)
+      if (!liveEntry) return h
+      const { xp, level, statPoints } = reverseXPGain(h.xp, h.level, h.statPoints, liveEntry.xp)
+      const entryStat = liveEntry.stat
+      const stats =
+        entryStat === 'GATE'
+          ? h.stats
+          : { ...h.stats, [entryStat]: Math.max(0, (h.stats?.[entryStat] || 0) - 1) }
+      const log = h.log.filter((e) => e !== liveEntry)
+      const dailyXP = subtractDailyXP(h.dailyXP, liveEntry.date, liveEntry.xp)
+      const completedToday = { ...h.completedToday }
+      delete completedToday[quest.id]
+      return { ...h, xp, level, statPoints, stats, log, dailyXP, completedToday }
+    })
+
+    return { ok: true }
+  }
+
   const logActivity = (tier: LogXPTier, label: string, stat: StatKey) => {
     const trimmed = label.trim()
     if (!trimmed) return
@@ -320,6 +382,8 @@ export function useHunter() {
     hunter,
     claimQuest,
     undoQuestClaim,
+    claimCustomQuest,
+    undoCustomQuestClaim,
     logActivity,
     renameHunter,
     completeOnboarding,
