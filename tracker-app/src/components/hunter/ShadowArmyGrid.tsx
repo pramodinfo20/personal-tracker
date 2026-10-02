@@ -28,8 +28,8 @@ export function ShadowArmyGrid({ unlockedShadows }: ShadowArmyGridProps) {
               className={cn(
                 'rounded-xl border p-3 text-center transition-transform',
                 unlocked
-                  ? 'border-border-strong bg-gradient-to-b from-surface to-surface-2 hover:-translate-y-0.5'
-                  : 'border-dashed border-border bg-surface-2/50',
+                  ? 'hud-inset border-border-strong hover:-translate-y-0.5'
+                  : 'border-dashed border-border bg-black/15',
               )}
             >
               <span

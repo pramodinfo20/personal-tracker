@@ -27,7 +27,7 @@ export function HunterHeader({ hunter, onOpenProfile, showProgress = true }: Hun
   return (
     <header
       className={cn(
-        'sticky top-0 z-20 border-b border-[rgb(var(--glow)/0.22)] bg-bg/70 px-4 pt-3 pb-3 sm:px-6',
+        'sticky top-0 z-20 border-b border-[rgb(var(--glow)/0.22)] bg-bg/55 px-4 pt-3 pb-3 sm:px-6',
         // Same capped blur as the hero panel; the header is the only
         // always-composited blurred layer while scrolling.
         '[-webkit-backdrop-filter:blur(var(--hud-blur-strong))] [backdrop-filter:blur(var(--hud-blur-strong))]',

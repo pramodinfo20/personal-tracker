@@ -5,6 +5,7 @@ import {
   resolveBackground,
   SCREEN_BACKGROUND_FILES,
   screenBackground,
+  screenBackgroundProps,
 } from '../../lib/screenBackgrounds'
 import { ScreenBackground } from './ScreenBackground'
 
@@ -38,8 +39,45 @@ describe('ScreenBackground', () => {
     expect(img.className).toContain('opacity-0')
     fireEvent.load(img)
     expect(img.className).toContain('opacity-100')
-    const overlay = screen.getByTestId('screen-background-overlay')
-    expect(overlay.style.background).toContain('var(--color-bg)')
+  })
+
+  // Alpha of each stop in the overlay's first (vertical) gradient, top to
+  // bottom. (jsdom normalizes `rgb(10 14 26 / a)` to `rgba(10, 14, 26, a)`.)
+  const verticalStops = (bg: string): number[] =>
+    [...bg.split('radial-gradient')[0].matchAll(/rgba\(10, 14, 26, ([\d.]+)\)/g)].map((m) =>
+      Number(m[1]),
+    )
+
+  it('overlay is dark only behind the header and tab bar, light through the middle', () => {
+    render(
+      <ScreenBackground image="/bg.webp">
+        <p>content</p>
+      </ScreenBackground>,
+    )
+    const stops = verticalStops(screen.getByTestId('screen-background-overlay').style.background)
+    expect(stops).toHaveLength(5)
+    const [top, , middle, , bottom] = stops
+    expect(top).toBeGreaterThanOrEqual(0.8)
+    expect(bottom).toBeGreaterThanOrEqual(0.8)
+    // The art must read through the card area: no stop between the ends is heavy.
+    expect(Math.max(...stops.slice(1, -1))).toBeLessThanOrEqual(0.4)
+    expect(middle).toBeLessThanOrEqual(0.25)
+  })
+
+  it('dim adds a uniform extra darkening layer only when set', () => {
+    const { rerender } = render(
+      <ScreenBackground image="/bg.webp">
+        <p>content</p>
+      </ScreenBackground>,
+    )
+    const dimLayer = 'linear-gradient(rgba(10, 14, 26, 0.35), rgba(10, 14, 26, 0.35))'
+    expect(screen.getByTestId('screen-background-overlay').style.background).not.toContain(dimLayer)
+    rerender(
+      <ScreenBackground image="/bg.webp" dim={0.35}>
+        <p>content</p>
+      </ScreenBackground>,
+    )
+    expect(screen.getByTestId('screen-background-overlay').style.background).toContain(dimLayer)
   })
 
   it('shows an image that was already decoded (cached) before onLoad could fire', () => {
@@ -88,6 +126,13 @@ describe('screen background registry', () => {
 
   it('falls back to generic for a screen without its own file', () => {
     expect(resolveBackground({ generic: '/g.jpg' }, 'profile')).toBe('/g.jpg')
+  })
+
+  it("carries each image's own dim: the two bright images are calmed wherever they're used", () => {
+    expect(screenBackgroundProps('generic')).toEqual({ image: screenBackground('generic'), dim: 0.35 })
+    expect(screenBackgroundProps('gate').dim).toBe(0.35)
+    expect(screenBackgroundProps('today').dim).toBe(0)
+    expect(screenBackgroundProps('profile').dim).toBe(0)
   })
 
   it('resolves to undefined (-> plain fallback) when neither exists', () => {

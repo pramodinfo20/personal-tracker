@@ -35,13 +35,13 @@ export function HunterHeroPanel({ hunter }: HunterHeroPanelProps) {
       />
       <div className="relative flex items-end justify-between gap-4">
         <div>
-          <div className="text-[10px] font-bold tracking-[0.25em] text-text-secondary uppercase">
+          <div className="text-[10px] font-bold tracking-[0.25em] text-text-primary/85 uppercase">
             Level
           </div>
           <div className="hud-text-glow font-mono text-6xl leading-none font-black">{level}</div>
         </div>
         <div className="min-w-0 pb-1 text-right">
-          <div className="text-[10px] font-bold tracking-[0.25em] text-text-secondary uppercase">
+          <div className="text-[10px] font-bold tracking-[0.25em] text-text-primary/85 uppercase">
             Rank
           </div>
           {/* Emoji kept outside the clipped-gradient text: color emoji

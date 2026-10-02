@@ -7,7 +7,7 @@ import {
 } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
-import { screenBackground } from '../../lib/screenBackgrounds'
+import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import {
   allQuestsClaimed,
   DAILY_QUESTS,
@@ -71,7 +71,7 @@ export function TodayScreen({
   }
 
   return (
-    <ScreenBackground image={screenBackground('today')} className="pb-28 text-text-primary">
+    <ScreenBackground {...screenBackgroundProps('today')} className="pb-28 text-text-primary">
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
         <HunterHeroPanel hunter={hunter} />
         <GateBanner

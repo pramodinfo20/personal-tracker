@@ -23,9 +23,9 @@ export function ProgressSummary({ totalXP, daysActive, range, streak }: Progress
 
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface-2 px-2 py-2.5 text-center">
+    <div className="hud-glass rounded-xl px-2 py-2.5 text-center">
       <div className="font-mono text-lg font-bold text-accent">{value}</div>
-      <div className="mt-0.5 text-[10px] font-bold text-text-muted uppercase">{label}</div>
+      <div className="mt-0.5 text-[10px] font-bold text-text-secondary uppercase">{label}</div>
     </div>
   )
 }

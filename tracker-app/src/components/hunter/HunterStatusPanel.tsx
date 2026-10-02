@@ -22,7 +22,7 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
     <Card glow>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-bold tracking-[0.2em] text-accent uppercase">
+          <div className="text-xs font-bold tracking-[0.2em] text-accent-hover uppercase">
             Hunter Status Window
           </div>
           <div className="mt-1 text-2xl font-extrabold text-text-primary">
@@ -34,21 +34,21 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
           <button
             type="button"
             onClick={rename}
-            className="mt-2 block cursor-pointer text-xs text-accent hover:text-accent-hover"
+            className="mt-2 block cursor-pointer text-xs text-accent-hover hover:text-white"
           >
             ✏️ rename
           </button>
         </div>
         <div className="text-right">
-          <div className="text-xs font-bold tracking-wide text-accent uppercase">Level</div>
-          <div className="font-mono text-5xl leading-none font-black text-accent drop-shadow-[0_0_20px_rgba(47,143,255,0.6)]">
+          <div className="text-xs font-bold tracking-wide text-accent-hover uppercase">Level</div>
+          <div className="font-mono text-5xl leading-none font-black text-accent-hover drop-shadow-[0_0_20px_rgba(47,143,255,0.6)]">
             {hunter.level || 1}
           </div>
         </div>
       </div>
 
       <div className="mt-5">
-        <div className="mb-1 text-xs font-bold text-accent uppercase">EXP</div>
+        <div className="mb-1 text-xs font-bold text-accent-hover uppercase">EXP</div>
         <ProgressBar value={hunter.xp || 0} max={need} />
         {hunter.streak > 0 && (
           <div className="mt-2 text-xs font-bold text-warning">🔥 {hunter.streak} day streak</div>
@@ -65,7 +65,7 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
               key={s.key}
               className={cn(
                 'rounded-xl border px-3 py-2',
-                isFocus ? 'border-accent/60 bg-accent-muted' : 'border-border bg-surface-2',
+                isFocus ? 'hud-inset border-accent/60 bg-accent/15' : 'hud-inset',
               )}
             >
               <div className="flex items-center gap-1 text-[11px] font-bold text-text-secondary">

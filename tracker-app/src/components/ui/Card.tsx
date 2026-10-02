@@ -25,9 +25,10 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border bg-gradient-to-b from-surface to-surface-2 p-5 shadow-panel transition-all duration-150',
-        interactive && 'cursor-pointer hover:-translate-y-0.5 hover:border-border-strong hover:shadow-glow-accent',
-        glow && 'border-accent/50 shadow-glow-accent',
+        // Shared HUD glass (index.css) — see-through, so screen art shows.
+        'hud-glass rounded-2xl p-5',
+        interactive && 'hud-pressable cursor-pointer',
+        glow && 'hud-glass-strong glow-accent',
         className,
       )}
       {...rest}

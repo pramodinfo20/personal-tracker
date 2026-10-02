@@ -12,7 +12,7 @@ export interface RangeSelectorProps {
 // are future options, not stubbed here as disabled buttons.
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   return (
-    <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface-2 p-1">
+    <div className="hud-glass inline-flex shrink-0 rounded-xl p-1">
       {RANGES.map((r) => {
         const active = value === r
         return (

@@ -10,7 +10,8 @@ import {
   type RangeKey,
 } from '../../lib/progress'
 import { ProgressSummary, RangeSelector, StatBreakdown, XPBarChart, type ChartPoint } from '../progress'
-import { Card } from '../ui'
+import { screenBackgroundProps } from '../../lib/screenBackgrounds'
+import { Card, ScreenBackground } from '../ui'
 
 export interface ProgressScreenProps {
   hunter: Hunter
@@ -42,7 +43,12 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
   const daysActive = useMemo(() => daysActiveInRange(dailyXP, days), [dailyXP, days])
 
   return (
-    <div className="min-h-dvh bg-bg px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10">
+    // Generic art; its built-in dim (screenBackgroundProps) keeps the
+    // burst's bright center calm behind the XP chart.
+    <ScreenBackground
+      {...screenBackgroundProps('generic')}
+      className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10"
+    >
       <div className="mx-auto flex max-w-3xl flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-extrabold text-text-primary">Progress</h1>
@@ -70,6 +76,6 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
           )}
         </Card>
       </div>
-    </div>
+    </ScreenBackground>
   )
 }

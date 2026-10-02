@@ -18,8 +18,13 @@
 
   /* text */
   --color-text-primary: #e8edf9;
-  --color-text-secondary: #93a2c2;
-  --color-text-muted: #5b6a8c;
+  /* Lifted from #93a2c2 so secondary labels hold AA contrast over screen
+     art seen through see-through glass, not only over flat navy. */
+  --color-text-secondary: #a9b6d2;
+  /* Was #5b6a8c (~3.5:1 on --color-bg, failing AA for the small labels it's
+     used on, and worse over screen art). #7f8db0 is ~5.8:1 and still sits
+     clearly below text-secondary in the hierarchy. */
+  --color-text-muted: #7f8db0;
 
   /* electric blue accent */
   --color-accent: #2f8fff;
@@ -116,9 +121,15 @@ body {
  * class (or inherited) — so tinting a surface, its border, its bloom, its
  * icon halo and its bar fill is one class, never per-component numbers.
  *
+ * Glass is genuinely see-through: the dark fill is only --hud-fill
+ * (~34%) so the ScreenBackground art reads through every surface; the
+ * backdrop blur, glow border and a soft text-shadow carry legibility
+ * instead of an opaque fill. Tune --hud-fill / --hud-blur here, once, for
+ * every screen.
+ *
  * Performance budget (these are the expensive bits on mid-range phones):
- *   - backdrop-filter blur is capped at --hud-blur (8px) for cards and
- *     --hud-blur-strong (12px) for the hero/header only;
+ *   - backdrop-filter blur is capped at --hud-blur (10px) for cards and
+ *     --hud-blur-strong (14px) for the hero/header/sheets only;
  *   - glow blooms use a fixed --hud-glow-spread, never animated per-frame
  *     except the one-shot press state;
  *   - entrance/sheen animations are one-shot, transform/opacity only, and
@@ -126,8 +137,10 @@ body {
  */
 :root {
   --glow: 47 143 255; /* default: accent blue */
-  --hud-blur: 8px;
-  --hud-blur-strong: 12px;
+  --hud-fill: 0.34; /* dark fill opacity of a glass surface */
+  --hud-tint: 0.08; /* how strongly --glow tints the top of a glass surface */
+  --hud-blur: 10px;
+  --hud-blur-strong: 14px;
   --hud-glow-spread: 18px;
   --hud-stagger: 50ms;
 }
@@ -145,7 +158,10 @@ body {
      border in --glow, a top-edge inset highlight, and a soft drop shadow. */
   .hud-glass {
     position: relative;
-    background: linear-gradient(180deg, rgb(22 32 56 / 0.72), rgb(11 15 28 / 0.8));
+    background:
+      linear-gradient(180deg, rgb(var(--glow) / var(--hud-tint)), transparent 60%),
+      rgb(8 12 24 / var(--hud-fill));
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
     -webkit-backdrop-filter: blur(var(--hud-blur));
     backdrop-filter: blur(var(--hud-blur));
     border: 1px solid rgb(var(--glow) / 0.38);
@@ -156,6 +172,7 @@ body {
   }
 
   .hud-glass-strong {
+    --hud-fill: 0.4;
     -webkit-backdrop-filter: blur(var(--hud-blur-strong));
     backdrop-filter: blur(var(--hud-blur-strong));
     border-color: rgb(var(--glow) / 0.5);
@@ -163,6 +180,13 @@ body {
       inset 0 1px 0 rgb(255 255 255 / 0.12),
       0 18px 40px -18px rgb(0 0 0 / 0.85),
       0 0 calc(var(--hud-glow-spread) * 1.5) -6px rgb(var(--glow) / 0.5);
+  }
+
+  /* A tile/list nested inside a glass panel: lightly darker, still
+     see-through, no blur of its own (the parent's blur already applies). */
+  .hud-inset {
+    background: rgb(4 7 16 / 0.3);
+    border: 1px solid rgb(255 255 255 / 0.07);
   }
 
   /* Press feedback: a small lift + brighter bloom. Transform/shadow only. */
@@ -209,6 +233,8 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    /* A text-shadow would show through the transparent glyph fill. */
+    text-shadow: none;
     filter: drop-shadow(0 0 10px rgb(var(--glow) / 0.55));
   }
 

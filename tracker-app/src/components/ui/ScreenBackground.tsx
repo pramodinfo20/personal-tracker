@@ -10,6 +10,12 @@ export interface ScreenBackgroundProps {
    * sit over the current tab and want their own backdrop.
    */
   layout?: 'page' | 'overlay'
+  /**
+   * Extra uniform darkening (0-1) on top of the standard overlay, for a
+   * screen whose content needs a calmer backdrop than the default — e.g.
+   * Progress, where the bright generic art sits behind charts.
+   */
+  dim?: number
   className?: string
   children: ReactNode
 }
@@ -17,17 +23,22 @@ export interface ScreenBackgroundProps {
 // Full-bleed atmospheric backdrop behind a screen's content.
 //
 // With an image: it's fixed to the viewport (object-fit: cover, so any
-// aspect ratio fills a 390px phone without distortion) and covered by a dark
-// overlay that fades to the app's deep-navy --color-bg toward the edges and
-// bottom — foreground glass cards and text stay legible however busy the
-// art is. The image fades in once decoded and sits in a fixed layer, so it
-// can never shift layout; if it fails to load we drop back to the fallback.
+// aspect ratio fills a 390px phone without distortion). Because the layer is
+// position: fixed, it covers the visible area at every scroll position — a
+// screen taller than the viewport scrolls its content over the art; there's
+// never a point where the image ends and flat color shows. The overlay is
+// dark only where chrome sits — behind the sticky header (top) and the tab
+// bar (bottom) — and light through the middle, so the art reads through the
+// glass cards; legibility there comes from the cards' blur + glow, not from
+// burying the image. The image fades in once decoded and can never shift
+// layout; if it fails to load we drop back to the fallback.
 //
 // Without one (or on error): the plain bg-bg with a faint ambient glow —
 // nothing to break, no empty box.
 export function ScreenBackground({
   image,
   layout = 'page',
+  dim = 0,
   className,
   children,
 }: ScreenBackgroundProps) {
@@ -47,6 +58,9 @@ export function ScreenBackground({
       className={cn(
         'isolate bg-bg',
         layout === 'page' ? 'relative min-h-dvh' : 'fixed inset-0',
+        // Text sitting straight on the art (screen titles, subtitles) gets
+        // the same soft shadow glass surfaces give their text.
+        showImage && '[text-shadow:0_1px_3px_rgb(0_0_0/0.7)]',
         className,
       )}
     >
@@ -74,14 +88,17 @@ export function ScreenBackground({
                 loaded ? 'opacity-100' : 'opacity-0',
               )}
             />
-            {/* Legibility overlay: darkens the whole image, then fades fully
-                to --color-bg at the bottom and edges. */}
+            {/* Legibility overlay: dark under the header and tab bar, light
+                through the middle, plus a gentle side vignette. */}
             <div
               data-testid="screen-background-overlay"
               className="absolute inset-0"
               style={{
-                background:
-                  'linear-gradient(180deg, rgb(10 14 26 / 0.55) 0%, rgb(10 14 26 / 0.7) 40%, rgb(10 14 26 / 0.92) 75%, var(--color-bg) 100%), radial-gradient(130% 90% at 50% 30%, transparent 40%, var(--color-bg) 100%)',
+                background: [
+                  'linear-gradient(180deg, rgb(10 14 26 / 0.85) 0%, rgb(10 14 26 / 0.3) 13%, rgb(10 14 26 / 0.18) 50%, rgb(10 14 26 / 0.35) 80%, rgb(10 14 26 / 0.92) 100%)',
+                  'radial-gradient(140% 100% at 50% 45%, transparent 55%, rgb(10 14 26 / 0.45) 100%)',
+                  ...(dim > 0 ? [`linear-gradient(rgb(10 14 26 / ${dim}), rgb(10 14 26 / ${dim}))`] : []),
+                ].join(', '),
               }}
             />
           </>

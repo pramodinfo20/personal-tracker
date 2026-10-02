@@ -32,3 +32,20 @@ export const resolveBackground = (
 
 export const screenBackground = (key: ScreenBackgroundKey): string | undefined =>
   resolveBackground(BACKGROUNDS, key)
+
+// Extra darkening an image needs on top of the standard overlay, by key.
+// It's a property of the artwork, not of the screen showing it: the generic
+// burst (mean luma ~100-113/255 through its middle) and the gate (~78 around
+// the portal) are the two bright images; today/profile stay ≤60 and need
+// none. Values chosen by measuring text contrast over each image.
+const BACKGROUND_DIM: Partial<Record<ScreenBackgroundKey, number>> = { generic: 0.35, gate: 0.35 }
+
+/** Spread into <ScreenBackground>: the image URL plus that image's dim. */
+export const screenBackgroundProps = (
+  key: ScreenBackgroundKey,
+): { image: string | undefined; dim: number } => {
+  const image = screenBackground(key)
+  // A screen falling back to the generic art inherits generic's dim too.
+  const resolvedKey = image && image === BACKGROUNDS[key] ? key : 'generic'
+  return { image, dim: BACKGROUND_DIM[resolvedKey] ?? 0 }
+}

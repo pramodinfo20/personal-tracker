@@ -177,7 +177,8 @@ export function QuestCards({
             <div
               style={isCelebrating ? CLAIM_PULSE_STYLE : undefined}
               className={cn(
-                'hud-glass glow-success relative flex w-full items-center gap-3 rounded-2xl bg-[linear-gradient(180deg,rgb(20_48_40/0.7),rgb(11_15_28/0.8))] p-4 text-left',
+                // Same see-through glass; a stronger --glow tint marks it done.
+              'hud-glass glow-success relative flex w-full items-center gap-3 rounded-2xl p-4 text-left [--hud-tint:0.2]',
                 isCelebrating && 'animate-claim-pulse',
               )}
             >

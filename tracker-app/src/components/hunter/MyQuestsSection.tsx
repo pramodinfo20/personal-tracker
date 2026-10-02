@@ -113,7 +113,7 @@ export function MyQuestsSection({
                     aria-label="Quest name"
                     maxLength={40}
                     autoFocus
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-black/40 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
                   />
                   <Button type="button" variant="secondary" onClick={() => setRenamingId(null)}>
                     Cancel

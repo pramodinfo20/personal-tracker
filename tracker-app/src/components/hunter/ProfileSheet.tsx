@@ -3,7 +3,7 @@ import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
 import { avatarInitial, formatJoinDate, joinDateFor } from '../../lib/profile'
-import { screenBackground } from '../../lib/screenBackgrounds'
+import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { Badge, Button, ScreenBackground } from '../ui'
 import { DevTestingPanel, type DevActions } from './DevTestingPanel'
 import { glowClass, rankTierColor } from './tierMapping'
@@ -39,7 +39,7 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
   }
 
   return (
-    <ScreenBackground image={screenBackground('profile')} layout="overlay" className="z-40">
+    <ScreenBackground {...screenBackgroundProps('profile')} layout="overlay" className="z-40">
       <div className="flex h-full items-end justify-center" onClick={onClose}>
         <div
           role="dialog"
@@ -65,7 +65,7 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
 
           <div className="flex items-center gap-4">
             <div
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-2xl font-extrabold text-accent"
+              className="hud-icon h-16 w-16 text-2xl font-extrabold text-white"
               aria-hidden="true"
             >
               {avatarInitial(hunter.name)}
@@ -87,7 +87,7 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
           <h3 className="mt-6 mb-2 text-xs font-bold tracking-wide text-text-secondary uppercase">
             Settings
           </h3>
-          <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+          <div className="hud-inset divide-y divide-white/5 overflow-hidden rounded-2xl">
             <form onSubmit={saveName} className="px-4 py-3">
               <label htmlFor="profile-name" className="mb-1.5 block text-xs font-bold text-text-secondary">
                 ✏️ Hunter name
@@ -98,7 +98,7 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={40}
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-black/40 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
                 />
                 <Button type="submit" disabled={!nameChanged} className="shrink-0">
                   Save
@@ -109,15 +109,16 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
               <div
                 key={item.label}
                 aria-disabled="true"
-                className="flex items-center justify-between gap-3 px-4 py-3.5 opacity-60"
+                className="flex items-center justify-between gap-3 px-4 py-3.5"
               >
-                <span className="flex items-center gap-3 text-sm font-bold text-text-primary">
+                {/* Only the not-yet-built item itself is faded — the badge stays fully legible. */}
+                <span className="flex items-center gap-3 text-sm font-bold text-text-primary opacity-60">
                   <span className="text-lg" aria-hidden="true">
                     {item.icon}
                   </span>
                   {item.label}
                 </span>
-                <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-muted uppercase">
+                <span className="shrink-0 rounded-full border border-border bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
                   Coming soon
                 </span>
               </div>
