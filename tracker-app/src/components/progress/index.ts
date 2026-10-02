@@ -1,4 +1,5 @@
 export { RangeSelector, type RangeSelectorProps } from './RangeSelector'
 export { ProgressSummary, type ProgressSummaryProps } from './ProgressSummary'
 export { StatBreakdown, type StatBreakdownProps } from './StatBreakdown'
+export { StatBalanceChart, type StatBalanceChartProps } from './StatBalanceChart'
 export { XPBarChart, type XPBarChartProps, type ChartPoint } from './XPBarChart'

@@ -9,7 +9,14 @@ import {
   totalXPInRange,
   type RangeKey,
 } from '../../lib/progress'
-import { ProgressSummary, RangeSelector, StatBreakdown, XPBarChart, type ChartPoint } from '../progress'
+import {
+  ProgressSummary,
+  RangeSelector,
+  StatBalanceChart,
+  StatBreakdown,
+  XPBarChart,
+  type ChartPoint,
+} from '../progress'
 import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { Card, ScreenBackground } from '../ui'
 
@@ -64,6 +71,12 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
 
         <Card title="XP Earned" icon="📈">
           <XPBarChart data={chartData} range={range} />
+        </Card>
+
+        {/* Current stats, not range-dependent — the Range selector doesn't affect it. */}
+        <Card title="Stat Balance" icon="🕸️">
+          <p className="-mt-2 mb-1 text-xs text-text-secondary">Your strengths at a glance.</p>
+          <StatBalanceChart stats={hunter.stats} />
         </Card>
 
         <Card title="Stat Breakdown" icon="📊">

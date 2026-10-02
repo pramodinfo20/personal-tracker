@@ -157,3 +157,46 @@ export const formatMonthLabel = (monthKey: string): string => {
   const label = d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', year: '2-digit' })
   return label.replace(' ', " '")
 }
+
+// Y-axis width (px) for the XP bar chart, sized to its widest tick label so
+// nothing is clipped — Week/Month max out in the tens or hundreds, but Year
+// buckets whole months and can reach four digits. recharts rounds the top
+// tick up to a "nice" number (e.g. a 95 max gets a 100 tick), so this sizes
+// for one more digit than the raw max when it's within 25% of the next
+// power of ten. ~6.5px per digit at the chart's 10px tick font, plus room
+// for recharts' tick padding.
+export const yAxisWidthFor = (maxValue: number): number => {
+  const niceMax = Math.max(1, Math.ceil(maxValue * 1.25))
+  const digits = String(niceMax).length
+  return Math.max(28, Math.ceil(digits * 6.5 + 14))
+}
+
+export interface StatRadarPoint {
+  stat: StatKey
+  label: string
+  value: number
+}
+
+// Axis order for the Stat Balance radar — STR/AGI/INT/PER/VIT, so the
+// physical stats (STR, AGI) sit next to each other at the top.
+export const RADAR_STAT_ORDER: StatKey[] = ['STR', 'AGI', 'INT', 'PER', 'VIT']
+
+export const statRadarData = (stats: Partial<Record<StatKey, number>> | undefined): StatRadarPoint[] =>
+  RADAR_STAT_ORDER.map((stat) => ({
+    stat,
+    label: STAT_META.find((s) => s.key === stat)?.label ?? stat,
+    value: Math.max(0, stats?.[stat] ?? 0),
+  }))
+
+// Smallest radial-axis max the radar ever uses: keeps an all-zero (or
+// all-tiny) stat block from collapsing into a degenerate dot, and keeps a
+// brand-new hunter's even 10s from reading as "maxed out".
+export const RADAR_MIN_DOMAIN_MAX = 20
+
+// Radial-axis max: 20% headroom over the highest stat so the polygon never
+// touches the outer ring, rounded up to a multiple of 5 for tidy rings,
+// floored at RADAR_MIN_DOMAIN_MAX.
+export const statRadarDomainMax = (data: StatRadarPoint[]): number => {
+  const highest = Math.max(0, ...data.map((d) => d.value))
+  return Math.max(RADAR_MIN_DOMAIN_MAX, Math.ceil((highest * 1.2) / 5) * 5)
+}

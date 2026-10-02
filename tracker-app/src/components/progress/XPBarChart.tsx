@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { formatDayLabel, formatMonthLabel, type RangeKey } from '../../lib/progress'
+import { formatDayLabel, formatMonthLabel, yAxisWidthFor, type RangeKey } from '../../lib/progress'
 
 // A common shape for the chart to render regardless of what's bucketed —
 // Week/Month pass dailyXPSeries's `{date, xp}` points (mapped to `key`
@@ -47,11 +47,14 @@ export function XPBarChart({ data, range }: XPBarChartProps) {
   // centered on the last bar, so without extra right margin its second
   // half gets clipped by the card edge.
   const rightMargin = range === 'year' ? 20 : 4
+  // The y-axis gets exactly the width its widest label needs, inside the
+  // chart (no negative left margin — that's what clipped "100" to "00").
+  const yAxisWidth = yAxisWidthFor(Math.max(0, ...data.map((d) => d.xp)))
 
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: rightMargin, left: -20, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: rightMargin, left: 0, bottom: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--color-border)" />
           <XAxis
             dataKey="key"
@@ -65,7 +68,7 @@ export function XPBarChart({ data, range }: XPBarChartProps) {
             tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
-            width={36}
+            width={yAxisWidth}
             allowDecimals={false}
           />
           <Tooltip

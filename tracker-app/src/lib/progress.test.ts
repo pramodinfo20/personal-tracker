@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { LogEntry } from './hunterState'
+import type { LogEntry, StatKey } from './hunterState'
 import {
+  RADAR_MIN_DOMAIN_MAX,
   dailyXPSeries,
   daysActiveInRange,
   formatDayLabel,
@@ -8,7 +9,10 @@ import {
   lastNDateKeys,
   monthlyXPSeries,
   statBreakdown,
+  statRadarData,
+  statRadarDomainMax,
   totalXPInRange,
+  yAxisWidthFor,
 } from './progress'
 
 const END = new Date('2026-03-15T12:00:00.000Z') // a Sunday, mid-day UTC
@@ -135,5 +139,55 @@ describe('formatMonthLabel', () => {
   it('formats month + 2-digit year, for the Year view', () => {
     expect(formatMonthLabel('2026-03')).toBe("Mar '26")
     expect(formatMonthLabel('2025-12')).toBe("Dec '25")
+  })
+})
+
+describe('yAxisWidthFor', () => {
+  it('fits the rounded-up top tick: 2-3 digit maxes get a 3-digit-wide axis', () => {
+    // A 95 max gets a "100" top tick from recharts.
+    expect(yAxisWidthFor(95)).toBe(yAxisWidthFor(120))
+    expect(yAxisWidthFor(95)).toBeGreaterThanOrEqual(3 * 6.5 + 14)
+  })
+
+  it('grows for four-digit Year totals', () => {
+    expect(yAxisWidthFor(1500)).toBeGreaterThan(yAxisWidthFor(150))
+  })
+
+  it('never goes below a usable minimum, even with no XP', () => {
+    expect(yAxisWidthFor(0)).toBe(28)
+  })
+})
+
+describe('statRadarData', () => {
+  it('returns the 5 stats in STR/AGI/INT/PER/VIT order with labels', () => {
+    const data = statRadarData({ STR: 16, VIT: 13, INT: 15, PER: 12, AGI: 11 })
+    expect(data.map((d) => d.stat)).toEqual(['STR', 'AGI', 'INT', 'PER', 'VIT'])
+    expect(data.map((d) => d.value)).toEqual([16, 11, 15, 12, 13])
+    expect(data[0].label).toBe('Strength')
+  })
+
+  it('treats missing/negative stats as 0 (old or partial saves)', () => {
+    const data = statRadarData({ STR: 12, INT: -3 } as Partial<Record<StatKey, number>>)
+    expect(data.map((d) => d.value)).toEqual([12, 0, 0, 0, 0])
+    expect(statRadarData(undefined).every((d) => d.value === 0)).toBe(true)
+  })
+})
+
+describe('statRadarDomainMax', () => {
+  it('adds ~20% headroom over the highest stat, rounded up to a multiple of 5', () => {
+    expect(statRadarDomainMax(statRadarData({ STR: 50, AGI: 10, INT: 10, PER: 10, VIT: 10 }))).toBe(60)
+    expect(statRadarDomainMax(statRadarData({ STR: 33, AGI: 10, INT: 10, PER: 10, VIT: 10 }))).toBe(40)
+  })
+
+  it('floors at RADAR_MIN_DOMAIN_MAX so all-zero stats still render a real chart', () => {
+    expect(statRadarDomainMax(statRadarData({ STR: 0, AGI: 0, INT: 0, PER: 0, VIT: 0 }))).toBe(
+      RADAR_MIN_DOMAIN_MAX,
+    )
+  })
+
+  it("keeps a brand-new hunter's even 10s well inside the outer ring", () => {
+    const max = statRadarDomainMax(statRadarData({ STR: 10, AGI: 10, INT: 10, PER: 10, VIT: 10 }))
+    expect(max).toBe(20)
+    expect(10 / max).toBeLessThan(0.8)
   })
 })
