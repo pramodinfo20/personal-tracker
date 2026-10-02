@@ -141,10 +141,13 @@ export function QuestCards({
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block font-mono text-lg font-bold text-[rgb(var(--glow))] drop-shadow-[0_0_6px_rgb(var(--glow)/0.6)]">
+                    {/* Tier-colored XP range on its own dark chip (lightened a step
+                        toward white): the deep tier reds/purples can't hold contrast
+                        over bright art through see-through glass on their own. */}
+                    <span className="inline-block rounded-md bg-black/50 px-1.5 font-mono text-lg font-bold text-[color-mix(in_srgb,rgb(var(--glow))_75%,white)] drop-shadow-[0_0_6px_rgb(var(--glow)/0.6)]">
                       {formatTierXPRange(q.tiers)}
                     </span>
-                    <span className="block text-[10px] font-bold text-text-muted uppercase">
+                    <span className="block text-[10px] font-bold text-text-secondary uppercase">
                       {q.tiers.length === 1 ? 'Tap to claim' : isPicking ? 'Pick one' : 'Tap to pick'}
                     </span>
                   </span>
@@ -219,7 +222,7 @@ export function QuestCards({
                     <button
                       type="button"
                       onClick={() => startUndo(q.id)}
-                      className="cursor-pointer text-[10px] font-bold text-text-muted uppercase hover:text-warning"
+                      className="cursor-pointer text-[10px] font-bold text-text-secondary uppercase hover:text-warning"
                     >
                       Undo
                     </button>

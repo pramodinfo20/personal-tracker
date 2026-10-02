@@ -61,12 +61,14 @@ export function CountdownTimer({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-sm tracking-wider tabular-nums',
+        // bg-black/50: its own dark backing, so the digits stay legible
+        // over screen art seen through see-through glass.
+        'inline-flex items-center rounded-md border bg-black/50 px-2 py-0.5 font-mono text-sm tracking-wider tabular-nums',
         expired
           ? 'border-border text-text-muted'
           : urgent
             ? 'border-tier-red/50 text-tier-red animate-glow-pulse'
-            : 'border-border-strong text-accent',
+            : 'border-border-strong text-accent-hover',
         className,
       )}
       style={urgent ? URGENT_PULSE_STYLE : undefined}

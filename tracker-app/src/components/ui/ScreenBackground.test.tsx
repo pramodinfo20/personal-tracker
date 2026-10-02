@@ -128,10 +128,10 @@ describe('screen background registry', () => {
     expect(resolveBackground({ generic: '/g.jpg' }, 'profile')).toBe('/g.jpg')
   })
 
-  it("carries each image's own dim: the two bright images are calmed wherever they're used", () => {
+  it("carries each image's own dim: the bright images are calmed wherever they're used", () => {
     expect(screenBackgroundProps('generic')).toEqual({ image: screenBackground('generic'), dim: 0.35 })
-    expect(screenBackgroundProps('gate').dim).toBe(0.35)
-    expect(screenBackgroundProps('today').dim).toBe(0)
+    expect(screenBackgroundProps('gate').dim).toBe(0.45)
+    expect(screenBackgroundProps('today').dim).toBe(0.35)
     expect(screenBackgroundProps('profile').dim).toBe(0)
   })
 
