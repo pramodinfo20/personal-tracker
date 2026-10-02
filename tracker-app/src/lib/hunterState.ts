@@ -20,7 +20,7 @@ export interface LogEntry {
    * fixed xp — so anything displaying this must treat it as optional.
    */
   tier?: string
-  /** Present only for Log Activity entries — the LOG_CATEGORIES id picked. */
+  /** Present only for Log Activity entries — the QUEST_CATEGORIES key picked. */
   category?: string
 }
 

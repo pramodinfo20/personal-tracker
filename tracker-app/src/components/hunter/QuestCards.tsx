@@ -5,20 +5,21 @@ import { cn } from '../../lib/cn'
 import { today } from '../../lib/format'
 import { STAT_META, type LogEntry } from '../../lib/hunterState'
 import {
-  DAILY_QUESTS,
   formatTierXPRange,
   questClaimEntry,
-  type DailyQuest,
+  type ClaimableQuest,
   type XPTier,
 } from '../../lib/quests'
 import { TierPicker } from './TierPicker'
 
-export interface DailyQuestCardsProps {
+export interface QuestCardsProps {
+  /** Fixed DAILY_QUESTS, or active custom quests mapped through customQuestToClaimable. */
+  quests: ClaimableQuest[]
   completedToday: Record<string, boolean>
   /** hunter.log — read to show which tier/XP each claimed-today quest was claimed at. */
   log: LogEntry[]
-  onClaim: (quest: DailyQuest, tier: XPTier) => void
-  onUndo: (quest: DailyQuest) => UndoResult
+  onClaim: (quest: ClaimableQuest, tier: XPTier) => void
+  onUndo: (quest: ClaimableQuest) => UndoResult
 }
 
 const CLAIM_PULSE_STYLE: CSSProperties = {
@@ -31,6 +32,8 @@ const CLAIM_PULSE_STYLE: CSSProperties = {
 // A confirm/message bubble auto-dismisses after this long if left untouched.
 const AUTO_DISMISS_MS = 5000
 
+// Renders fixed and custom quests alike — one card, one tier picker and
+// one undo flow for every claimable quest.
 // Each quest is its own big, whole-card tap target. A single-tier quest
 // claims in exactly one tap; a multi-tier one expands into the shared
 // TierPicker on tap, and picking a tier is the claim (still no separate
@@ -39,7 +42,7 @@ const AUTO_DISMISS_MS = 5000
 // A claimed-today card offers a small "Undo" — itself gated behind a
 // lightweight inline confirm (a mistake-proofing feature skipping its own
 // mistake-proofing would be ironic), not a full modal.
-export function DailyQuestCards({ completedToday, log, onClaim, onUndo }: DailyQuestCardsProps) {
+export function QuestCards({ quests, completedToday, log, onClaim, onUndo }: QuestCardsProps) {
   const { celebrating, celebrate } = useClaimCelebration<string>()
   const [pickingId, setPickingId] = useState<string | null>(null)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
@@ -57,13 +60,13 @@ export function DailyQuestCards({ completedToday, log, onClaim, onUndo }: DailyQ
     return () => clearTimeout(t)
   }, [blocked])
 
-  const claim = (q: DailyQuest, tier: XPTier) => {
+  const claim = (q: ClaimableQuest, tier: XPTier) => {
     setPickingId(null)
     onClaim(q, tier)
     celebrate(q.id, tier.xp)
   }
 
-  const handleTap = (q: DailyQuest) => {
+  const handleTap = (q: ClaimableQuest) => {
     if (q.tiers.length === 1) {
       claim(q, q.tiers[0])
       return
@@ -76,7 +79,7 @@ export function DailyQuestCards({ completedToday, log, onClaim, onUndo }: DailyQ
     setConfirmingId(id)
   }
 
-  const confirmUndo = (q: DailyQuest) => {
+  const confirmUndo = (q: ClaimableQuest) => {
     setConfirmingId(null)
     const result = onUndo(q)
     if (!result.ok) {
@@ -86,7 +89,7 @@ export function DailyQuestCards({ completedToday, log, onClaim, onUndo }: DailyQ
 
   return (
     <div className="flex flex-col gap-3">
-      {DAILY_QUESTS.map((q) => {
+      {quests.map((q) => {
         const done = !!completedToday?.[q.id]
         const sm = STAT_META.find((s) => s.key === q.stat)
         const isCelebrating = celebrating[q.id] !== undefined

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { QUEST_CATEGORIES } from './customQuests'
 import type { LogEntry } from './hunterState'
 import {
   allQuestsClaimed,
@@ -6,7 +7,6 @@ import {
   DAILY_QUESTS,
   formatTierXPRange,
   isValidTier,
-  LOG_CATEGORIES,
   questClaimEntry,
   questXPOnDate,
   tierXPRange,
@@ -49,7 +49,12 @@ describe('quest/log constants', () => {
     expect(quest('q_discipline').tiers).toEqual([{ label: 'Done', xp: 10 }])
   })
 
-  it.each([...DAILY_QUESTS, ...LOG_CATEGORIES].map((x) => [x.id, x.tiers] as const))(
+  // Every built-in tier list in the app — fixed quests and the category
+  // presets custom quests / Log Activity draw from.
+  it.each([
+    ...DAILY_QUESTS.map((q) => [q.id, q.tiers] as const),
+    ...QUEST_CATEGORIES.map((c) => [c.key, c.defaultTiers] as const),
+  ])(
     '%s: tiers are non-empty, strictly ascending in xp, with unique labels',
     (_id, tiers) => {
       expect(tiers.length).toBeGreaterThan(0)
@@ -57,11 +62,6 @@ describe('quest/log constants', () => {
       expect(new Set(tiers.map((t) => t.label)).size).toBe(tiers.length)
     },
   )
-
-  it('has uniquely-identified log categories that each map to a stat', () => {
-    expect(new Set(LOG_CATEGORIES.map((c) => c.id)).size).toBe(LOG_CATEGORIES.length)
-    for (const c of LOG_CATEGORIES) expect(['STR', 'VIT', 'INT', 'PER', 'AGI']).toContain(c.stat)
-  })
 })
 
 describe('isValidTier', () => {
@@ -139,14 +139,20 @@ describe('questClaimEntry', () => {
 })
 
 describe('questXPOnDate', () => {
-  it("sums only that day's quest-claim entries, old and new alike", () => {
+  it("sums only that day's fixed-quest claims, old and new alike", () => {
     const log = [
       entry({ questId: 'q_train', xp: 50, tier: '60+ min' }),
       entry({ questId: 'q_learn', xp: 25 }), // pre-tier entry
-      entry({ xp: 20, category: 'reading', tier: '30 min' }), // log activity — not a quest
+      entry({ xp: 20, category: 'learning', tier: '30 min' }), // log activity — not a quest
+      entry({ questId: 'cq_abc', xp: 15, tier: '1L' }), // custom quest — not one of the fixed 5
       entry({ questId: 'q_hunt', xp: 30, date: '2026-10-01T09:00:00.000Z' }), // yesterday
     ]
     expect(questXPOnDate(log, '2026-10-02')).toBe(75)
+  })
+
+  it('can be scoped to a different quest set (e.g. custom quests)', () => {
+    const log = [entry({ questId: 'cq_abc', xp: 15 }), entry({ questId: 'q_train', xp: 50 })]
+    expect(questXPOnDate(log, '2026-10-02', [{ id: 'cq_abc' }])).toBe(15)
   })
 
   it('is 0 for an empty/missing log', () => {

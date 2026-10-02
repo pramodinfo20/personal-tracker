@@ -1,8 +1,10 @@
 // Originally ported from pramod-2026-tracker.html (HUNTER / LEVEL SYSTEM
-// section), where each daily quest paid a single fixed XP value and Log
-// Activity used generic Light/Moderate/Intense buttons. Both now share one
-// shape: a list of {label, xp} tiers — more time/effort = more XP — picked
-// by the same TierPicker component.
+// section), where each daily quest paid a single fixed XP value. Every
+// XP-earning action now shares one shape: a list of {label, xp} tiers —
+// more time/effort = more XP — picked through the one TierPicker component.
+// Fixed quests (below), custom quests (customQuests.ts, adapted via
+// customQuestToClaimable) and Log Activity (QUEST_CATEGORIES' tiers) all
+// use XPTier.
 
 import type { LogEntry } from './hunterState'
 import type { StatKey } from './types'
@@ -14,15 +16,22 @@ export interface XPTier {
 
 export const DAILY_LOG_CAP = 3
 
-export interface DailyQuest {
+/**
+ * Anything that can be claimed once per day at a tier — the fixed
+ * DAILY_QUESTS directly, and custom quests via customQuestToClaimable.
+ * useHunter.claimQuest, undoQuestClaim and QuestCards all work on this.
+ */
+export interface ClaimableQuest {
   id: string
   icon: string
   label: string
   hint: string
   stat: StatKey
-  /** Ascending by xp. A single-tier quest claims in one tap with no picker. */
+  /** A single-tier quest claims in one tap with no picker. */
   tiers: XPTier[]
 }
+
+export type DailyQuest = ClaimableQuest
 
 export const DAILY_QUESTS: DailyQuest[] = [
   {
@@ -80,86 +89,6 @@ export const DAILY_QUESTS: DailyQuest[] = [
   },
 ]
 
-export interface LogCategory {
-  id: string
-  icon: string
-  label: string
-  stat: StatKey
-  tiers: XPTier[]
-}
-
-// Log Activity's categories — same {label, xp} tier shape as DAILY_QUESTS.
-// XP is deliberately a notch below the matching daily quest's tiers: these
-// are extras on top of the day's quests (and capped at DAILY_LOG_CAP).
-export const LOG_CATEGORIES: LogCategory[] = [
-  {
-    id: 'exercise',
-    icon: '🏋️',
-    label: 'Exercise',
-    stat: 'STR',
-    tiers: [
-      { label: '15 min', xp: 10 },
-      { label: '30 min', xp: 20 },
-      { label: '60+ min', xp: 35 },
-    ],
-  },
-  {
-    id: 'reading',
-    icon: '📖',
-    label: 'Reading',
-    stat: 'INT',
-    tiers: [
-      { label: '15 min', xp: 10 },
-      { label: '30 min', xp: 20 },
-      { label: '60+ min', xp: 35 },
-    ],
-  },
-  {
-    id: 'networking',
-    icon: '🤝',
-    label: 'Networking',
-    stat: 'PER',
-    tiers: [
-      { label: '1–2 actions', xp: 10 },
-      { label: '3–4 actions', xp: 15 },
-      { label: '5+ actions', xp: 25 },
-    ],
-  },
-  {
-    id: 'hydration',
-    icon: '💧',
-    label: 'Hydration',
-    stat: 'VIT',
-    tiers: [
-      { label: '1 L', xp: 5 },
-      { label: '2 L', xp: 10 },
-      { label: '3+ L', xp: 15 },
-    ],
-  },
-  {
-    id: 'mindfulness',
-    icon: '🧘',
-    label: 'Mindfulness',
-    stat: 'VIT',
-    tiers: [
-      { label: '5 min', xp: 5 },
-      { label: '10 min', xp: 10 },
-      { label: '20+ min', xp: 20 },
-    ],
-  },
-  {
-    id: 'chores',
-    icon: '🧹',
-    label: 'Chores & Errands',
-    stat: 'AGI',
-    tiers: [
-      { label: '15 min', xp: 10 },
-      { label: '30 min', xp: 20 },
-      { label: '60+ min', xp: 30 },
-    ],
-  },
-]
-
 // Claims/logs only ever accept a tier that's actually in the quest's or
 // category's own list — a stale or hand-crafted tier can't mint arbitrary XP.
 export const isValidTier = (tiers: XPTier[], tier: XPTier): boolean =>
@@ -190,10 +119,17 @@ export const questClaimEntry = (
 ): LogEntry | undefined =>
   (log || []).find((e) => e.questId === questId && e.date.slice(0, 10) === dateKey)
 
-// What today's daily-quest claims actually paid out — replaces the old
-// fixed "sum of every quest's xp" now that each claim's XP depends on the
-// tier picked.
-export const questXPOnDate = (log: LogEntry[], dateKey: string): number =>
-  (log || [])
-    .filter((e) => e.questId && e.date.slice(0, 10) === dateKey)
+// What a day's claims of `quests` actually paid out (default: the fixed
+// DAILY_QUESTS, for DayCompleteCard) — replaces the old fixed "sum of every
+// quest's xp" now that each claim's XP depends on the tier picked. Custom
+// quest claims share the questId field, so scoping by id keeps them out.
+export const questXPOnDate = (
+  log: LogEntry[],
+  dateKey: string,
+  quests: Pick<ClaimableQuest, 'id'>[] = DAILY_QUESTS,
+): number => {
+  const ids = new Set(quests.map((q) => q.id))
+  return (log || [])
+    .filter((e) => e.questId && ids.has(e.questId) && e.date.slice(0, 10) === dateKey)
     .reduce((sum, e) => sum + e.xp, 0)
+}

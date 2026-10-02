@@ -25,11 +25,15 @@ import {
 } from '../lib/hunterState'
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
 import {
+  customQuestToClaimable,
+  type CustomQuest,
+  type QuestCategoryPreset,
+} from '../lib/customQuests'
+import {
   DAILY_LOG_CAP,
   isValidTier,
   questClaimEntry,
-  type DailyQuest,
-  type LogCategory,
+  type ClaimableQuest,
   type XPTier,
 } from '../lib/quests'
 import { SHADOW_MILESTONES } from '../lib/shadows'
@@ -187,23 +191,35 @@ export function useHunter() {
     })
   }
 
-  // completedToday stays a plain Record<string, boolean> (unchanged shape,
-  // so old saves need no migration) — the XP and tier actually granted live
-  // on the claim's log entry, which is what undo reverses.
-  const claimQuest = (quest: DailyQuest, tier: XPTier) => {
+  // The one claim path for every once-per-day quest — fixed DAILY_QUESTS
+  // directly, custom quests via claimCustomQuest below. completedToday stays
+  // a plain Record<string, boolean> keyed by quest id (unchanged shape, so
+  // old saves need no migration); the XP, stat and tier actually granted
+  // live on the claim's log entry, which is what undo reverses.
+  const claimQuest = (quest: ClaimableQuest, tier: XPTier) => {
     if (hunter.completedToday?.[quest.id]) return
     if (!isValidTier(quest.tiers, tier)) return
     grantXP(tier.xp, quest.stat, quest.label, { questId: quest.id, tier: tier.label })
     setHunter((h) => ({ ...h, completedToday: { ...h.completedToday, [quest.id]: true } }))
   }
 
+  // Custom quests only add an "is it still active?" check on top of the
+  // shared path — a deactivated quest's card is hidden, but a stale tap
+  // shouldn't be able to claim it.
+  const claimCustomQuest = (quest: CustomQuest, tier: XPTier) => {
+    if (!quest.active) return
+    claimQuest(customQuestToClaimable(quest), tier)
+  }
+
+  // The one undo path for every quest type (fixed or custom) — only the id
+  // is needed, since everything to reverse comes from the log entry.
   // Undo a quest claimed earlier TODAY (respects the same midnight-reset
   // boundary the daily-rollover effect uses — completedToday/lastQuestDate
   // are only ever "today's" by construction). Does the guard checks against
   // the current snapshot for an immediate synchronous result the UI can
   // show, then re-validates inside the updater against the freshest state
   // before actually mutating anything.
-  const undoQuestClaim = (quest: DailyQuest): UndoResult => {
+  const undoQuestClaim = (quest: Pick<ClaimableQuest, 'id'>): UndoResult => {
     if (hunter.lastQuestDate !== today()) {
       return { ok: false, reason: "That claim wasn't from today." }
     }
@@ -231,10 +247,15 @@ export function useHunter() {
       const liveEntry = questClaimEntry(h.log, quest.id, h.lastQuestDate)
       if (!liveEntry) return h
       const { xp, level, statPoints } = reverseXPGain(h.xp, h.level, h.statPoints, liveEntry.xp)
-      const stats = {
-        ...h.stats,
-        [quest.stat]: Math.max(0, (h.stats?.[quest.stat] || 0) - 1),
-      }
+      // The stat comes from the LOGGED entry, not the quest definition: a
+      // custom quest's stat can be edited between claim and undo, and the
+      // entry is what reflects exactly what was granted. (For fixed quests
+      // the two always agree.)
+      const entryStat = liveEntry.stat
+      const stats =
+        entryStat === 'GATE'
+          ? h.stats
+          : { ...h.stats, [entryStat]: Math.max(0, (h.stats?.[entryStat] || 0) - 1) }
       const log = h.log.filter((e) => e !== liveEntry)
       const dailyXP = subtractDailyXP(h.dailyXP, liveEntry.date, liveEntry.xp)
       const completedToday = { ...h.completedToday }
@@ -245,15 +266,21 @@ export function useHunter() {
     return { ok: true }
   }
 
-  // Same {label, xp} tier shape as daily quests: the category decides the
-  // stat, the tier decides the XP, and the optional note just adds detail
-  // to the entry's label.
-  const logActivity = (category: LogCategory, tier: XPTier, note = '') => {
-    if (!isValidTier(category.tiers, tier)) return
+  // Same categories and {label, xp} tiers custom quests are built from
+  // (QUEST_CATEGORIES), just logged ad hoc instead of saved as a recurring
+  // quest. The category's preset stat is the default, overridable like in
+  // QuestForm; the optional note adds detail to the entry's label.
+  const logActivity = (
+    category: QuestCategoryPreset,
+    tier: XPTier,
+    note = '',
+    stat: StatKey = category.statKey,
+  ) => {
+    if (!isValidTier(category.defaultTiers, tier)) return
     if ((hunter.logCount || 0) >= DAILY_LOG_CAP) return
     const trimmed = note.trim()
     const label = trimmed ? `${category.label}: ${trimmed}` : category.label
-    grantXP(tier.xp, category.stat, label, { tier: tier.label, category: category.id })
+    grantXP(tier.xp, stat, label, { tier: tier.label, category: category.key })
     setHunter((h) => ({ ...h, logCount: (h.logCount || 0) + 1 }))
   }
 
@@ -361,6 +388,7 @@ export function useHunter() {
     hunter,
     dev,
     claimQuest,
+    claimCustomQuest,
     undoQuestClaim,
     logActivity,
     renameHunter,

@@ -1,27 +1,40 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
-import type { Hunter } from '../../lib/hunterState'
+import {
+  activeCustomQuests,
+  customQuestToClaimable,
+  type CustomQuest,
+  type QuestCategoryPreset,
+} from '../../lib/customQuests'
+import type { Hunter, StatKey } from '../../lib/hunterState'
 import { today } from '../../lib/format'
 import {
   allQuestsClaimed,
+  DAILY_QUESTS,
   questXPOnDate,
-  type DailyQuest,
-  type LogCategory,
+  type ClaimableQuest,
   type XPTier,
 } from '../../lib/quests'
 import {
-  DailyQuestCards,
   DayCompleteCard,
   GateBanner,
   LogActivitySheet,
+  QuestCards,
   QuestsResetTimer,
 } from '../hunter'
 
 export interface TodayScreenProps {
   hunter: Hunter
-  onClaimQuest: (quest: DailyQuest, tier: XPTier) => void
-  onUndoQuest: (quest: DailyQuest) => UndoResult
-  onLogActivity: (category: LogCategory, tier: XPTier, note: string) => void
+  customQuests: CustomQuest[]
+  onClaimQuest: (quest: ClaimableQuest, tier: XPTier) => void
+  onClaimCustomQuest: (quest: CustomQuest, tier: XPTier) => void
+  onUndoQuest: (quest: ClaimableQuest) => UndoResult
+  onLogActivity: (
+    category: QuestCategoryPreset,
+    tier: XPTier,
+    note: string,
+    stat: StatKey,
+  ) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
@@ -32,7 +45,9 @@ export interface TodayScreenProps {
 // quick-logging a custom activity without leaving the screen.
 export function TodayScreen({
   hunter,
+  customQuests,
   onClaimQuest,
+  onClaimCustomQuest,
   onUndoQuest,
   onLogActivity,
   onStartGate,
@@ -46,6 +61,17 @@ export function TodayScreen({
   const [showQuestsAnyway, setShowQuestsAnyway] = useState(false)
 
   const allDone = allQuestsClaimed(hunter.completedToday)
+  const customClaimables = useMemo(
+    () => activeCustomQuests(customQuests).map(customQuestToClaimable),
+    [customQuests],
+  )
+
+  // Custom cards render as ClaimableQuest; route the claim back through the
+  // stored quest so claimCustomQuest can still check it's active.
+  const claimCustom = (q: ClaimableQuest, tier: XPTier) => {
+    const quest = customQuests.find((c) => c.id === q.id)
+    if (quest) onClaimCustomQuest(quest, tier)
+  }
 
   return (
     <div className="min-h-dvh bg-bg pb-28 text-text-primary">
@@ -64,13 +90,25 @@ export function TodayScreen({
             onEditClaims={() => setShowQuestsAnyway(true)}
           />
         ) : (
-          <DailyQuestCards
+          <QuestCards
+            quests={DAILY_QUESTS}
             completedToday={hunter.completedToday}
             log={hunter.log}
             onClaim={onClaimQuest}
             onUndo={onUndoQuest}
           />
         )}
+        {/* Custom quests are independent of the fixed 5's "all done" state
+            above — they stay visible either way, since allQuestsClaimed /
+            DayCompleteCard are deliberately scoped to DAILY_QUESTS only.
+            Same QuestCards component, so same picker and undo flow. */}
+        <QuestCards
+          quests={customClaimables}
+          completedToday={hunter.completedToday}
+          log={hunter.log}
+          onClaim={claimCustom}
+          onUndo={onUndoQuest}
+        />
       </div>
 
       <button

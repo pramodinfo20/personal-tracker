@@ -1,9 +1,11 @@
-import type { LogCategory, XPTier } from '../../lib/quests'
+import type { QuestCategoryPreset } from '../../lib/customQuests'
+import type { StatKey } from '../../lib/hunterState'
+import type { XPTier } from '../../lib/quests'
 import { LogActivityForm } from './LogActivityForm'
 
 export interface LogActivitySheetProps {
   logCount: number
-  onLog: (category: LogCategory, tier: XPTier, note: string) => void
+  onLog: (category: QuestCategoryPreset, tier: XPTier, note: string, stat: StatKey) => void
   onClose: () => void
 }
 

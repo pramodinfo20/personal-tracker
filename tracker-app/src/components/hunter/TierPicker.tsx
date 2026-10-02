@@ -18,9 +18,10 @@ const CLAIM_PULSE_STYLE: CSSProperties = {
   '--pulse-glow-strong': 'rgba(47, 143, 255, 0.9)',
 } as CSSProperties
 
-// The one tier picker for every {label, xp} tier list — daily quests and
-// Log Activity both render this, so there's a single implementation of
-// "pick how much you did, get that much XP". One tap on a tier is the claim.
+// The one tier picker for every {label, xp} tier list — fixed quests,
+// custom quests and Log Activity all render this, so there's a single
+// implementation of "pick how much you did, get that much XP". One tap on a
+// tier is the claim.
 export function TierPicker({ tiers, onPick, disabled, celebrating = {}, className }: TierPickerProps) {
   return (
     <div
@@ -31,11 +32,12 @@ export function TierPicker({ tiers, onPick, disabled, celebrating = {}, classNam
         className,
       )}
     >
-      {tiers.map((tier) => {
+      {tiers.map((tier, i) => {
         const isCelebrating = celebrating[tier.label] !== undefined
         return (
           <button
-            key={tier.label}
+            // Index too: custom quests' tiers are user-typed, so labels may repeat.
+            key={`${tier.label}-${i}`}
             type="button"
             disabled={disabled}
             onClick={() => onPick(tier)}

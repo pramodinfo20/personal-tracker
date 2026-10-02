@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
-// Hook-level coverage for the tiered claim flow: claim -> log entry with
-// tier -> undo via reverseXPGain + the strand guard, plus backward
-// compatibility with hunter saves from the old single-XP-value system.
+// Hook-level coverage for the one shared tiered claim flow — fixed quests,
+// custom quests and Log Activity: claim -> log entry with tier -> undo via
+// reverseXPGain + the strand guard. Plus backward compatibility with saves
+// from the old single-XP-value system and from custom quests' first
+// release (entries labelled "Name — Tier", no tier field).
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { questCategory, type CustomQuest } from '../lib/customQuests'
 import { DEFAULT_HUNTER, type Hunter, type LogEntry } from '../lib/hunterState'
 import { xpForLevel } from '../lib/leveling'
-import { DAILY_LOG_CAP, DAILY_QUESTS, LOG_CATEGORIES } from '../lib/quests'
+import { DAILY_LOG_CAP, DAILY_QUESTS } from '../lib/quests'
 import { useHunter } from './useHunter'
 
 const KEY = 'p26_hunter'
@@ -14,7 +17,20 @@ const NOW = new Date('2026-10-02T12:00:00.000Z')
 const TODAY = '2026-10-02'
 
 const quest = (id: string) => DAILY_QUESTS.find((q) => q.id === id)!
-const category = (id: string) => LOG_CATEGORIES.find((c) => c.id === id)!
+
+const HYDRATION_QUEST: CustomQuest = {
+  id: 'cq_hydration',
+  name: 'Hydration',
+  category: 'hydration',
+  iconKey: 'droplet',
+  statKey: 'VIT',
+  tiers: [
+    { label: '0.5L', xp: 8 },
+    { label: '1L', xp: 15 },
+    { label: '2L', xp: 25 },
+  ],
+  active: true,
+}
 
 const seed = (over: Partial<Hunter>) => {
   const h: Hunter = { ...DEFAULT_HUNTER, name: 'Tester', lastQuestDate: TODAY, dailyXP: {}, ...over }
@@ -270,7 +286,7 @@ describe('useHunter — backward compatibility with pre-tier saves', () => {
   })
 })
 
-describe('useHunter — tiered Log Activity', () => {
+describe('useHunter — custom quests through the shared claim/undo path', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
@@ -280,21 +296,171 @@ describe('useHunter — tiered Log Activity', () => {
     localStorage.clear()
   })
 
-  it("logs a category + tier: the category's stat, the tier's XP, and the note in the label", () => {
+  it("grants the picked tier's xp and stat, marks it done, and logs it exactly like a fixed quest", () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    const c = category('reading')
-    act(() => result.current.logActivity(c, c.tiers[1], '  Dune ch. 3 '))
+
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[1])) // 1L, +15
+
+    const h = result.current.hunter
+    expect(h.xp).toBe(15)
+    expect(h.stats.VIT).toBe(11)
+    expect(h.completedToday[HYDRATION_QUEST.id]).toBe(true)
+    expect(h.dailyXP[TODAY]).toBe(15)
+    // Same entry shape as a fixed-quest claim: name as label, tier as its own field.
+    expect(h.log[0]).toMatchObject({
+      label: 'Hydration',
+      tier: '1L',
+      xp: 15,
+      stat: 'VIT',
+      questId: HYDRATION_QUEST.id,
+    })
+  })
+
+  it('is a no-op if already claimed today, even at a different tier', () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[0]))
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[2]))
+    expect(result.current.hunter.xp).toBe(8)
+    expect(result.current.hunter.log).toHaveLength(1)
+  })
+
+  it('is a no-op for an inactive (deactivated) quest', () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    const inactive = { ...HYDRATION_QUEST, active: false }
+    act(() => result.current.claimCustomQuest(inactive, inactive.tiers[0]))
+    expect(result.current.hunter.log).toHaveLength(0)
+    expect(result.current.hunter.completedToday[inactive.id]).toBeUndefined()
+  })
+
+  it("rejects a tier that isn't one of the quest's own tiers", () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, { label: '1L', xp: 500 }))
+    expect(result.current.hunter.xp).toBe(0)
+    expect(result.current.hunter.completedToday[HYDRATION_QUEST.id]).toBeUndefined()
+  })
+
+  it('undoQuestClaim fully reverses a custom claim: xp, stat, log, dailyXP, completedToday', () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[1]))
+
+    let r: ReturnType<typeof result.current.undoQuestClaim> | undefined
+    act(() => {
+      r = result.current.undoQuestClaim(HYDRATION_QUEST)
+    })
+
+    expect(r).toEqual({ ok: true })
+    const h = result.current.hunter
+    expect(h.xp).toBe(0)
+    expect(h.stats.VIT).toBe(10)
+    expect(h.completedToday[HYDRATION_QUEST.id]).toBeUndefined()
+    expect(h.log).toHaveLength(0)
+    expect(h.dailyXP[TODAY]).toBe(0)
+  })
+
+  it("undo decrements the stat that was LOGGED, not the quest's current (edited) stat", () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[1])) // logged VIT
+    expect(result.current.hunter.stats.VIT).toBe(11)
+
+    // The quest is edited to STR between claim and undo.
+    const edited: CustomQuest = { ...HYDRATION_QUEST, statKey: 'STR' }
+    act(() => {
+      result.current.undoQuestClaim(edited)
+    })
+
+    expect(result.current.hunter.stats.STR).toBe(10)
+    expect(result.current.hunter.stats.VIT).toBe(10)
+  })
+
+  it('after undo, the same custom quest can be claimed again the same day', () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[0]))
+    act(() => {
+      result.current.undoQuestClaim(HYDRATION_QUEST)
+    })
+    act(() => result.current.claimCustomQuest(HYDRATION_QUEST, HYDRATION_QUEST.tiers[2]))
+    expect(result.current.hunter.completedToday[HYDRATION_QUEST.id]).toBe(true)
+    expect(result.current.hunter.log[0]).toMatchObject({ xp: 25, tier: '2L' })
+  })
+
+  it('refuses a custom undo that would strand already-unlocked progress', () => {
+    // 5 XP shy of level 5 with the level-5 shadow already unlocked: a +10
+    // claim crosses into level 5, so undoing it would strand Ash Wolf.
+    const big: CustomQuest = { ...HYDRATION_QUEST, tiers: [{ label: 'Big', xp: 10 }] }
+    seed({ level: 4, xp: xpForLevel(4) - 5, unlockedShadows: [5] })
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.claimCustomQuest(big, big.tiers[0]))
+    expect(result.current.hunter.level).toBe(5)
+
+    let r: ReturnType<typeof result.current.undoQuestClaim> | undefined
+    act(() => {
+      r = result.current.undoQuestClaim(big)
+    })
+    expect(r?.ok).toBe(false)
+    expect(r?.reason).toMatch(/Ash Wolf/)
+    expect(result.current.hunter.level).toBe(5)
+    expect(result.current.hunter.completedToday[big.id]).toBe(true)
+  })
+
+  it('undoes a same-day claim saved by the first custom-quest release (label "Name — Tier", no tier field)', () => {
+    const legacy: LogEntry = {
+      id: 1,
+      date: NOW.toISOString(),
+      label: 'Hydration — 1L',
+      xp: 15,
+      stat: 'VIT',
+      questId: HYDRATION_QUEST.id,
+    }
+    seed({
+      xp: 15,
+      stats: { ...DEFAULT_HUNTER.stats, VIT: 11 },
+      completedToday: { [HYDRATION_QUEST.id]: true },
+      log: [legacy],
+      dailyXP: { [TODAY]: 15 },
+    })
+    const { result } = renderHook(() => useHunter())
+    let r: ReturnType<typeof result.current.undoQuestClaim> | undefined
+    act(() => {
+      r = result.current.undoQuestClaim(HYDRATION_QUEST)
+    })
+    expect(r).toEqual({ ok: true })
+    expect(result.current.hunter).toMatchObject({ xp: 0, log: [], dailyXP: { [TODAY]: 0 } })
+    expect(result.current.hunter.stats.VIT).toBe(10)
+  })
+})
+
+describe('useHunter — tiered Log Activity (same categories/tiers as custom quests)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(NOW)
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.clear()
+  })
+
+  it("logs a category + tier: the preset's stat, the tier's XP, and the note in the label", () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    const c = questCategory('learning')
+    act(() => result.current.logActivity(c, c.defaultTiers[1], '  Dune ch. 3 '))
     const h = result.current.hunter
     expect(h.xp).toBe(20)
     expect(h.stats.INT).toBe(11)
     expect(h.logCount).toBe(1)
     expect(h.log[0]).toMatchObject({
-      label: 'Reading: Dune ch. 3',
+      label: 'Reading / Learning: Dune ch. 3',
       xp: 20,
       stat: 'INT',
-      tier: '30 min',
-      category: 'reading',
+      tier: '20 min',
+      category: 'learning',
     })
     expect(h.log[0].questId).toBeUndefined()
   })
@@ -302,15 +468,25 @@ describe('useHunter — tiered Log Activity', () => {
   it('uses the category label alone when there is no note', () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    const c = category('hydration')
-    act(() => result.current.logActivity(c, c.tiers[0]))
-    expect(result.current.hunter.log[0]).toMatchObject({ label: 'Hydration', xp: 5, stat: 'VIT' })
+    const c = questCategory('hydration')
+    act(() => result.current.logActivity(c, c.defaultTiers[0]))
+    expect(result.current.hunter.log[0]).toMatchObject({ label: 'Hydration', xp: 8, stat: 'VIT' })
+  })
+
+  it("credits an overridden stat instead of the category's preset", () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    const c = questCategory('custom') // preset PER
+    act(() => result.current.logActivity(c, c.defaultTiers[2], 'Deep clean', 'AGI'))
+    expect(result.current.hunter.stats).toMatchObject({ AGI: 11, PER: 10 })
+    expect(result.current.hunter.log[0]).toMatchObject({ stat: 'AGI', xp: 35, tier: 'Intense' })
   })
 
   it("rejects a tier that isn't in the category's list", () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    act(() => result.current.logActivity(category('hydration'), category('exercise').tiers[2]))
+    const exerciseTier = questCategory('exercise').defaultTiers[3]
+    act(() => result.current.logActivity(questCategory('hydration'), exerciseTier))
     expect(result.current.hunter.xp).toBe(0)
     expect(result.current.hunter.logCount).toBe(0)
   })
@@ -318,8 +494,8 @@ describe('useHunter — tiered Log Activity', () => {
   it('still enforces the daily log cap', () => {
     seed({ logCount: DAILY_LOG_CAP })
     const { result } = renderHook(() => useHunter())
-    const c = category('exercise')
-    act(() => result.current.logActivity(c, c.tiers[0]))
+    const c = questCategory('exercise')
+    act(() => result.current.logActivity(c, c.defaultTiers[0]))
     expect(result.current.hunter.xp).toBe(0)
   })
 })

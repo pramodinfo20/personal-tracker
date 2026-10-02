@@ -1,34 +1,47 @@
 import { useState } from 'react'
 import { useClaimCelebration } from '../../hooks/useClaimCelebration'
 import { cn } from '../../lib/cn'
-import { STAT_META } from '../../lib/hunterState'
-import { DAILY_LOG_CAP, LOG_CATEGORIES, type LogCategory, type XPTier } from '../../lib/quests'
+import {
+  QUEST_CATEGORIES,
+  QUEST_ICONS,
+  questCategory,
+  type QuestCategoryKey,
+  type QuestCategoryPreset,
+} from '../../lib/customQuests'
+import { STAT_META, type StatKey } from '../../lib/hunterState'
+import { DAILY_LOG_CAP, type XPTier } from '../../lib/quests'
 import { Card } from '../ui'
 import { TierPicker } from './TierPicker'
 
 export interface LogActivityFormProps {
   logCount: number
-  onLog: (category: LogCategory, tier: XPTier, note: string) => void
+  onLog: (category: QuestCategoryPreset, tier: XPTier, note: string, stat: StatKey) => void
   /** Fired once the claim-feedback animation finishes — e.g. so a wrapping bottom sheet can auto-close only after the user actually sees the feedback. */
   onAfterLog?: () => void
   /** Skip the Card wrapper — use when embedding inside another container (e.g. a bottom sheet) that already provides its own chrome. */
   bare?: boolean
 }
 
-// Category first (which decides the stat), then a duration/amount tier via
-// the same TierPicker daily quests use — one tap on a tier logs it. The
-// note is optional detail appended to the entry's label.
+// A one-off log against the same category presets custom quests are built
+// from (QUEST_CATEGORIES): pick a category (which prefills the stat, still
+// overridable as in QuestForm), then a tier via the shared TierPicker —
+// one tap on a tier logs it. The note is optional detail for the label.
 export function LogActivityForm({ logCount, onLog, onAfterLog, bare }: LogActivityFormProps) {
-  const [categoryId, setCategoryId] = useState<string>(LOG_CATEGORIES[0].id)
+  const [categoryKey, setCategoryKey] = useState<QuestCategoryKey>(QUEST_CATEGORIES[0].key)
+  const [stat, setStat] = useState<StatKey>(QUEST_CATEGORIES[0].statKey)
   const [note, setNote] = useState('')
   const { celebrating, celebrate } = useClaimCelebration<string>()
   const capReached = logCount >= DAILY_LOG_CAP
-  const category = LOG_CATEGORIES.find((c) => c.id === categoryId) ?? LOG_CATEGORIES[0]
-  const stat = STAT_META.find((s) => s.key === category.stat)
+  const category = questCategory(categoryKey)
+
+  const pickCategory = (c: QuestCategoryPreset) => {
+    setCategoryKey(c.key)
+    setStat(c.statKey)
+  }
 
   const submit = (tier: XPTier) => {
     if (capReached) return
-    onLog(category, tier, note)
+    onLog(category, tier, note, stat)
     celebrate(tier.label, tier.xp, onAfterLog)
     setNote('')
   }
@@ -46,41 +59,49 @@ export function LogActivityForm({ logCount, onLog, onAfterLog, bare }: LogActivi
         </div>
       ) : (
         <>
-          <div className="mb-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Category">
-            {LOG_CATEGORIES.map((c) => {
-              const selected = c.id === category.id
+          <div className="mb-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Category">
+            {QUEST_CATEGORIES.map((c) => {
+              const selected = c.key === category.key
               return (
                 <button
-                  key={c.id}
+                  key={c.key}
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => setCategoryId(c.id)}
+                  onClick={() => pickCategory(c)}
                   className={cn(
-                    'flex cursor-pointer flex-col items-center gap-0.5 rounded-lg border px-1 py-2 text-[11px] font-bold transition-colors',
+                    'cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors',
                     selected
-                      ? 'border-accent bg-accent-muted text-text-primary'
-                      : 'border-border bg-surface-2 text-text-secondary hover:border-accent/50',
+                      ? 'border-accent bg-accent-muted text-accent'
+                      : 'border-border bg-surface-2 text-text-secondary hover:text-text-primary',
                   )}
                 >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    {c.icon}
-                  </span>
-                  <span className="truncate">{c.label}</span>
+                  {QUEST_ICONS[c.iconKey]} {c.label}
                 </button>
               )
             })}
           </div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Note (optional) — e.g. 5K run, Dune ch. 3"
-            className="mb-3 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
-          />
-          <div className="mb-2 text-[11px] font-bold text-text-secondary">
-            {category.icon} {category.label} · {stat?.icon} {category.stat}
+          <div className="mb-3 flex gap-2">
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Note (optional) — e.g. 5K run"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            />
+            <select
+              value={stat}
+              onChange={(e) => setStat(e.target.value as StatKey)}
+              aria-label="Stat"
+              className="shrink-0 rounded-lg border border-border bg-surface-2 px-2 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+            >
+              {STAT_META.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.icon} {s.key}
+                </option>
+              ))}
+            </select>
           </div>
-          <TierPicker tiers={category.tiers} onPick={submit} celebrating={celebrating} />
+          <TierPicker tiers={category.defaultTiers} onPick={submit} celebrating={celebrating} />
         </>
       )}
       <div className="mt-2 text-[10px] text-text-muted">
