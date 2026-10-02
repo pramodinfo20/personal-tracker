@@ -14,6 +14,14 @@ export interface LogEntry {
   stat: StatKey | 'GATE'
   /** Present only for entries created by claiming a daily quest — lets undo find the exact entry to reverse without guessing from label/xp/stat. */
   questId?: string
+  /**
+   * The {label, xp} tier picked when this entry was created (e.g. "30 min").
+   * Absent on entries from before tiers existed — those only ever had a
+   * fixed xp — so anything displaying this must treat it as optional.
+   */
+  tier?: string
+  /** Present only for Log Activity entries — the LOG_CATEGORIES id picked. */
+  category?: string
 }
 
 export interface StatMeta {
@@ -58,6 +66,8 @@ export interface Hunter {
   logCount: number
   /** Cosmetic-only "focus" chosen during onboarding — which stats get slight visual emphasis. Multi-select: any number of stats, including none (e.g. only "Balanced" picked, or a hunter who predates onboarding). */
   focusStats: StatKey[]
+  /** ISO timestamp of finishing onboarding. Absent for hunters who onboarded before this was tracked — see joinDateFor in lib/profile.ts. */
+  joinedAt?: string
 }
 
 export const DEFAULT_HUNTER: Hunter = {

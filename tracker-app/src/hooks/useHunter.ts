@@ -24,7 +24,14 @@ import {
   type StatKey,
 } from '../lib/hunterState'
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
-import { DAILY_LOG_CAP, type DailyQuest, type LogXPTier } from '../lib/quests'
+import {
+  DAILY_LOG_CAP,
+  isValidTier,
+  questClaimEntry,
+  type DailyQuest,
+  type LogCategory,
+  type XPTier,
+} from '../lib/quests'
 import { SHADOW_MILESTONES } from '../lib/shadows'
 import { today } from '../lib/format'
 import { wouldStrandProgress } from '../lib/undoGuard'
@@ -90,6 +97,10 @@ export interface UndoResult {
   reason?: string
 }
 
+// Extra provenance recorded on a log entry alongside label/xp/stat. All
+// optional — entries from before tiers existed have none of these.
+type EntryMeta = Pick<LogEntry, 'questId' | 'tier' | 'category'>
+
 export function useHunter() {
   const [hunter, setHunter] = useSaved<Hunter>(HUNTER_STORAGE_KEY, DEFAULT_HUNTER)
   const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null)
@@ -134,7 +145,7 @@ export function useHunter() {
     }
   }, [hunter.log])
 
-  const grantXP = (amount: number, stat: StatKey, label: string, questId?: string) => {
+  const grantXP = (amount: number, stat: StatKey, label: string, meta: EntryMeta = {}) => {
     setHunter((h) => {
       const { xp, level, statPoints, gained } = applyXPGain(h.xp, h.level, h.statPoints, amount)
       const stats = { ...h.stats, [stat]: (h.stats?.[stat] || 0) + 1 }
@@ -144,7 +155,9 @@ export function useHunter() {
         label,
         xp: amount,
         stat,
-        ...(questId ? { questId } : {}),
+        ...(meta.questId ? { questId: meta.questId } : {}),
+        ...(meta.tier ? { tier: meta.tier } : {}),
+        ...(meta.category ? { category: meta.category } : {}),
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
       const dailyXP = addDailyXP(h.dailyXP, entry.date, amount)
@@ -174,9 +187,13 @@ export function useHunter() {
     })
   }
 
-  const claimQuest = (quest: DailyQuest) => {
+  // completedToday stays a plain Record<string, boolean> (unchanged shape,
+  // so old saves need no migration) — the XP and tier actually granted live
+  // on the claim's log entry, which is what undo reverses.
+  const claimQuest = (quest: DailyQuest, tier: XPTier) => {
     if (hunter.completedToday?.[quest.id]) return
-    grantXP(quest.xp, quest.stat, quest.label, quest.id)
+    if (!isValidTier(quest.tiers, tier)) return
+    grantXP(tier.xp, quest.stat, quest.label, { questId: quest.id, tier: tier.label })
     setHunter((h) => ({ ...h, completedToday: { ...h.completedToday, [quest.id]: true } }))
   }
 
@@ -193,7 +210,9 @@ export function useHunter() {
     if (!hunter.completedToday?.[quest.id]) {
       return { ok: false, reason: 'Nothing to undo.' }
     }
-    const entry = hunter.log.find((e) => e.questId === quest.id)
+    // Reverses whatever XP the entry recorded — a new tiered claim or an old
+    // fixed-XP one alike — never a value re-derived from today's tier table.
+    const entry = questClaimEntry(hunter.log, quest.id, hunter.lastQuestDate)
     if (!entry) {
       return { ok: false, reason: "Couldn't find that claim in the log." }
     }
@@ -209,7 +228,7 @@ export function useHunter() {
 
     setHunter((h) => {
       if (h.lastQuestDate !== today() || !h.completedToday?.[quest.id]) return h
-      const liveEntry = h.log.find((e) => e.questId === quest.id)
+      const liveEntry = questClaimEntry(h.log, quest.id, h.lastQuestDate)
       if (!liveEntry) return h
       const { xp, level, statPoints } = reverseXPGain(h.xp, h.level, h.statPoints, liveEntry.xp)
       const stats = {
@@ -226,11 +245,15 @@ export function useHunter() {
     return { ok: true }
   }
 
-  const logActivity = (tier: LogXPTier, label: string, stat: StatKey) => {
-    const trimmed = label.trim()
-    if (!trimmed) return
+  // Same {label, xp} tier shape as daily quests: the category decides the
+  // stat, the tier decides the XP, and the optional note just adds detail
+  // to the entry's label.
+  const logActivity = (category: LogCategory, tier: XPTier, note = '') => {
+    if (!isValidTier(category.tiers, tier)) return
     if ((hunter.logCount || 0) >= DAILY_LOG_CAP) return
-    grantXP(tier.xp, stat, trimmed)
+    const trimmed = note.trim()
+    const label = trimmed ? `${category.label}: ${trimmed}` : category.label
+    grantXP(tier.xp, category.stat, label, { tier: tier.label, category: category.id })
     setHunter((h) => ({ ...h, logCount: (h.logCount || 0) + 1 }))
   }
 
@@ -246,7 +269,12 @@ export function useHunter() {
   // intermediate render with a name but no focus (or vice versa).
   const completeOnboarding = (name: string, focusStats: StatKey[]) => {
     const trimmed = name.trim() || 'Hunter'
-    setHunter((h) => ({ ...h, name: trimmed, focusStats }))
+    setHunter((h) => ({
+      ...h,
+      name: trimmed,
+      focusStats,
+      joinedAt: h.joinedAt ?? new Date().toISOString(),
+    }))
   }
 
   const startGateAction = () => {
@@ -316,8 +344,22 @@ export function useHunter() {
     })
   }
 
+  // ── DEV TESTING ONLY — ported from pramod-2026-tracker.html's throwaway
+  // debug panel. Writes hunter state directly; never goes through
+  // applyXPGain/grantXP/claimQuest or the real gate-progress logic.
+  const dev = {
+    // Wipes everything, including the name — so onboarding shows again.
+    resetHunter: () => setHunter(() => ({ ...DEFAULT_HUNTER, lastQuestDate: today() })),
+    jumpToLevel: (level: number) => {
+      const lvl = Math.max(1, Math.floor(Number(level) || 1))
+      setHunter((h) => ({ ...h, level: lvl, xp: 0 }))
+    },
+    clearGateHistory: () => setHunter((h) => ({ ...h, clearedGates: [] })),
+  }
+
   return {
     hunter,
+    dev,
     claimQuest,
     undoQuestClaim,
     logActivity,

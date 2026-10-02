@@ -2,7 +2,12 @@ import { lazy, Suspense, useState } from 'react'
 import { useHunter } from './hooks/useHunter'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
-import { GateClearedOverlay, LevelUpOverlay } from './components/hunter'
+import {
+  GateClearedOverlay,
+  HunterHeader,
+  LevelUpOverlay,
+  ProfileSheet,
+} from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
 
 // Code-split: recharts (Progress screen's chart library) is a meaningful
@@ -14,8 +19,10 @@ const ProgressScreen = lazy(() =>
 
 function App() {
   const [tab, setTab] = useState<Tab>('today')
+  const [profileOpen, setProfileOpen] = useState(false)
   const {
     hunter,
+    dev,
     claimQuest,
     undoQuestClaim,
     logActivity,
@@ -38,6 +45,9 @@ function App() {
 
   return (
     <div className="bg-bg text-text-primary">
+      {/* Persistent across every tab — the avatar here is the Profile entry point. */}
+      <HunterHeader hunter={hunter} onOpenProfile={() => setProfileOpen(true)} />
+
       {tab === 'today' && (
         <TodayScreen
           hunter={hunter}
@@ -72,6 +82,15 @@ function App() {
       {tab === 'more' && <MoreScreen />}
 
       <BottomTabBar active={tab} onChange={setTab} />
+
+      {profileOpen && (
+        <ProfileSheet
+          hunter={hunter}
+          onRename={renameHunter}
+          dev={dev}
+          onClose={() => setProfileOpen(false)}
+        />
+      )}
 
       {levelUpEvent && <LevelUpOverlay event={levelUpEvent} onDismiss={dismissLevelUp} />}
       {gateClearedEvent && (

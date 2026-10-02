@@ -1,21 +1,27 @@
 import { useState } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
-import type { Hunter, StatKey } from '../../lib/hunterState'
-import { allQuestsClaimed, type DailyQuest, type LogXPTier } from '../../lib/quests'
+import type { Hunter } from '../../lib/hunterState'
+import { today } from '../../lib/format'
+import {
+  allQuestsClaimed,
+  questXPOnDate,
+  type DailyQuest,
+  type LogCategory,
+  type XPTier,
+} from '../../lib/quests'
 import {
   DailyQuestCards,
   DayCompleteCard,
   GateBanner,
-  HunterHeader,
   LogActivitySheet,
   QuestsResetTimer,
 } from '../hunter'
 
 export interface TodayScreenProps {
   hunter: Hunter
-  onClaimQuest: (quest: DailyQuest) => void
+  onClaimQuest: (quest: DailyQuest, tier: XPTier) => void
   onUndoQuest: (quest: DailyQuest) => UndoResult
-  onLogActivity: (tier: LogXPTier, label: string, stat: StatKey) => void
+  onLogActivity: (category: LogCategory, tier: XPTier, note: string) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
@@ -43,8 +49,6 @@ export function TodayScreen({
 
   return (
     <div className="min-h-dvh bg-bg pb-28 text-text-primary">
-      <HunterHeader hunter={hunter} />
-
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
         <GateBanner
           hunter={hunter}
@@ -54,10 +58,15 @@ export function TodayScreen({
         />
         <QuestsResetTimer />
         {allDone && !showQuestsAnyway ? (
-          <DayCompleteCard streak={hunter.streak} onEditClaims={() => setShowQuestsAnyway(true)} />
+          <DayCompleteCard
+            streak={hunter.streak}
+            xpToday={questXPOnDate(hunter.log, today())}
+            onEditClaims={() => setShowQuestsAnyway(true)}
+          />
         ) : (
           <DailyQuestCards
             completedToday={hunter.completedToday}
+            log={hunter.log}
             onClaim={onClaimQuest}
             onUndo={onUndoQuest}
           />

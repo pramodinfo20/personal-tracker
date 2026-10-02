@@ -2,12 +2,22 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
 import { useClaimCelebration } from '../../hooks/useClaimCelebration'
 import { cn } from '../../lib/cn'
-import { STAT_META } from '../../lib/hunterState'
-import { DAILY_QUESTS, type DailyQuest } from '../../lib/quests'
+import { today } from '../../lib/format'
+import { STAT_META, type LogEntry } from '../../lib/hunterState'
+import {
+  DAILY_QUESTS,
+  formatTierXPRange,
+  questClaimEntry,
+  type DailyQuest,
+  type XPTier,
+} from '../../lib/quests'
+import { TierPicker } from './TierPicker'
 
 export interface DailyQuestCardsProps {
   completedToday: Record<string, boolean>
-  onClaim: (quest: DailyQuest) => void
+  /** hunter.log — read to show which tier/XP each claimed-today quest was claimed at. */
+  log: LogEntry[]
+  onClaim: (quest: DailyQuest, tier: XPTier) => void
   onUndo: (quest: DailyQuest) => UndoResult
 }
 
@@ -21,14 +31,17 @@ const CLAIM_PULSE_STYLE: CSSProperties = {
 // A confirm/message bubble auto-dismisses after this long if left untouched.
 const AUTO_DISMISS_MS = 5000
 
-// Each quest is its own big, whole-card tap target — a normal claim happens
-// in exactly one tap, no secondary confirmation. A claim also triggers a
+// Each quest is its own big, whole-card tap target. A single-tier quest
+// claims in exactly one tap; a multi-tier one expands into the shared
+// TierPicker on tap, and picking a tier is the claim (still no separate
+// confirmation step). A claim also triggers a
 // brief floating "+XP" and a glow pulse right on the card that was tapped.
 // A claimed-today card offers a small "Undo" — itself gated behind a
 // lightweight inline confirm (a mistake-proofing feature skipping its own
 // mistake-proofing would be ironic), not a full modal.
-export function DailyQuestCards({ completedToday, onClaim, onUndo }: DailyQuestCardsProps) {
+export function DailyQuestCards({ completedToday, log, onClaim, onUndo }: DailyQuestCardsProps) {
   const { celebrating, celebrate } = useClaimCelebration<string>()
+  const [pickingId, setPickingId] = useState<string | null>(null)
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<{ id: string; reason: string } | null>(null)
 
@@ -44,9 +57,18 @@ export function DailyQuestCards({ completedToday, onClaim, onUndo }: DailyQuestC
     return () => clearTimeout(t)
   }, [blocked])
 
-  const handleClaim = (q: DailyQuest) => {
-    onClaim(q)
-    celebrate(q.id, q.xp)
+  const claim = (q: DailyQuest, tier: XPTier) => {
+    setPickingId(null)
+    onClaim(q, tier)
+    celebrate(q.id, tier.xp)
+  }
+
+  const handleTap = (q: DailyQuest) => {
+    if (q.tiers.length === 1) {
+      claim(q, q.tiers[0])
+      return
+    }
+    setPickingId((id) => (id === q.id ? null : q.id))
   }
 
   const startUndo = (id: string) => {
@@ -72,31 +94,62 @@ export function DailyQuestCards({ completedToday, onClaim, onUndo }: DailyQuestC
         const blockedReason = blocked?.id === q.id ? blocked.reason : null
 
         if (!done) {
+          const isPicking = pickingId === q.id
           return (
-            <button
+            <div
               key={q.id}
-              type="button"
-              onClick={() => handleClaim(q)}
-              className="relative flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-border bg-gradient-to-b from-surface to-surface-2 p-4 text-left shadow-panel transition-all duration-150 active:scale-[0.98] hover:border-accent/50 hover:shadow-glow-accent"
+              className={cn(
+                'rounded-2xl border bg-gradient-to-b from-surface to-surface-2 shadow-panel transition-all duration-150',
+                isPicking
+                  ? 'border-accent/60'
+                  : 'border-border hover:border-accent/50 hover:shadow-glow-accent',
+              )}
             >
-              <span className="text-3xl" aria-hidden="true">
-                {q.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-text-primary">{q.label}</span>
-                <span className="mt-0.5 block truncate text-xs text-text-secondary">
-                  {q.hint} · {sm?.icon} {q.stat}
+              <button
+                type="button"
+                onClick={() => handleTap(q)}
+                aria-expanded={q.tiers.length > 1 ? isPicking : undefined}
+                className="relative flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-transform duration-150 active:scale-[0.98]"
+              >
+                <span className="text-3xl" aria-hidden="true">
+                  {q.icon}
                 </span>
-              </span>
-              <span className="shrink-0 text-right">
-                <span className="block font-mono text-lg font-bold text-accent">+{q.xp}</span>
-                <span className="block text-[10px] font-bold text-text-muted uppercase">
-                  Tap to claim
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold text-text-primary">{q.label}</span>
+                  <span className="mt-0.5 block truncate text-xs text-text-secondary">
+                    {q.hint} · {sm?.icon} {q.stat}
+                  </span>
                 </span>
-              </span>
-            </button>
+                <span className="shrink-0 text-right">
+                  <span className="block font-mono text-lg font-bold text-accent">
+                    {formatTierXPRange(q.tiers)}
+                  </span>
+                  <span className="block text-[10px] font-bold text-text-muted uppercase">
+                    {q.tiers.length === 1 ? 'Tap to claim' : isPicking ? 'Pick one' : 'Tap to pick'}
+                  </span>
+                </span>
+              </button>
+              {isPicking && (
+                <div className="px-4 pb-4">
+                  <TierPicker tiers={q.tiers} onPick={(tier) => claim(q, tier)} />
+                  <button
+                    type="button"
+                    onClick={() => setPickingId(null)}
+                    className="mt-2 w-full cursor-pointer text-center text-[10px] font-bold text-text-muted uppercase hover:text-text-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           )
         }
+
+        // Old (pre-tier) claims have xp but no tier label — show just the XP.
+        const entry = questClaimEntry(log, q.id, today())
+        const claimedSummary = entry
+          ? `+${entry.xp} XP${entry.tier ? ` · ${entry.tier}` : ''}`
+          : `${q.hint} · ${sm?.icon} ${q.stat}`
 
         return (
           <div
@@ -116,7 +169,7 @@ export function DailyQuestCards({ completedToday, onClaim, onUndo }: DailyQuestC
                 <span className="mt-0.5 block text-xs font-bold text-warning">{blockedReason}</span>
               ) : (
                 <span className="mt-0.5 block truncate text-xs text-text-secondary">
-                  {q.hint} · {sm?.icon} {q.stat}
+                  {claimedSummary}
                 </span>
               )}
             </span>

@@ -1,10 +1,9 @@
-import type { StatKey } from '../../lib/hunterState'
-import type { LogXPTier } from '../../lib/quests'
+import type { LogCategory, XPTier } from '../../lib/quests'
 import { LogActivityForm } from './LogActivityForm'
 
 export interface LogActivitySheetProps {
   logCount: number
-  onLog: (tier: LogXPTier, label: string, stat: StatKey) => void
+  onLog: (category: LogCategory, tier: XPTier, note: string) => void
   onClose: () => void
 }
 
