@@ -1,6 +1,7 @@
 export { Button, type ButtonProps, type ButtonVariant } from './Button'
 export { Card, type CardProps } from './Card'
 export { ProgressBar, type ProgressBarProps } from './ProgressBar'
+export { ScreenBackground, type ScreenBackgroundProps } from './ScreenBackground'
 export { Badge, type BadgeProps } from './Badge'
 export { CountdownTimer, type CountdownTimerProps } from './CountdownTimer'
 export { TIERS, TIER_CLASSES, type Tier } from './tiers'

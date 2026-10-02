@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
-export type ProgressBarSize = 'default' | 'thin'
+export type ProgressBarSize = 'default' | 'thin' | 'hero'
 
 export interface ProgressBarProps {
   value: number
@@ -16,7 +16,12 @@ export interface ProgressBarProps {
 const TRACK_HEIGHT: Record<ProgressBarSize, string> = {
   default: 'h-3',
   thin: 'h-1.5',
+  hero: 'h-3.5',
 }
+
+// The fill is .hud-bar-fill (index.css): it blooms in --glow — inherited
+// from the nearest .glow-* ancestor, accent blue by default — and sweeps a
+// one-shot sheen across on mount.
 
 export function ProgressBar({ value, max, label, size = 'default', className }: ProgressBarProps) {
   const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0
@@ -26,12 +31,12 @@ export function ProgressBar({ value, max, label, size = 'default', className }: 
     <div className={cn('w-full', className)}>
       <div
         className={cn(
-          'relative w-full overflow-hidden rounded-full border border-border bg-surface-2',
+          'relative w-full rounded-full border border-white/5 bg-black/40 shadow-[inset_0_1px_2px_rgb(0_0_0/0.6)]',
           TRACK_HEIGHT[size],
         )}
       >
         <div
-          className="h-full rounded-full bg-[length:200px_100%] bg-gradient-to-r from-accent-active via-accent to-accent-hover transition-[width] duration-500 ease-out animate-shimmer"
+          className="hud-bar-fill h-full rounded-full transition-[width] duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>

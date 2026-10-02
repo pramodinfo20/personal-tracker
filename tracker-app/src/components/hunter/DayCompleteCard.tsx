@@ -1,4 +1,3 @@
-import { Card } from '../ui'
 
 export interface DayCompleteCardProps {
   streak: number
@@ -12,11 +11,11 @@ export interface DayCompleteCardProps {
 // a distinct "you're done" moment rather than just 5 green cards.
 export function DayCompleteCard({ streak, xpToday, onEditClaims }: DayCompleteCardProps) {
   return (
-    <Card glow className="text-center">
-      <div className="text-4xl" aria-hidden="true">
+    <div className="hud-glass hud-glass-strong hud-enter glow-gold rounded-3xl p-5 text-center">
+      <div className="hud-icon mx-auto h-16 w-16 text-4xl" aria-hidden="true">
         🎉
       </div>
-      <div className="mt-2 text-xl font-extrabold text-text-primary">Day Complete!</div>
+      <div className="hud-text-glow mt-2 text-2xl font-black">Day Complete!</div>
       <p className="mt-1 text-sm text-text-secondary">
         All 5 quests cleared — +{xpToday} XP earned today.
       </p>
@@ -36,6 +35,6 @@ export function DayCompleteCard({ streak, xpToday, onEditClaims }: DayCompleteCa
       >
         View/undo today's claims
       </button>
-    </Card>
+    </div>
   )
 }

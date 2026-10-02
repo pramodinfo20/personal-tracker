@@ -7,6 +7,7 @@ import {
 } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
+import { screenBackground } from '../../lib/screenBackgrounds'
 import {
   allQuestsClaimed,
   DAILY_QUESTS,
@@ -18,9 +19,11 @@ import {
   ActivityPickerSheet,
   DayCompleteCard,
   GateBanner,
+  HunterHeroPanel,
   QuestCards,
   QuestsResetTimer,
 } from '../hunter'
+import { ScreenBackground } from '../ui'
 
 export interface TodayScreenProps {
   hunter: Hunter
@@ -68,8 +71,9 @@ export function TodayScreen({
   }
 
   return (
-    <div className="min-h-dvh bg-bg pb-28 text-text-primary">
+    <ScreenBackground image={screenBackground('today')} className="pb-28 text-text-primary">
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
+        <HunterHeroPanel hunter={hunter} />
         <GateBanner
           hunter={hunter}
           onStartGate={onStartGate}
@@ -90,6 +94,7 @@ export function TodayScreen({
             log={hunter.log}
             onClaim={onClaimQuest}
             onUndo={onUndoQuest}
+            enterOffset={3}
           />
         )}
         {/* Custom quests are independent of the fixed 5's "all done" state
@@ -102,6 +107,7 @@ export function TodayScreen({
           log={hunter.log}
           onClaim={claimCustom}
           onUndo={onUndoQuest}
+          enterOffset={3 + DAILY_QUESTS.length}
         />
       </div>
 
@@ -109,7 +115,7 @@ export function TodayScreen({
         type="button"
         onClick={() => setLogSheetOpen(true)}
         aria-label="Log an activity"
-        className="fixed right-4 bottom-24 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-accent text-3xl leading-none font-bold text-white shadow-glow-accent transition-transform active:scale-95"
+        className="glow-accent fixed right-4 bottom-24 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#6fb4ff,var(--color-accent)_55%,var(--color-accent-active))] text-3xl leading-none font-bold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_10px_24px_-8px_rgb(0_0_0/0.7),0_0_var(--hud-glow-spread)_rgb(var(--glow)/0.6)] transition-transform active:scale-95"
       >
         +
       </button>
@@ -122,6 +128,6 @@ export function TodayScreen({
           onClose={() => setLogSheetOpen(false)}
         />
       )}
-    </div>
+    </ScreenBackground>
   )
 }

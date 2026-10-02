@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { nextResetAt } from '../../lib/format'
 import { CountdownTimer } from '../ui'
 
@@ -10,7 +10,9 @@ export function QuestsResetTimer() {
   const [resetAt, setResetAt] = useState(() => nextResetAt())
 
   return (
-    <div className="flex items-center justify-between gap-2 px-1 text-xs text-text-secondary">
+    <div className="hud-glass hud-enter flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs text-text-secondary [--hud-glow-spread:10px]"
+      style={{ '--i': 2 } as CSSProperties}
+    >
       <span className="font-bold">Quests reset in</span>
       <CountdownTimer
         expiresAt={resetAt}

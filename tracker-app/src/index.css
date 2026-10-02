@@ -108,3 +108,152 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
+
+/*
+ * ── HUD surface system ──────────────────────────────────────────────────
+ * One shared glass/glow/depth language for the "cinematic HUD" surfaces.
+ * Every color comes from a single RGB triple, --glow, set by a .glow-*
+ * class (or inherited) — so tinting a surface, its border, its bloom, its
+ * icon halo and its bar fill is one class, never per-component numbers.
+ *
+ * Performance budget (these are the expensive bits on mid-range phones):
+ *   - backdrop-filter blur is capped at --hud-blur (8px) for cards and
+ *     --hud-blur-strong (12px) for the hero/header only;
+ *   - glow blooms use a fixed --hud-glow-spread, never animated per-frame
+ *     except the one-shot press state;
+ *   - entrance/sheen animations are one-shot, transform/opacity only, and
+ *     disabled under prefers-reduced-motion.
+ */
+:root {
+  --glow: 47 143 255; /* default: accent blue */
+  --hud-blur: 8px;
+  --hud-blur-strong: 12px;
+  --hud-glow-spread: 18px;
+  --hud-stagger: 50ms;
+}
+
+.glow-accent { --glow: 47 143 255; }
+.glow-bronze { --glow: 205 127 50; }
+.glow-silver { --glow: 184 196 217; }
+.glow-gold { --glow: 245 197 24; }
+.glow-purple { --glow: 168 85 247; }
+.glow-red { --glow: 224 41 63; }
+.glow-success { --glow: 34 197 94; }
+
+@layer components {
+  /* Floating glass panel: translucent navy, blurred backdrop, thin glowing
+     border in --glow, a top-edge inset highlight, and a soft drop shadow. */
+  .hud-glass {
+    position: relative;
+    background: linear-gradient(180deg, rgb(22 32 56 / 0.72), rgb(11 15 28 / 0.8));
+    -webkit-backdrop-filter: blur(var(--hud-blur));
+    backdrop-filter: blur(var(--hud-blur));
+    border: 1px solid rgb(var(--glow) / 0.38);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.09),
+      0 12px 28px -14px rgb(0 0 0 / 0.75),
+      0 0 var(--hud-glow-spread) -6px rgb(var(--glow) / 0.4);
+  }
+
+  .hud-glass-strong {
+    -webkit-backdrop-filter: blur(var(--hud-blur-strong));
+    backdrop-filter: blur(var(--hud-blur-strong));
+    border-color: rgb(var(--glow) / 0.5);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 18px 40px -18px rgb(0 0 0 / 0.85),
+      0 0 calc(var(--hud-glow-spread) * 1.5) -6px rgb(var(--glow) / 0.5);
+  }
+
+  /* Press feedback: a small lift + brighter bloom. Transform/shadow only. */
+  .hud-pressable {
+    transition:
+      transform 150ms ease-out,
+      box-shadow 150ms ease-out,
+      border-color 150ms ease-out;
+  }
+  .hud-pressable:hover {
+    border-color: rgb(var(--glow) / 0.6);
+  }
+  .hud-pressable:active {
+    transform: translateY(-2px) scale(1.015);
+    border-color: rgb(var(--glow) / 0.8);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 16px 30px -14px rgb(0 0 0 / 0.8),
+      0 0 calc(var(--hud-glow-spread) * 1.4) -4px rgb(var(--glow) / 0.7);
+  }
+
+  /* Cascade-in entrance; set --i (0, 1, 2…) inline for the stagger.
+     'backwards', not 'both': a held end state would keep overriding
+     transform and cancel .hud-pressable's press lift. */
+  .hud-enter {
+    animation: hud-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    animation-delay: calc(var(--i, 0) * var(--hud-stagger));
+  }
+
+  /* Icon orb: bigger glyph on a radial halo in the card's --glow. */
+  .hud-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgb(var(--glow) / 0.35) 0%, rgb(var(--glow) / 0.08) 55%, transparent 72%);
+    box-shadow: inset 0 0 0 1px rgb(var(--glow) / 0.25);
+  }
+
+  /* Bold gradient text that glows in --glow (rank names). */
+  .hud-text-glow {
+    background: linear-gradient(180deg, #ffffff 0%, rgb(var(--glow)) 85%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 10px rgb(var(--glow) / 0.55));
+  }
+
+  /* Bar fill that blooms in its own color, with a one-shot sheen sweep. */
+  .hud-bar-fill {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgb(var(--glow) / 0.75), rgb(var(--glow)));
+    box-shadow:
+      0 0 10px rgb(var(--glow) / 0.65),
+      0 0 2px rgb(var(--glow));
+  }
+  .hud-bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.55) 50%, transparent 80%);
+    transform: translateX(-120%);
+    animation: hud-sheen 1.6s ease-out 0.35s 1 both;
+  }
+}
+
+@keyframes hud-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hud-sheen {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-enter,
+  .hud-bar-fill::after {
+    animation: none;
+  }
+  .hud-pressable:active {
+    transform: none;
+  }
+}

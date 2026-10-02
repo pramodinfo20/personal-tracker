@@ -1,4 +1,5 @@
 export { HunterHeader, type HunterHeaderProps } from './HunterHeader'
+export { HunterHeroPanel, type HunterHeroPanelProps } from './HunterHeroPanel'
 export { HunterStatusPanel, type HunterStatusPanelProps } from './HunterStatusPanel'
 export { ShadowArmyGrid, type ShadowArmyGridProps } from './ShadowArmyGrid'
 export { GateCard, type GateCardProps } from './GateCard'

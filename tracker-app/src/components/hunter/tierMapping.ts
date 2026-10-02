@@ -3,6 +3,7 @@
 // system (src/index.css), so GateCard and ShadowArmyGrid can reuse Badge's
 // tier coloring instead of inventing their own palette.
 
+import type { StatKey } from '../../lib/types'
 import { TIERS, type Tier } from '../ui'
 
 export const gateTierColor = (tier: string): Tier => {
@@ -51,3 +52,16 @@ export const statMilestoneTier = (value: number): Tier | null => {
   const index = Math.min(TIERS.length - 1, Math.floor((thresholdsCrossed - 1) / 2))
   return TIERS[index]
 }
+
+// Each stat's accent on the HUD quest cards, drawn from the same 5-step
+// rank-tier palette (one tier per stat) so quest colors stay in-system.
+export const STAT_TIER: Record<StatKey, Tier> = {
+  STR: 'red',
+  AGI: 'gold',
+  INT: 'purple',
+  PER: 'silver',
+  VIT: 'bronze',
+}
+
+/** The `.glow-*` class (index.css) that sets --glow for a tier. */
+export const glowClass = (tier: Tier): string => `glow-${tier}`

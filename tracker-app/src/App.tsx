@@ -49,7 +49,12 @@ function App() {
   return (
     <div className="bg-bg text-text-primary">
       {/* Persistent across every tab — the avatar here is the Profile entry point. */}
-      <HunterHeader hunter={hunter} onOpenProfile={() => setProfileOpen(true)} />
+      <HunterHeader
+        hunter={hunter}
+        onOpenProfile={() => setProfileOpen(true)}
+        // Today's HunterHeroPanel shows level/rank/XP large — don't repeat it.
+        showProgress={tab !== 'today'}
+      />
 
       {tab === 'today' && (
         <TodayScreen

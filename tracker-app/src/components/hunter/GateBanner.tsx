@@ -3,8 +3,8 @@ import { cn } from '../../lib/cn'
 import { deriveGateState } from '../../lib/gateState'
 import { resolveGateBonusXP } from '../../lib/gates'
 import type { Hunter } from '../../lib/hunterState'
-import { Badge, Button, CountdownTimer, TIER_CLASSES } from '../ui'
-import { gateTierColor } from './tierMapping'
+import { Badge, Button, CountdownTimer } from '../ui'
+import { gateTierColor, glowClass } from './tierMapping'
 
 export interface GateBannerProps {
   hunter: Hunter
@@ -29,7 +29,12 @@ const URGENT_PULSE_STYLE: CSSProperties = {
 // Prominent, "impossible to miss" gate summary for the Today screen — fully
 // actionable (Start / Complete task) without navigating to the Level Up tab.
 // The Level Up tab's GateCard covers the same data with more detail (plus
-// cleared-gates history) for players who want it.
+// cleared-gates history) for players who want it. Same .hud-glass surface
+// as the quest cards, tinted by the gate's tier; the urgent state swaps the
+// tint to red and adds the glow-pulse.
+const BANNER = 'hud-glass hud-glass-strong hud-enter rounded-2xl p-4'
+// Second in Today's entrance cascade, right after HunterHeroPanel.
+const ENTER: CSSProperties = { '--i': 1 } as CSSProperties
 export function GateBanner({ hunter, onStartGate, onCompleteTask, onGateExpire }: GateBannerProps) {
   const { activeGate, activeTemplate, availableGate } = deriveGateState(hunter)
   const [remainingMs, setRemainingMs] = useState<number | null>(null)
@@ -43,13 +48,8 @@ export function GateBanner({ hunter, onStartGate, onCompleteTask, onGateExpire }
 
     return (
       <div
-        className={cn(
-          'rounded-2xl border-2 p-4 transition-colors duration-500',
-          urgent
-            ? 'animate-glow-pulse border-tier-red/70 bg-tier-red/10'
-            : cn(TIER_CLASSES[tier].border, TIER_CLASSES[tier].bg),
-        )}
-        style={urgent ? URGENT_PULSE_STYLE : undefined}
+        className={cn(BANNER, glowClass(urgent ? 'red' : tier), urgent && 'animate-glow-pulse')}
+        style={urgent ? { ...ENTER, ...URGENT_PULSE_STYLE } : ENTER}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -83,10 +83,10 @@ export function GateBanner({ hunter, onStartGate, onCompleteTask, onGateExpire }
                 disabled={done}
                 onClick={() => onCompleteTask(t.id)}
                 className={cn(
-                  'flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition-colors',
+                  'flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold',
                   done
                     ? 'border-success/40 bg-success/10 text-success'
-                    : 'cursor-pointer border-border-strong bg-surface-2 text-text-primary hover:border-accent/60',
+                    : 'hud-pressable cursor-pointer border-[rgb(var(--glow)/0.3)] bg-black/30 text-text-primary',
                 )}
               >
                 <span>
@@ -104,7 +104,7 @@ export function GateBanner({ hunter, onStartGate, onCompleteTask, onGateExpire }
   const gate = availableGate!
   const tier = gateTierColor(gate.tier)
   return (
-    <div className={cn('rounded-2xl border-2 p-4', TIER_CLASSES[tier].border, TIER_CLASSES[tier].bg)}>
+    <div className={cn(BANNER, glowClass(tier))} style={ENTER}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Badge tier={tier}>
