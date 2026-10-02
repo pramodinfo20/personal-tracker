@@ -24,11 +24,8 @@ import {
   type StatKey,
 } from '../lib/hunterState'
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
-import {
-  customQuestToClaimable,
-  type CustomQuest,
-  type QuestCategoryPreset,
-} from '../lib/customQuests'
+import { findActivity } from '../lib/activities'
+import { customQuestToClaimable, type CustomQuest } from '../lib/customQuests'
 import {
   DAILY_LOG_CAP,
   isValidTier,
@@ -266,21 +263,18 @@ export function useHunter() {
     return { ok: true }
   }
 
-  // Same categories and {label, xp} tiers custom quests are built from
-  // (QUEST_CATEGORIES), just logged ad hoc instead of saved as a recurring
-  // quest. The category's preset stat is the default, overridable like in
-  // QuestForm; the optional note adds detail to the entry's label.
-  const logActivity = (
-    category: QuestCategoryPreset,
-    tier: XPTier,
-    note = '',
-    stat: StatKey = category.statKey,
-  ) => {
-    if (!isValidTier(category.defaultTiers, tier)) return
+  // A one-off log of an ACTIVITY_LIBRARY activity at one of its fixed tiers
+  // — the same activities recurring custom quests are created from, just
+  // claimed once instead of saved. Takes the activity id (not an object) so
+  // the tiers checked against are always the library's own; the optional
+  // note adds detail to the entry's label.
+  const logActivity = (activityId: string, tier: XPTier, note = '') => {
+    const activity = findActivity(activityId)
+    if (!activity || !isValidTier(activity.tiers, tier)) return
     if ((hunter.logCount || 0) >= DAILY_LOG_CAP) return
     const trimmed = note.trim()
-    const label = trimmed ? `${category.label}: ${trimmed}` : category.label
-    grantXP(tier.xp, stat, label, { tier: tier.label, category: category.key })
+    const label = trimmed ? `${activity.name}: ${trimmed}` : activity.name
+    grantXP(tier.xp, activity.statKey, label, { tier: tier.label, category: activity.category })
     setHunter((h) => ({ ...h, logCount: (h.logCount || 0) + 1 }))
   }
 

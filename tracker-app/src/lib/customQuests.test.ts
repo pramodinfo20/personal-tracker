@@ -1,45 +1,29 @@
 import { describe, expect, it } from 'vitest'
 import {
-  QUEST_CATEGORIES,
   QUEST_ICONS,
   activeCustomQuests,
   customQuestToClaimable,
-  questCategory,
+  questCategoryLabel,
   questIcon,
   type CustomQuest,
 } from './customQuests'
 
-describe('QUEST_CATEGORIES', () => {
-  it('has one preset per category, each with at least one tier', () => {
-    expect(QUEST_CATEGORIES).toHaveLength(5)
-    for (const c of QUEST_CATEGORIES) {
-      expect(c.defaultTiers.length).toBeGreaterThan(0)
-      expect(QUEST_ICONS[c.iconKey]).toBeDefined()
-    }
-  })
-
-  it('has unique category keys', () => {
-    const keys = QUEST_CATEGORIES.map((c) => c.key)
-    expect(new Set(keys).size).toBe(keys.length)
-  })
-
-  it('every default tier has a positive xp value', () => {
-    for (const c of QUEST_CATEGORIES) {
-      for (const t of c.defaultTiers) {
-        expect(t.xp).toBeGreaterThan(0)
-      }
-    }
+describe('questCategoryLabel', () => {
+  it('labels every category key a saved quest can carry — including pre-library ones', () => {
+    expect(questCategoryLabel('exercise')).toBe('Exercise')
+    expect(questCategoryLabel('hydration')).toBe('Hydration')
+    expect(questCategoryLabel('learning')).toBe('Reading / Learning')
+    expect(questCategoryLabel('recovery')).toBe('Mindfulness / Recovery')
+    expect(questCategoryLabel('career')).toBe('Career / Networking')
+    expect(questCategoryLabel('custom')).toBe('Other')
   })
 })
 
-describe('questCategory', () => {
-  it('finds a preset by key', () => {
-    expect(questCategory('exercise').label).toBe('Exercise')
-  })
-
-  it('falls back to the last preset for an unknown key', () => {
-    // @ts-expect-error deliberately invalid key
-    expect(questCategory('nonexistent').key).toBe('custom')
+describe('QUEST_ICONS', () => {
+  it('still resolves every icon key that pre-library quests could have saved', () => {
+    for (const key of ['droplet', 'dumbbell', 'book', 'moon', 'star', 'run', 'brain', 'heart', 'pen', 'target']) {
+      expect(QUEST_ICONS[key]).toBeDefined()
+    }
   })
 })
 

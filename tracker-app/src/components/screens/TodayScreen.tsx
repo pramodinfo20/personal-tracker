@@ -4,9 +4,8 @@ import {
   activeCustomQuests,
   customQuestToClaimable,
   type CustomQuest,
-  type QuestCategoryPreset,
 } from '../../lib/customQuests'
-import type { Hunter, StatKey } from '../../lib/hunterState'
+import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
 import {
   allQuestsClaimed,
@@ -16,9 +15,9 @@ import {
   type XPTier,
 } from '../../lib/quests'
 import {
+  ActivityPickerSheet,
   DayCompleteCard,
   GateBanner,
-  LogActivitySheet,
   QuestCards,
   QuestsResetTimer,
 } from '../hunter'
@@ -29,12 +28,7 @@ export interface TodayScreenProps {
   onClaimQuest: (quest: ClaimableQuest, tier: XPTier) => void
   onClaimCustomQuest: (quest: CustomQuest, tier: XPTier) => void
   onUndoQuest: (quest: ClaimableQuest) => UndoResult
-  onLogActivity: (
-    category: QuestCategoryPreset,
-    tier: XPTier,
-    note: string,
-    stat: StatKey,
-  ) => void
+  onLogActivity: (activityId: string, tier: XPTier, note: string) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
@@ -121,7 +115,8 @@ export function TodayScreen({
       </button>
 
       {logSheetOpen && (
-        <LogActivitySheet
+        <ActivityPickerSheet
+          mode="log"
           logCount={hunter.logCount}
           onLog={onLogActivity}
           onClose={() => setLogSheetOpen(false)}

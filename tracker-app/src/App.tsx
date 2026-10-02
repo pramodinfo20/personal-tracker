@@ -38,7 +38,7 @@ function App() {
     gateClearedEvent,
     dismissGateCleared,
   } = useHunter()
-  const { customQuests, addQuest, updateQuest, setQuestActive, deleteQuest } = useCustomQuests()
+  const { customQuests, addQuest, renameQuest, setQuestActive, deleteQuest } = useCustomQuests()
 
   // First launch only — hunter.name stays '' (the DEFAULT_HUNTER value)
   // until onboarding finishes, so this never reappears afterward.
@@ -73,7 +73,7 @@ function App() {
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
           onAddCustomQuest={addQuest}
-          onUpdateCustomQuest={updateQuest}
+          onRenameCustomQuest={renameQuest}
           onSetCustomQuestActive={setQuestActive}
           onDeleteCustomQuest={deleteQuest}
         />

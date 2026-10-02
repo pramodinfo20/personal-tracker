@@ -1,4 +1,3 @@
-import type { NewCustomQuest } from '../../hooks/useCustomQuests'
 import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import {
@@ -16,8 +15,8 @@ export interface LevelUpScreenProps {
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
-  onAddCustomQuest: (quest: NewCustomQuest) => void
-  onUpdateCustomQuest: (id: string, patch: NewCustomQuest) => void
+  onAddCustomQuest: (activityId: string) => void
+  onRenameCustomQuest: (id: string, name: string) => void
   onSetCustomQuestActive: (id: string, active: boolean) => void
   onDeleteCustomQuest: (id: string) => void
 }
@@ -33,7 +32,7 @@ export function LevelUpScreen({
   onCompleteGateTask,
   onGateExpire,
   onAddCustomQuest,
-  onUpdateCustomQuest,
+  onRenameCustomQuest,
   onSetCustomQuestActive,
   onDeleteCustomQuest,
 }: LevelUpScreenProps) {
@@ -52,7 +51,7 @@ export function LevelUpScreen({
           customQuests={customQuests}
           completedToday={hunter.completedToday}
           onAdd={onAddCustomQuest}
-          onUpdate={onUpdateCustomQuest}
+          onRename={onRenameCustomQuest}
           onSetActive={onSetCustomQuestActive}
           onDelete={onDeleteCustomQuest}
         />

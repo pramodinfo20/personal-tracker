@@ -3,7 +3,7 @@
 // XP-earning action now shares one shape: a list of {label, xp} tiers —
 // more time/effort = more XP — picked through the one TierPicker component.
 // Fixed quests (below), custom quests (customQuests.ts, adapted via
-// customQuestToClaimable) and Log Activity (QUEST_CATEGORIES' tiers) all
+// customQuestToClaimable) and Log Activity (ACTIVITY_LIBRARY's tiers) all
 // use XPTier.
 
 import type { LogEntry } from './hunterState'

@@ -6,7 +6,8 @@
 // release (entries labelled "Name — Tier", no tier field).
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { questCategory, type CustomQuest } from '../lib/customQuests'
+import { findActivity } from '../lib/activities'
+import type { CustomQuest } from '../lib/customQuests'
 import { DEFAULT_HUNTER, type Hunter, type LogEntry } from '../lib/hunterState'
 import { xpForLevel } from '../lib/leveling'
 import { DAILY_LOG_CAP, DAILY_QUESTS } from '../lib/quests'
@@ -436,7 +437,7 @@ describe('useHunter — custom quests through the shared claim/undo path', () =>
   })
 })
 
-describe('useHunter — tiered Log Activity (same categories/tiers as custom quests)', () => {
+describe('useHunter — Log Activity from the activity library', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
@@ -446,56 +447,58 @@ describe('useHunter — tiered Log Activity (same categories/tiers as custom que
     localStorage.clear()
   })
 
-  it("logs a category + tier: the preset's stat, the tier's XP, and the note in the label", () => {
+  it("logs an activity at a tier: the activity's stat, the tier's XP, the note in the label", () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    const c = questCategory('learning')
-    act(() => result.current.logActivity(c, c.defaultTiers[1], '  Dune ch. 3 '))
+    const reading = findActivity('reading')!
+    act(() => result.current.logActivity('reading', reading.tiers[1], '  Dune ch. 3 '))
     const h = result.current.hunter
     expect(h.xp).toBe(20)
     expect(h.stats.INT).toBe(11)
     expect(h.logCount).toBe(1)
     expect(h.log[0]).toMatchObject({
-      label: 'Reading / Learning: Dune ch. 3',
+      label: 'Reading: Dune ch. 3',
       xp: 20,
       stat: 'INT',
-      tier: '20 min',
+      tier: '30 min',
       category: 'learning',
     })
     expect(h.log[0].questId).toBeUndefined()
   })
 
-  it('uses the category label alone when there is no note', () => {
+  it('uses the activity name alone when there is no note', () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    const c = questCategory('hydration')
-    act(() => result.current.logActivity(c, c.defaultTiers[0]))
-    expect(result.current.hunter.log[0]).toMatchObject({ label: 'Hydration', xp: 8, stat: 'VIT' })
+    act(() => result.current.logActivity('running', findActivity('running')!.tiers[2]))
+    expect(result.current.hunter.log[0]).toMatchObject({
+      label: 'Running',
+      tier: '10K',
+      xp: 45,
+      stat: 'STR',
+      category: 'exercise',
+    })
   })
 
-  it("credits an overridden stat instead of the category's preset", () => {
+  it("rejects a tier that isn't the activity's own — including a tampered xp on a real label", () => {
     seed({})
     const { result } = renderHook(() => useHunter())
-    const c = questCategory('custom') // preset PER
-    act(() => result.current.logActivity(c, c.defaultTiers[2], 'Deep clean', 'AGI'))
-    expect(result.current.hunter.stats).toMatchObject({ AGI: 11, PER: 10 })
-    expect(result.current.hunter.log[0]).toMatchObject({ stat: 'AGI', xp: 35, tier: 'Intense' })
-  })
-
-  it("rejects a tier that isn't in the category's list", () => {
-    seed({})
-    const { result } = renderHook(() => useHunter())
-    const exerciseTier = questCategory('exercise').defaultTiers[3]
-    act(() => result.current.logActivity(questCategory('hydration'), exerciseTier))
+    act(() => result.current.logActivity('water', findActivity('running')!.tiers[2]))
+    act(() => result.current.logActivity('water', { label: '2L', xp: 999 }))
     expect(result.current.hunter.xp).toBe(0)
     expect(result.current.hunter.logCount).toBe(0)
+  })
+
+  it('rejects an activity id that is not in the library', () => {
+    seed({})
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.logActivity('made_up', { label: 'Light', xp: 10 }))
+    expect(result.current.hunter.log).toHaveLength(0)
   })
 
   it('still enforces the daily log cap', () => {
     seed({ logCount: DAILY_LOG_CAP })
     const { result } = renderHook(() => useHunter())
-    const c = questCategory('exercise')
-    act(() => result.current.logActivity(c, c.defaultTiers[0]))
+    act(() => result.current.logActivity('general', findActivity('general')!.tiers[0]))
     expect(result.current.hunter.xp).toBe(0)
   })
 })

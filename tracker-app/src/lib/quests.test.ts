@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QUEST_CATEGORIES } from './customQuests'
+import { ACTIVITY_LIBRARY } from './activities'
 import type { LogEntry } from './hunterState'
 import {
   allQuestsClaimed,
@@ -49,11 +49,11 @@ describe('quest/log constants', () => {
     expect(quest('q_discipline').tiers).toEqual([{ label: 'Done', xp: 10 }])
   })
 
-  // Every built-in tier list in the app — fixed quests and the category
-  // presets custom quests / Log Activity draw from.
+  // Every built-in tier list in the app — fixed quests and the activity
+  // library custom quests / Log Activity draw from.
   it.each([
     ...DAILY_QUESTS.map((q) => [q.id, q.tiers] as const),
-    ...QUEST_CATEGORIES.map((c) => [c.key, c.defaultTiers] as const),
+    ...ACTIVITY_LIBRARY.map((a) => [a.id, a.tiers] as const),
   ])(
     '%s: tiers are non-empty, strictly ascending in xp, with unique labels',
     (_id, tiers) => {
