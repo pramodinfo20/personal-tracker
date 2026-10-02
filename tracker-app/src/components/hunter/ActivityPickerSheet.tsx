@@ -7,6 +7,7 @@ import {
   type Activity,
   type ActivityCategoryKey,
 } from '../../lib/activities'
+import { activityImage } from '../../lib/activityImages'
 import { questIcon } from '../../lib/customQuests'
 import { STAT_META } from '../../lib/hunterState'
 import { DAILY_LOG_CAP, formatTierXPRange, type XPTier } from '../../lib/quests'
@@ -146,6 +147,7 @@ export function ActivityPickerSheet(props: ActivityPickerSheetProps) {
                   subtitle={`${formatTierXPRange(a.tiers)} XP · ${a.statKey}`}
                   glyph={questIcon(a.iconKey)}
                   gradient={a.gradient}
+                  image={activityImage(a.id)}
                   onClick={() => setActivity(a)}
                 />
               ))}
@@ -159,6 +161,7 @@ export function ActivityPickerSheet(props: ActivityPickerSheetProps) {
               subtitle={`${activityCategory(activity.category).label} · ${STAT_META.find((s) => s.key === activity.statKey)?.icon} ${activity.statKey}`}
               glyph={questIcon(activity.iconKey)}
               gradient={activity.gradient}
+              image={activityImage(activity.id)}
             />
             {props.mode === 'log' ? (
               <div className="mt-4">
