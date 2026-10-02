@@ -1,5 +1,6 @@
 import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
+import { screenBackground } from '../../lib/screenBackgrounds'
 import {
   GateCard,
   HunterStatusPanel,
@@ -7,6 +8,7 @@ import {
   RecentActivityLog,
   ShadowArmyGrid,
 } from '../hunter'
+import { ScreenBackground } from '../ui'
 
 export interface LevelUpScreenProps {
   hunter: Hunter
@@ -37,7 +39,11 @@ export function LevelUpScreen({
   onDeleteCustomQuest,
 }: LevelUpScreenProps) {
   return (
-    <div className="min-h-dvh bg-bg px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10">
+    // The gate backdrop — this tab is where gates are started and cleared.
+    <ScreenBackground
+      image={screenBackground('gate')}
+      className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10"
+    >
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <HunterStatusPanel hunter={hunter} onRename={onRename} />
         <ShadowArmyGrid unlockedShadows={hunter.unlockedShadows} />
@@ -57,6 +63,6 @@ export function LevelUpScreen({
         />
         <RecentActivityLog log={hunter.log} />
       </div>
-    </div>
+    </ScreenBackground>
   )
 }

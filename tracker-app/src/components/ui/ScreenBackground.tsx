@@ -1,9 +1,15 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
 export interface ScreenBackgroundProps {
   /** Image URL (see screenBackground()). Absent -> the ambient fallback. */
   image?: string
+  /**
+   * 'page' (default): an in-flow, full-height screen (a tab's root).
+   * 'overlay': a fixed, full-viewport layer — for sheets like Profile that
+   * sit over the current tab and want their own backdrop.
+   */
+  layout?: 'page' | 'overlay'
   className?: string
   children: ReactNode
 }
@@ -19,13 +25,31 @@ export interface ScreenBackgroundProps {
 //
 // Without one (or on error): the plain bg-bg with a faint ambient glow —
 // nothing to break, no empty box.
-export function ScreenBackground({ image, className, children }: ScreenBackgroundProps) {
+export function ScreenBackground({
+  image,
+  layout = 'page',
+  className,
+  children,
+}: ScreenBackgroundProps) {
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
   const showImage = !!image && !failed
 
+  // A cached image can finish decoding before React wires up onLoad, in
+  // which case the event never fires and the art would stay at opacity-0
+  // forever. Checking `complete` when the element mounts closes that gap.
+  const imgRef = useCallback((img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth > 0) setLoaded(true)
+  }, [])
+
   return (
-    <div className={cn('relative isolate min-h-dvh bg-bg', className)}>
+    <div
+      className={cn(
+        'isolate bg-bg',
+        layout === 'page' ? 'relative min-h-dvh' : 'fixed inset-0',
+        className,
+      )}
+    >
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         {/* Ambient glow — always present; it's the whole background when there's no image. */}
         <div
@@ -38,6 +62,7 @@ export function ScreenBackground({ image, className, children }: ScreenBackgroun
         {showImage && (
           <>
             <img
+              ref={imgRef}
               src={image}
               alt=""
               loading="lazy"

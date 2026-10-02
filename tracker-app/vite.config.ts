@@ -35,8 +35,9 @@ export default defineConfig({
       },
       workbox: {
         // Default globPatterns only cover js/css/html — extend it so the app
-        // icons and manifest are precached too, for a real offline app shell.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // icons, manifest, activity art (png) and screen backgrounds
+        // (jpg/webp) are precached too, for a real offline app shell.
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,webmanifest}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
