@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>Pramod — Germany Career Tracker 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:15px}
+:root{--blue:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706;--purple:#7c3aed;--gray:#64748b;--light:#f8fafc;--border:#e2e8f0}
+
+/* NAV */
+.nav{background:#1e293b;color:#fff;padding:0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.nav-top{display:flex;align-items:center;padding:12px 16px;gap:10px}
+.nav-title{font-size:16px;font-weight:700;flex:1}
+.nav-sub{font-size:11px;color:#94a3b8}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-top:1px solid #334155}
+.nav-tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:10px 16px;border:none;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:.15s}
+.tab-btn.active{color:#60a5fa;border-bottom-color:#60a5fa}
+.tab-btn:hover{color:#e2e8f0}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:900px;margin:0 auto}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px}
+
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+@media(min-width:480px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:#fff;border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stat-val{font-size:26px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--gray);margin-top:4px}
+
+/* SCHEDULE */
+.sched-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.sched-item:last-child{border-bottom:none}
+.sched-icon{font-size:18px;width:30px;text-align:center;flex-shrink:0;margin-top:1px}
+.sched-content{flex:1}
+.sched-time{font-size:11px;font-weight:600;color:var(--gray);margin-bottom:2px}
+.sched-task{font-size:13px;line-height:1.4}
+.sched-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s}
+.sched-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.cat-code{color:var(--blue)}
+.cat-fitness{color:var(--red)}
+.cat-jobs{color:var(--amber)}
+.cat-family{color:var(--purple)}
+.cat-routine{color:var(--gray)}
+.cat-leisure{color:#ec4899}
+.cat-rest{color:#0891b2}
+.cat-learn{color:var(--green)}
+.cat-mindset{color:var(--purple)}
+
+/* PROGRESS BAR */
+.progress-wrap{margin-top:6px}
+.progress-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:.3s}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:3px}
+
+/* JOBS */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:#fff;font-size:12px;cursor:pointer;transition:.15s}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-box{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px}
+.search-box:focus{outline:2px solid var(--blue);outline-offset:1px}
+.company-list{display:grid;gap:8px}
+.company-card{background:#fff;border-radius:10px;padding:12px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.company-card.applied{border-left:4px solid var(--blue)}
+.company-card.interview{border-left:4px solid var(--amber)}
+.company-card.offer{border-left:4px solid var(--green)}
+.company-card.rejected{border-left:4px solid var(--red)}
+.co-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.co-name{font-size:15px;font-weight:600;flex:1}
+.co-pri-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.pri-HIGH{background:#fef3c7;color:#92400e}
+.pri-MED{background:#eff6ff;color:#1d4ed8}
+.co-pos{font-size:13px;color:#475569}
+.co-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.co-tag{font-size:11px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:2px 7px;color:var(--gray)}
+.co-salary{font-size:12px;font-weight:600;color:var(--green)}
+.status-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.status-sel{flex:1;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff}
+.co-link{padding:6px 12px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none;display:inline-block}
+.notes-input{width:100%;margin-top:6px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;resize:none}
+.expand-btn{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:0;margin-top:4px}
+
+/* STATUS BADGES */
+.status-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0}
+.status-Not-Applied{background:#f1f5f9;color:#64748b}
+.status-Applied{background:#dbeafe;color:#1d4ed8}
+.status-Interview{background:#fef3c7;color:#92400e}
+.status-Offer{background:#dcfce7;color:#166534}
+.status-Rejected{background:#fee2e2;color:#991b1b}
+.status-Withdrawn{background:#f3f4f6;color:#6b7280}
+
+/* CERTS */
+.cert-card{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.cert-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
+.cert-name{font-size:14px;font-weight:600;flex:1;line-height:1.3}
+.cert-pri{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.pri-CRITICAL{background:#fee2e2;color:#991b1b}
+.pri-HIGH{background:#fef3c7;color:#92400e}
+.pri-MEDIUM{background:#eff6ff;color:#1d4ed8}
+.cert-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#475569;margin-bottom:10px}
+.cert-meta-item span{font-weight:600;color:#1e293b}
+.cert-notes{font-size:12px;color:#64748b;background:#f8fafc;padding:8px;border-radius:6px;margin-bottom:10px;line-height:1.5}
+.cert-actions{display:flex;gap:8px;align-items:center}
+.cert-link{padding:6px 12px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;text-decoration:none}
+.prog-input{width:70px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600}
+
+/* ROADMAP */
+.roadmap-stage{background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stage-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.stage-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.stage-title{font-size:15px;font-weight:600}
+.stage-date{font-size:12px;color:var(--gray)}
+.stage-salary{font-size:18px;font-weight:700}
+.stage-items{font-size:13px;color:#475569;line-height:1.8}
+.stage-items li{margin-left:16px}
+
+/* REALITY CHECK */
+.reality-card{background:#fff;border-radius:12px;padding:14px;border-left:4px solid var(--amber);margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.reality-title{font-size:14px;font-weight:600;color:var(--amber);margin-bottom:8px}
+.reality-text{font-size:13px;color:#475569;line-height:1.7}
+.reality-text li{margin-left:16px;margin-bottom:4px}
+
+/* FLOATING SAVE */
+.save-btn{position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(22,163,74,.4);z-index:200}
+.save-btn:active{transform:scale(.97)}
+
+/* BACKUP MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--gray);margin-bottom:18px}
+.modal-btn{width:100%;padding:13px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+.modal-btn:active{transform:scale(.98)}
+.btn-export{background:#2563eb;color:#fff}
+.btn-import{background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b}
+.btn-close{background:none;border:none;font-size:13px;color:var(--gray);cursor:pointer;width:100%;padding:6px;margin-top:4px}
+.import-info{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 12px;font-size:12px;color:#713f12;margin-bottom:12px;line-height:1.6}
+.backup-nav-btn{background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;padding:10px 12px;border-bottom:3px solid transparent;transition:.15s;flex-shrink:0;white-space:nowrap}
+.backup-nav-btn:hover{color:#e2e8f0}
+input:focus,select:focus,textarea:focus{outline:2px solid #2563eb;outline-offset:1px;border-color:#2563eb}
+.edit-co-btn{background:none;border:none;font-size:11px;color:#2563eb;cursor:pointer;padding:2px 0;margin-top:4px;text-decoration:underline}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;right:20px;background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:500;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Germany TZ Banner */
+.tz-banner{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.tz-banner strong{font-size:14px;display:block;margin-bottom:4px}
+
+/* Utility */
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.text-sm{font-size:12px;color:var(--gray)}
+.mt-2{margin-top:8px}
+.hidden{display:none}
+.chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.chip-green{background:#dcfce7;color:#166534}
+.chip-blue{background:#dbeafe;color:#1d4ed8}
+.chip-red{background:#fee2e2;color:#991b1b}
+.chip-gray{background:#f1f5f9;color:#64748b}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-top">
+    <div>
+      <div class="nav-title">🚀 Pramod — Germany 2026</div>
+      <div class="nav-sub">PHP · Symfony · Python → €100k+</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showTab('schedule')">📅 Schedule</button>
+    <button class="tab-btn" onclick="showTab('jobs')">🇩🇪 Jobs (149)</button>
+    <button class="tab-btn" onclick="showTab('certs')">📜 Certs</button>
+    <button class="tab-btn" onclick="showTab('roadmap')">🗺️ Roadmap</button>
+    <button class="backup-nav-btn" onclick="openBackup()">☁️ Backup</button>
+  </div>
+</nav>
+
+<!-- BACKUP MODAL -->
+<div class="modal-overlay" id="backupModal" style="display:none" onclick="if(event.target===this)closeBackup()">
+  <div class="modal">
+    <div class="modal-title">☁️ Backup & Sync</div>
+    <div class="modal-sub">Keep your data in sync between PC and mobile</div>
+
+    <div class="import-info">
+      <strong>How to sync PC ↔ Phone:</strong><br>
+      1. On PC — tap <em>Export Backup</em> → saves a .json file<br>
+      2. Send that file to yourself (WhatsApp, email, Drive)<br>
+      3. On Phone — tap <em>Import Backup</em> → pick the file<br>
+      4. All your job statuses, notes &amp; cert progress are restored ✓
+    </div>
+
+    <button class="modal-btn btn-export" onclick="exportBackup()">
+      ⬇️ Export Backup (download .json)
+    </button>
+    <button class="modal-btn btn-import" onclick="document.getElementById('importFile').click()">
+      ⬆️ Import Backup (load .json)
+    </button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(this)"/>
+
+    <div style="border-top:1px solid #e2e8f0;margin:12px 0"></div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:10px;text-align:center">Last backup info</div>
+    <div id="backupMeta" style="font-size:13px;color:#475569;text-align:center;line-height:1.8"></div>
+
+    <button class="btn-close" onclick="closeBackup()">Close</button>
+  </div>
+</div>
+
+<div id="page-dashboard" class="page active">
+  <div class="tz-banner">
+    <strong>🕐 Germany Window: 3:00 PM – 5:30 PM IST (daily)</strong>
+    9 AM – 2 PM CET = prime time to apply, email recruiters &amp; be visible in Germany.
+  </div>
+  <div class="stats" id="dashStats"></div>
+  <div class="card">
+    <div class="card-title">Weekly Non-Negotiables</div>
+    <div id="weeklyChecklist"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Application Pipeline</div>
+    <div id="pipeline"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Certification Progress</div>
+    <div id="certProgress"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Today —  <span id="todayDate" style="font-weight:400;color:var(--gray)"></span></div>
+    <div id="todayScore" style="margin-bottom:8px"></div>
+    <div id="quickChecklist"></div>
+  </div>
+</div>
+
+<div id="page-schedule" class="page">
+  <div class="card" style="background:#f0fdf4;border-color:#86efac">
+    <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px">Option B — Balanced &amp; Realistic</div>
+    <div style="font-size:12px;color:#166534">India timezone · Dog walks at 6:30 AM &amp; 5:00 PM · Family meals at 10 AM, 2 PM, 7 PM · Germany window at 3 PM IST</div>
+  </div>
+  <div class="card">
+    <div class="flex-between" style="margin-bottom:12px">
+      <div class="card-title" style="margin:0">Daily Schedule</div>
+      <button onclick="resetSchedule()" style="font-size:12px;color:var(--gray);background:none;border:none;cursor:pointer">Reset ↺</button>
+    </div>
+    <div id="scheduleList"></div>
+  </div>
+  <div class="card" style="background:#fefce8;border-color:#fde68a">
+    <div style="font-size:13px;font-weight:600;color:#78350f;margin-bottom:6px">📖 Weekly Review (Every Sunday)</div>
+    <div style="font-size:12px;color:#92400e;line-height:1.8">
+      1. What were my 3 biggest wins this week?<br>
+      2. Did I follow my schedule? Where did I slip?<br>
+      3. How many applications did I send?<br>
+      4. What did I learn in programming?<br>
+      5. How was my fitness — did I run?<br>
+      6. Score the week 1–10. What would make it a 10?<br>
+      7. One thing I will improve next week.
+    </div>
+  </div>
+</div>
+
+<div id="page-jobs" class="page">
+  <button onclick="openAddCompany()" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+    <span style="font-size:20px;line-height:1">+</span> Add New Company
+  </button>
+  <input class="search-box" id="jobSearch" type="search" placeholder="Search company, position, location..." oninput="filterJobs()"/>
+  <div class="filter-row" id="statusFilters"></div>
+  <div class="flex-between" style="margin-bottom:10px">
+    <div class="text-sm" id="jobCount"></div>
+    <select id="sortBy" onchange="filterJobs()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#fff">
+      <option value="priority">Sort: Priority</option>
+      <option value="company">Sort: A–Z</option>
+      <option value="salary">Sort: Salary</option>
+      <option value="status">Sort: Status</option>
+    </select>
+  </div>
+  <div class="company-list" id="companyList"></div>
+</div>
+
+<!-- ADD COMPANY MODAL -->
+<div class="modal-overlay" id="addCompanyModal" style="display:none" onclick="if(event.target===this)closeAddCompany()">
+  <div class="modal" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-title" id="addModalTitle">+ Add New Company</div>
+    <div class="modal-sub" id="addModalSub">Track a company not in the list</div>
+    <input type="hidden" id="editCompanyId"/>
+
+    <div style="display:grid;gap:10px;margin-bottom:16px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Company Name *</label>
+        <input id="f_company" type="text" placeholder="e.g. Shopify" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Position / Role *</label>
+        <input id="f_position" type="text" placeholder="e.g. Senior PHP Developer" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Location</label>
+        <input id="f_location" type="text" placeholder="e.g. Berlin / Remote" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Expected Salary</label>
+        <input id="f_salary" type="text" placeholder="e.g. €80k–€110k" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Careers / Job URL</label>
+        <input id="f_url" type="url" placeholder="https://careers.example.com" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Priority</label>
+          <select id="f_priority" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff">
+            <option value="HIGH">HIGH</option>
+            <option value="MED" selected>MEDIUM</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Realistic Chance</label>
+          <select id="f_chance" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff">
+            <option value="Strong">Strong</option>
+            <option value="Medium-Strong" selected>Medium-Strong</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Status</label>
+        <select id="f_status" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff">
+          <option value="Not Applied" selected>Not Applied</option>
+          <option value="Applied">Applied</option>
+          <option value="Interview">Interview</option>
+          <option value="Offer">Offer</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Withdrawn">Withdrawn</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Notes</label>
+        <textarea id="f_notes" rows="2" placeholder="Any notes about this company..." style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:none"></textarea>
+      </div>
+    </div>
+
+    <div id="f_error" style="color:#dc2626;font-size:13px;margin-bottom:10px;display:none"></div>
+    <button class="modal-btn btn-export" id="saveCompanyBtn" onclick="saveCompany()">Save Company</button>
+    <div id="deleteCompanyWrap" style="display:none">
+      <button class="modal-btn" onclick="deleteCompany()" style="background:#fee2e2;color:#991b1b;margin-bottom:0">Delete this company</button>
+    </div>
+    <button class="btn-close" onclick="closeAddCompany()">Cancel</button>
+  </div>
+</div>
+
+<div id="page-certs" class="page">
+  <div class="reality-card">
+    <div class="reality-title">⚠️ Reality Check (from your own research)</div>
+    <div class="reality-text">
+      AWS cert alone will <strong>NOT</strong> get you €150k. It is a filter-opener. The actual salary jump comes from:
+      <ul>
+        <li>System Design depth &amp; Distributed Systems understanding</li>
+        <li>AI backend ownership (LLM/RAG projects)</li>
+        <li>Cloud + infrastructure exposure (hands-on)</li>
+        <li>Search/Elasticsearch specialization</li>
+      </ul>
+      Build certs AND real projects. Both matter.
+    </div>
+  </div>
+  <div id="certList"></div>
+  <div class="card" style="background:#f0fdf4;border-color:#86efac">
+    <div class="card-title">Skills to Build (No Cert Needed)</div>
+    <div style="font-size:13px;color:#166534;line-height:2">
+      <div>🧠 <strong>System Design</strong> — ByteByteGo + DDIA book — 2–3 months — CRITICAL</div>
+      <div>🤖 <strong>LLM + RAG</strong> — Build a project — 1 month — CRITICAL for AI backend roles</div>
+      <div>⚡ <strong>Distributed Systems</strong> — DDIA book — 2 months — CRITICAL</div>
+      <div>📨 <strong>Kafka/Event Streaming</strong> — Hands-on projects — 3–4 weeks — HIGH</div>
+      <div>🔍 <strong>Elasticsearch</strong> — Official docs + practice — 4–6 weeks — HIGH</div>
+      <div>🐍 <strong>FastAPI (Python)</strong> — Build REST APIs — 2–3 weeks — HIGH</div>
+    </div>
+  </div>
+</div>
+
+<div id="page-roadmap" class="page">
+  <div id="roadmapContent"></div>
+  <div class="card">
+    <div class="card-title">First 30 Days — Action Plan</div>
+    <div style="font-size:13px;color:#475569;line-height:1.9">
+      <strong style="color:#1e293b">Week 1 (Now):</strong><br>
+      • Update CV in English — add tech keywords (PHP 8, Symfony 6/7, REST API, Docker, Git)<br>
+      • Update LinkedIn: "PHP/Symfony/Python Backend Dev | Open to Germany roles"<br>
+      • Create GitHub — push 1 Symfony project immediately<br>
+      • Register: Indeed.de, StepStone.de, Glassdoor.de, Xing, LinkedIn Germany<br>
+      • Apply to first 3 companies from the jobs list. Tailor each one.<br><br>
+      <strong style="color:#1e293b">Week 2:</strong><br>
+      • Start AWS Cloud Practitioner (FREE on AWS Skill Builder)<br>
+      • Begin Symfony certification guide reading<br>
+      • Apply to 5 more companies. Connect with 10 German recruiters on LinkedIn.<br>
+      • Write first LinkedIn post: "What I am learning this week"<br><br>
+      <strong style="color:#1e293b">Week 3:</strong><br>
+      • Start mock interviews at pramp.com (free)<br>
+      • Build a Symfony REST API + push to GitHub<br>
+      • Apply 5 more. Follow up on Week 1 applications.<br><br>
+      <strong style="color:#1e293b">Week 4:</strong><br>
+      • Buy TutorialsDojo AWS SAA-C03 course (~$15). Start serious AWS study.<br>
+      • Apply 5 more. Record yourself: "Tell me about yourself" — watch it back.<br>
+      • Join PHP/Symfony Slack communities. Comment on dev posts in Germany.
+    </div>
+  </div>
+  <div class="card" style="background:#fef3c7;border-color:#fcd34d">
+    <div class="card-title" style="color:#92400e">Germany Job Market Tips</div>
+    <div style="font-size:13px;color:#78350f;line-height:1.9">
+      • Applications take 2–6 weeks to respond in Germany. Be patient. Keep applying.<br>
+      • Apply to both German companies AND international companies with Germany offices.<br>
+      • German CVs: no photo unless requested, clear date ranges, concise, max 2 pages.<br>
+      • Learn basic German (A1/A2) — shows commitment and makes you more hireable.<br>
+      • Always negotiate salary. First offer is rarely best. Counter with a specific number.<br>
+      • Remote-first companies are your best bet initially — easier visa + location flexibility.<br>
+      • Visa: Germany has a Job Seeker Visa (6 months). Research it as a fallback option.
+    </div>
+  </div>
+</div>
+
+<button class="save-btn" onclick="saveAll()">💾 Save Progress</button>
+<div class="toast" id="toast">Saved!</div>
+
+<script>
+const COMPANIES_DEFAULT = [{"id": 1, "priority": "HIGH", "company": "Elastic", "position": "Search Engineer", "location": "Remote Germany", "salary": "€110k–€180k", "chance": "Medium-Strong", "url": "https://www.elastic.co/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 2, "priority": "HIGH", "company": "Databricks", "position": "Senior Software Engineer", "location": "Germany/Remote", "salary": "€120k–€200k", "chance": "Medium-Strong", "url": "https://www.databricks.com/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 3, "priority": "HIGH", "company": "Snowflake", "position": "Backend Engineer", "location": "Germany/Remote", "salary": "€120k–€200k", "chance": "Medium-Strong", "url": "https://careers.snowflake.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 4, "priority": "HIGH", "company": "N26", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€100k–€150k", "chance": "Medium-Strong", "url": "https://n26.com/en-de/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 5, "priority": "HIGH", "company": "Trade Republic", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€100k–€160k", "chance": "Medium-Strong", "url": "https://traderepublic.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 6, "priority": "HIGH", "company": "SAP", "position": "AI Backend Engineer", "location": "Walldorf/Germany", "salary": "€90k–€140k", "chance": "Medium-Strong", "url": "https://jobs.sap.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 7, "priority": "HIGH", "company": "Celonis", "position": "Senior Software Engineer", "location": "Munich", "salary": "€100k–€160k", "chance": "Medium-Strong", "url": "https://www.celonis.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 8, "priority": "HIGH", "company": "AboutYou / SCAYLE", "position": "Backend Engineer", "location": "Hamburg", "salary": "€85k–€120k", "chance": "Medium-Strong", "url": "https://corporate.aboutyou.de/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 9, "priority": "HIGH", "company": "CHECK24", "position": "Senior PHP Backend Engineer", "location": "Munich/Berlin", "salary": "€80k–€110k", "chance": "Medium-Strong", "url": "https://careers.check24.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 10, "priority": "HIGH", "company": "Delivery Hero", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€90k–€140k", "chance": "Medium-Strong", "url": "https://www.deliveryhero.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 11, "priority": "HIGH", "company": "HelloFresh", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.hellofresh.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 12, "priority": "HIGH", "company": "GetYourGuide", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.getyourguide.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 13, "priority": "HIGH", "company": "Auto1 Group", "position": "Backend Engineer", "location": "Berlin", "salary": "€85k–€120k", "chance": "Medium-Strong", "url": "https://www.auto1-group.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 14, "priority": "HIGH", "company": "FlixBus", "position": "Backend Engineer", "location": "Munich", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.flixbus.de/unternehmen/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 15, "priority": "HIGH", "company": "Personio", "position": "Senior Backend Engineer", "location": "Munich", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.personio.de/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 16, "priority": "HIGH", "company": "Zalando", "position": "Senior Backend Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://jobs.zalando.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 17, "priority": "HIGH", "company": "DeepL", "position": "Backend Engineer", "location": "Cologne", "salary": "€100k–€150k", "chance": "Medium-Strong", "url": "https://www.deepl.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 18, "priority": "HIGH", "company": "Contentful", "position": "Backend Engineer", "location": "Berlin", "salary": "€100k–€140k", "chance": "Medium-Strong", "url": "https://www.contentful.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 19, "priority": "HIGH", "company": "Mambu", "position": "Platform Engineer", "location": "Berlin", "salary": "€100k–€150k", "chance": "Medium-Strong", "url": "https://www.mambu.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 20, "priority": "HIGH", "company": "Wayfair", "position": "Backend Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.wayfair.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 21, "priority": "HIGH", "company": "Klarna", "position": "Backend Engineer", "location": "Germany", "salary": "€100k–€150k", "chance": "Medium-Strong", "url": "https://www.klarna.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 22, "priority": "HIGH", "company": "Wise", "position": "Backend Engineer", "location": "Europe", "salary": "€100k–€160k", "chance": "Medium-Strong", "url": "https://www.wise.jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 23, "priority": "HIGH", "company": "Revolut", "position": "Backend Engineer", "location": "Remote Europe", "salary": "€100k–€180k", "chance": "Medium-Strong", "url": "https://www.revolut.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 24, "priority": "HIGH", "company": "SumUp", "position": "Backend Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.sumup.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 25, "priority": "HIGH", "company": "Wolt", "position": "Backend Engineer", "location": "Berlin", "salary": "€85k–€120k", "chance": "Medium-Strong", "url": "https://careers.wolt.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 26, "priority": "HIGH", "company": "Forto", "position": "Platform Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.forto.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 27, "priority": "HIGH", "company": "Raisin (WeltSparen)", "position": "Backend Engineer", "location": "Berlin", "salary": "€80k–€115k", "chance": "Medium", "url": "https://www.raisin.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 28, "priority": "HIGH", "company": "Scalable Capital", "position": "Backend Developer", "location": "Munich", "salary": "€85k–€120k", "chance": "Medium-Strong", "url": "https://de.scalable.capital/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 29, "priority": "HIGH", "company": "SolarisBank", "position": "Software Engineer", "location": "Berlin", "salary": "€80k–€115k", "chance": "Medium", "url": "https://www.solarisbank.com/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 30, "priority": "HIGH", "company": "Auxmoney", "position": "Backend Developer", "location": "Düsseldorf", "salary": "€75k–€105k", "chance": "Medium", "url": "https://www.auxmoney.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 31, "priority": "HIGH", "company": "Google", "position": "Software Engineer", "location": "Munich/Hamburg", "salary": "€140k–€220k", "chance": "Medium", "url": "https://careers.google.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 32, "priority": "HIGH", "company": "Amazon", "position": "Senior SDE", "location": "Germany (Various)", "salary": "€110k–€180k", "chance": "Medium", "url": "https://www.amazon.jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 33, "priority": "HIGH", "company": "Microsoft", "position": "Senior Software Engineer", "location": "Munich", "salary": "€110k–€180k", "chance": "Medium", "url": "https://careers.microsoft.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 34, "priority": "HIGH", "company": "Meta", "position": "Software Engineer", "location": "Europe", "salary": "€150k–€250k", "chance": "Medium", "url": "https://www.metacareers.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 35, "priority": "HIGH", "company": "Apple", "position": "Software Engineer", "location": "Munich", "salary": "€120k–€200k", "chance": "Medium", "url": "https://www.apple.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 36, "priority": "HIGH", "company": "Spotify", "position": "Backend Engineer", "location": "Berlin", "salary": "€95k–€140k", "chance": "Medium-Strong", "url": "https://www.lifeatspotify.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 37, "priority": "HIGH", "company": "Stripe", "position": "Backend Engineer", "location": "Remote Europe", "salary": "€130k–€220k", "chance": "Medium", "url": "https://stripe.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 38, "priority": "HIGH", "company": "Shopify", "position": "Backend Engineer", "location": "Remote", "salary": "€120k–€180k", "chance": "Medium", "url": "https://www.shopify.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 39, "priority": "HIGH", "company": "Booking.com", "position": "Backend Engineer", "location": "Amsterdam/Remote", "salary": "€100k–€150k", "chance": "Medium-Strong", "url": "https://jobs.booking.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 40, "priority": "HIGH", "company": "Adyen", "position": "Backend Engineer", "location": "Amsterdam/Germany", "salary": "€120k–€180k", "chance": "Medium", "url": "https://www.adyen.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 41, "priority": "HIGH", "company": "GitLab", "position": "Backend Engineer", "location": "Remote", "salary": "€100k–€170k", "chance": "Medium-Strong", "url": "https://about.gitlab.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 42, "priority": "HIGH", "company": "Atlassian", "position": "Backend Engineer", "location": "Germany/Remote", "salary": "€95k–€145k", "chance": "Medium", "url": "https://www.atlassian.com/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 43, "priority": "HIGH", "company": "Miro", "position": "Backend Engineer", "location": "Remote Europe", "salary": "€100k–€160k", "chance": "Medium", "url": "https://miro.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 44, "priority": "HIGH", "company": "Docker", "position": "Backend Engineer", "location": "Remote", "salary": "€120k–€180k", "chance": "Medium", "url": "https://www.docker.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 45, "priority": "HIGH", "company": "HashiCorp", "position": "Software Engineer", "location": "Remote", "salary": "€120k–€200k", "chance": "Medium", "url": "https://www.hashicorp.com/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 46, "priority": "HIGH", "company": "Confluent", "position": "Distributed Systems Eng", "location": "Remote", "salary": "€120k–€200k", "chance": "Medium", "url": "https://www.confluent.io/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 47, "priority": "HIGH", "company": "Red Hat", "position": "Platform Engineer", "location": "Remote Germany", "salary": "€100k–€160k", "chance": "Medium", "url": "https://www.redhat.com/en/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 48, "priority": "HIGH", "company": "Canonical", "position": "Cloud Engineer", "location": "Remote", "salary": "€90k–€140k", "chance": "Medium", "url": "https://canonical.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 49, "priority": "HIGH", "company": "Cloudflare", "position": "Systems Engineer", "location": "Remote", "salary": "€120k–€180k", "chance": "Medium", "url": "https://www.cloudflare.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 50, "priority": "HIGH", "company": "OpenAI", "position": "Solutions Engineer", "location": "Remote Europe", "salary": "€150k–€250k", "chance": "Medium", "url": "https://openai.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 51, "priority": "HIGH", "company": "Datadog", "position": "Backend Engineer", "location": "Germany/Remote", "salary": "€90k–€180k", "chance": "Medium", "url": "https://www.datadoghq.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 52, "priority": "HIGH", "company": "Grafana Labs", "position": "Backend Engineer", "location": "Germany/Remote", "salary": "€90k–€180k", "chance": "Medium", "url": "https://grafana.com/about/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 53, "priority": "HIGH", "company": "Palantir", "position": "Software Engineer", "location": "Munich", "salary": "€90k–€180k", "chance": "Medium", "url": "https://www.palantir.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 54, "priority": "HIGH", "company": "NVIDIA", "position": "AI Software Engineer", "location": "Germany", "salary": "€120k–€200k", "chance": "Medium", "url": "https://www.nvidia.com/en-us/about-nvidia/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 55, "priority": "HIGH", "company": "JetBrains", "position": "Backend Engineer", "location": "Remote Europe", "salary": "€100k–€160k", "chance": "Medium", "url": "https://www.jetbrains.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 56, "priority": "HIGH", "company": "GitHub", "position": "Software Engineer", "location": "Remote Europe", "salary": "€120k–€190k", "chance": "Medium", "url": "https://github.com/about/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 57, "priority": "HIGH", "company": "Data4Life", "position": "LLM Infra Engineer", "location": "Berlin", "salary": "€90k–€130k", "chance": "Medium-Strong", "url": "https://www.data4life.care/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 58, "priority": "HIGH", "company": "Tesla", "position": "Senior AI Engineer", "location": "Berlin", "salary": "€100k–€150k", "chance": "Medium", "url": "https://www.tesla.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 59, "priority": "MED", "company": "REWE Digital", "position": "PHP Developer", "location": "Cologne", "salary": "€70k–€95k", "chance": "Strong", "url": "https://rewe-digital.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 60, "priority": "MED", "company": "Otto Group", "position": "Software Engineer", "location": "Hamburg", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.ottogroup.com/en/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 61, "priority": "MED", "company": "Westwing", "position": "Senior Backend Dev", "location": "Munich", "salary": "€80k–€110k", "chance": "Strong", "url": "https://www.westwing.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 62, "priority": "MED", "company": "Mytheresa", "position": "PHP Developer", "location": "Munich", "salary": "€80k–€100k", "chance": "Strong", "url": "https://www.mytheresa.com/culture/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 63, "priority": "MED", "company": "Shopware", "position": "Core Developer", "location": "Schöppingen", "salary": "€70k–€95k", "chance": "Strong", "url": "https://www.shopware.com/de/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 64, "priority": "MED", "company": "Kaufland e-commerce", "position": "Backend Engineer", "location": "Berlin", "salary": "€80k–€110k", "chance": "Strong", "url": "https://jobs.kaufland.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 65, "priority": "MED", "company": "Lidl Digital", "position": "Software Developer", "location": "Neckarsulm", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.lidl.de/de/karriere/c12", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 66, "priority": "MED", "company": "MediaMarktSaturn", "position": "Software Engineer", "location": "Munich", "salary": "€75k–€100k", "chance": "Medium", "url": "https://career.mediamarkt-saturn.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 67, "priority": "MED", "company": "Flaconi", "position": "PHP Developer", "location": "Berlin", "salary": "€70k–€90k", "chance": "Strong", "url": "https://www.flaconi.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 68, "priority": "MED", "company": "Lieferando", "position": "Backend Developer", "location": "Berlin", "salary": "€80k–€110k", "chance": "Strong", "url": "https://careers.lieferando.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 69, "priority": "MED", "company": "ING Germany", "position": "Developer", "location": "Frankfurt", "salary": "€80k–€110k", "chance": "Strong", "url": "https://www.ing.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 70, "priority": "MED", "company": "DKB", "position": "Software Engineer", "location": "Berlin", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.dkb.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 71, "priority": "MED", "company": "Tomorrow Bank", "position": "Backend Dev", "location": "Hamburg", "salary": "€75k–€100k", "chance": "Medium", "url": "https://www.tomorrow.one/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 72, "priority": "MED", "company": "Finanzcheck", "position": "PHP Developer", "location": "Hamburg", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.finanzcheck.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 73, "priority": "MED", "company": "Clark Germany", "position": "Developer", "location": "Frankfurt", "salary": "€75k–€100k", "chance": "Medium", "url": "https://www.clark.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 74, "priority": "MED", "company": "Wefox", "position": "Backend Developer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Medium", "url": "https://www.wefox.com/de/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 75, "priority": "MED", "company": "Smava", "position": "Developer", "location": "Berlin", "salary": "€75k–€100k", "chance": "Medium", "url": "https://www.smava.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 76, "priority": "MED", "company": "BMW Group", "position": "Software Engineer", "location": "Munich", "salary": "€85k–€125k", "chance": "Medium", "url": "https://www.bmwgroup.com/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 77, "priority": "MED", "company": "Mercedes-Benz Tech", "position": "Developer", "location": "Stuttgart", "salary": "€85k–€125k", "chance": "Medium", "url": "https://www.mercedes-benz-techinnovation.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 78, "priority": "MED", "company": "CARIAD (VW Group)", "position": "Software Engineer", "location": "Wolfsburg", "salary": "€85k–€120k", "chance": "Medium", "url": "https://cariad.technology/de/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 79, "priority": "MED", "company": "Porsche Digital", "position": "Developer", "location": "Stuttgart", "salary": "€90k–€130k", "chance": "Medium", "url": "https://jobs.porsche.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 80, "priority": "MED", "company": "Sixt", "position": "Backend Developer", "location": "Munich", "salary": "€80k–€110k", "chance": "Strong", "url": "https://www.sixt.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 81, "priority": "MED", "company": "TeamViewer", "position": "Senior Developer", "location": "Göppingen", "salary": "€80k–€110k", "chance": "Strong", "url": "https://www.teamviewer.com/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 82, "priority": "MED", "company": "Haufe Group", "position": "Software Developer", "location": "Freiburg", "salary": "€75k–€100k", "chance": "Strong", "url": "https://karriere.haufe.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 83, "priority": "MED", "company": "DATEV", "position": "Developer", "location": "Nuremberg", "salary": "€75k–€100k", "chance": "Strong", "url": "https://jobs.datev.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 84, "priority": "MED", "company": "DocuWare", "position": "Developer", "location": "Germering", "salary": "€75k–€100k", "chance": "Strong", "url": "https://start.docuware.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 85, "priority": "MED", "company": "Brainlab", "position": "Software Developer", "location": "Munich", "salary": "€85k–€120k", "chance": "Medium", "url": "https://www.brainlab.com/career", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 86, "priority": "MED", "company": "Accenture Germany", "position": "Senior Dev", "location": "Germany", "salary": "€85k–€120k", "chance": "Strong", "url": "https://www.accenture.com/de-de/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 87, "priority": "MED", "company": "Capgemini Germany", "position": "Developer", "location": "Munich/Frankfurt", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.capgemini.com/de-de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 88, "priority": "MED", "company": "Thoughtworks Germany", "position": "Developer", "location": "Hamburg", "salary": "€90k–€130k", "chance": "Strong", "url": "https://www.thoughtworks.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 89, "priority": "MED", "company": "EPAM Systems", "position": "Developer", "location": "Germany", "salary": "€85k–€120k", "chance": "Strong", "url": "https://www.epam.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 90, "priority": "MED", "company": "codecentric", "position": "Developer", "location": "Solingen", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.codecentric.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 91, "priority": "MED", "company": "innoQ", "position": "Developer", "location": "Monheim", "salary": "€85k–€120k", "chance": "Strong", "url": "https://www.innoq.com/de/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 92, "priority": "MED", "company": "TNG Technology", "position": "Software Engineer", "location": "Munich", "salary": "€90k–€130k", "chance": "Strong", "url": "https://www.tngtech.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 93, "priority": "MED", "company": "iteratec", "position": "Developer", "location": "Munich", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.iteratec.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 94, "priority": "MED", "company": "Doctolib", "position": "Backend Engineer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Medium", "url": "https://www.doctolib.de/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 95, "priority": "MED", "company": "Ada Health", "position": "Developer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Medium", "url": "https://ada.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 96, "priority": "MED", "company": "Siemens Healthineers", "position": "Developer", "location": "Erlangen", "salary": "€85k–€120k", "chance": "Medium", "url": "https://www.siemens-healthineers.com/de/career", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 97, "priority": "MED", "company": "CompuGroup Medical", "position": "Developer", "location": "Koblenz", "salary": "€75k–€100k", "chance": "Medium", "url": "https://www.cgm.com/deu_de/kunden-partner/karriere.html", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 98, "priority": "MED", "company": "DHL Digital", "position": "Developer", "location": "Bonn", "salary": "€80k–€110k", "chance": "Strong", "url": "https://careers.dhl.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 99, "priority": "MED", "company": "Sennder", "position": "Developer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Medium", "url": "https://www.sennder.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 100, "priority": "MED", "company": "IONOS", "position": "Developer", "location": "Montabaur", "salary": "€75k–€105k", "chance": "Strong", "url": "https://www.ionos.jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 101, "priority": "MED", "company": "Hetzner Online", "position": "Developer", "location": "Gunzenhausen", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.hetzner.com/unternehmen/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 102, "priority": "MED", "company": "Siemens", "position": "Senior Developer", "location": "Germany", "salary": "€90k–€130k", "chance": "Medium", "url": "https://jobs.siemens.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 103, "priority": "MED", "company": "Bosch", "position": "Senior Developer", "location": "Stuttgart", "salary": "€90k–€130k", "chance": "Medium", "url": "https://www.bosch.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 104, "priority": "MED", "company": "IBM", "position": "Developer", "location": "Germany", "salary": "€85k–€130k", "chance": "Medium", "url": "https://www.ibm.com/employment", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 105, "priority": "MED", "company": "Oracle", "position": "Developer", "location": "Germany", "salary": "€90k–€140k", "chance": "Medium", "url": "https://www.oracle.com/corporate/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 106, "priority": "MED", "company": "Salesforce", "position": "Senior Developer", "location": "Germany", "salary": "€95k–€145k", "chance": "Medium", "url": "https://www.salesforce.com/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 107, "priority": "MED", "company": "HubSpot", "position": "Senior Developer", "location": "Germany/Remote", "salary": "€90k–€135k", "chance": "Medium", "url": "https://www.hubspot.com/company/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 108, "priority": "MED", "company": "Twilio", "position": "Senior Developer", "location": "Germany/Remote", "salary": "€90k–€135k", "chance": "Medium", "url": "https://www.twilio.com/company/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 109, "priority": "MED", "company": "MongoDB", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://www.mongodb.com/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 110, "priority": "MED", "company": "Snyk", "position": "Backend Engineer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://snyk.io/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 111, "priority": "MED", "company": "Okta", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://www.okta.com/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 112, "priority": "MED", "company": "ServiceNow", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€160k", "chance": "Medium", "url": "https://careers.servicenow.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 113, "priority": "MED", "company": "Workday", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€160k", "chance": "Medium", "url": "https://www.workday.com/en-us/company/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 114, "priority": "MED", "company": "Figma", "position": "Developer", "location": "Germany/Remote", "salary": "€100k–€160k", "chance": "Medium", "url": "https://www.figma.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 115, "priority": "MED", "company": "Mollie", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://www.mollie.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 116, "priority": "MED", "company": "Bitpanda", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://www.bitpanda.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 117, "priority": "MED", "company": "Skyscanner", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€150k", "chance": "Medium", "url": "https://www.skyscanner.net/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 118, "priority": "MED", "company": "Roche", "position": "Senior Backend Engineer", "location": "Germany/Europe", "salary": "€90k–€160k", "chance": "Medium", "url": "https://www.roche.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 119, "priority": "MED", "company": "Deutsche Bank Tech", "position": "Developer", "location": "Frankfurt", "salary": "€90k–€140k", "chance": "Medium", "url": "https://careers.db.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 120, "priority": "MED", "company": "Deutsche Bahn", "position": "Developer", "location": "Germany", "salary": "€80k–€130k", "chance": "Medium", "url": "https://karriere.deutschebahn.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 121, "priority": "MED", "company": "Lufthansa Systems", "position": "Developer", "location": "Raunheim", "salary": "€80k–€130k", "chance": "Medium", "url": "https://be-lufthansa.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 122, "priority": "MED", "company": "PayPal", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€160k", "chance": "Medium", "url": "https://careers.paypal.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 123, "priority": "MED", "company": "LinkedIn", "position": "Developer", "location": "Germany/Remote", "salary": "€100k–€160k", "chance": "Medium", "url": "https://careers.linkedin.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 124, "priority": "MED", "company": "TikTok", "position": "Developer", "location": "Germany/Europe", "salary": "€90k–€160k", "chance": "Medium", "url": "https://careers.tiktok.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 125, "priority": "MED", "company": "Airbnb", "position": "Developer", "location": "Germany/Remote", "salary": "€100k–€180k", "chance": "Medium", "url": "https://careers.airbnb.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 126, "priority": "MED", "company": "Expedia", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€160k", "chance": "Medium", "url": "https://careers.expedia.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 127, "priority": "MED", "company": "Unity", "position": "Developer", "location": "Germany/Remote", "salary": "€90k–€160k", "chance": "Medium", "url": "https://careers.unity.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 128, "priority": "MED", "company": "Trivago", "position": "Developer", "location": "Düsseldorf", "salary": "€80k–€115k", "chance": "Strong", "url": "https://careers.trivago.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 129, "priority": "MED", "company": "ImmobilienScout24", "position": "Developer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Strong", "url": "https://www.immobilienscout24.de/unternehmen/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 130, "priority": "MED", "company": "Immowelt", "position": "Developer", "location": "Nuremberg", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.immowelt.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 131, "priority": "MED", "company": "Xing (New Work)", "position": "Developer", "location": "Hamburg", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.new-work.se/en/career", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 132, "priority": "MED", "company": "Holidu", "position": "Developer", "location": "Munich", "salary": "€80k–€110k", "chance": "Medium", "url": "https://www.holidu.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 133, "priority": "MED", "company": "Omio", "position": "Developer", "location": "Berlin", "salary": "€85k–€115k", "chance": "Medium", "url": "https://www.omio.com/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 134, "priority": "MED", "company": "Zeiss Digital", "position": "Developer", "location": "Dresden/Jena", "salary": "€80k–€115k", "chance": "Strong", "url": "https://karriere.zeiss.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 135, "priority": "MED", "company": "Rohde & Schwarz", "position": "Developer", "location": "Munich", "salary": "€85k–€120k", "chance": "Medium", "url": "https://www.rohde-schwarz.com/de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 136, "priority": "MED", "company": "EnBW Digital", "position": "Developer", "location": "Karlsruhe", "salary": "€80k–€110k", "chance": "Medium", "url": "https://www.enbw.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 137, "priority": "MED", "company": "Flink", "position": "Backend Developer", "location": "Berlin", "salary": "€85k–€120k", "chance": "Medium", "url": "https://www.goflink.com/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 138, "priority": "MED", "company": "Picnic", "position": "Backend Engineer", "location": "Düsseldorf", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.picnic.app/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 139, "priority": "MED", "company": "Too Good To Go", "position": "Developer", "location": "Berlin", "salary": "€80k–€110k", "chance": "Medium", "url": "https://toogoodtogo.com/en/jobs", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 140, "priority": "MED", "company": "QAware", "position": "Developer", "location": "Munich", "salary": "€85k–€120k", "chance": "Strong", "url": "https://www.qaware.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 141, "priority": "MED", "company": "Mayflower", "position": "Developer", "location": "Würzburg", "salary": "€80k–€115k", "chance": "Strong", "url": "https://www.mayflower.de/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 142, "priority": "MED", "company": "HRS Group", "position": "Developer", "location": "Cologne", "salary": "€75k–€100k", "chance": "Medium", "url": "https://www.hrs.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 143, "priority": "MED", "company": "Commerzbank", "position": "Developer", "location": "Frankfurt", "salary": "€85k–€130k", "chance": "Medium", "url": "https://karriere.commerzbank.de", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 144, "priority": "MED", "company": "SAP LeanIX", "position": "Developer", "location": "Germany", "salary": "€90k–€140k", "chance": "Medium-Strong", "url": "https://www.leanix.net/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 145, "priority": "MED", "company": "Babbel", "position": "Backend Developer", "location": "Berlin", "salary": "€80k–€110k", "chance": "Medium", "url": "https://jobs.babbel.com", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 146, "priority": "MED", "company": "Ecosia", "position": "Developer", "location": "Berlin", "salary": "€80k–€110k", "chance": "Medium", "url": "https://jobs.ecosia.org", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 147, "priority": "MED", "company": "Taxfix", "position": "Developer", "location": "Berlin", "salary": "€85k–€120k", "chance": "Medium", "url": "https://taxfix.de/en/careers", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 148, "priority": "MED", "company": "Scout24", "position": "Developer", "location": "Munich", "salary": "€85k–€115k", "chance": "Strong", "url": "https://www.scout24.com/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}, {"id": 149, "priority": "MED", "company": "comdirect", "position": "Developer", "location": "Quickborn", "salary": "€75k–€100k", "chance": "Strong", "url": "https://www.comdirect.de/info/ueber-uns/karriere", "status": "Not Applied", "appliedDate": "", "notes": "", "stage": ""}];
+const CERTS_DEFAULT = [{"id": 1, "name": "AWS Solutions Architect Associate (SAA-C03)", "priority": "CRITICAL", "duration": "8-10 weeks", "cost": "~$150", "deadline": "2026-08-31", "progress": 0, "url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/", "notes": "Study 2-3 hrs/day. TutorialsDojo + practice exams. FREE study: AWS Skill Builder.", "color": "#dc2626"}, {"id": 2, "name": "Elastic Certified Engineer", "priority": "HIGH", "duration": "6-8 weeks", "cost": "~$400", "deadline": "2026-08-31", "progress": 0, "url": "https://www.elastic.co/training/certification", "notes": "Huge advantage for search engineering roles. Hands-on exam.", "color": "#d97706"}, {"id": 3, "name": "CKAD - Kubernetes Application Developer", "priority": "HIGH", "duration": "8-12 weeks", "cost": "~$395", "deadline": "2026-09-30", "progress": 0, "url": "https://training.linuxfoundation.org/certification/certified-kubernetes-application-developer-ckad/", "notes": "Platform/cloud credibility. Practical exam - hands-on terminal.", "color": "#d97706"}, {"id": 4, "name": "Databricks Data Engineer Associate", "priority": "HIGH", "duration": "5-6 weeks", "cost": "~$200", "deadline": "2026-07-31", "progress": 0, "url": "https://www.databricks.com/learn/certification/data-engineer-associate", "notes": "AI/data engineering companies. Good ROI for the effort.", "color": "#d97706"}, {"id": 5, "name": "HashiCorp Terraform Associate", "priority": "MEDIUM", "duration": "3-4 weeks", "cost": "~$70", "deadline": "2026-08-31", "progress": 0, "url": "https://developer.hashicorp.com/certifications/infrastructure-automation", "notes": "DevOps/platform roles. Quick win alongside AWS.", "color": "#2563eb"}, {"id": 6, "name": "Symfony Certification", "priority": "MEDIUM", "duration": "4-6 weeks", "cost": "~€250", "deadline": "2026-06-30", "progress": 0, "url": "https://certification.symfony.com/exams/symfony.html", "notes": "Validates your main PHP framework skill. Good for German Symfony roles.", "color": "#2563eb"}, {"id": 7, "name": "Zend PHP 8 Certification", "priority": "MEDIUM", "duration": "3-4 weeks", "cost": "~$195", "deadline": "2026-06-30", "progress": 0, "url": "https://www.zend.com/training/php-certification-exam", "notes": "Shows PHP mastery. Pairs perfectly with Symfony cert.", "color": "#2563eb"}];
+const SCHEDULE_DEFAULT = [{"time": "6:30 AM", "task": "Dog walk (30 min)", "cat": "routine", "icon": "🐕"}, {"time": "7:00 AM", "task": "Personal breakfast + review today's plan", "cat": "routine", "icon": "🍳"}, {"time": "7:30 AM", "task": "Programming Block 1 — PHP / Symfony / Python (2 hrs deep focus)", "cat": "code", "icon": "💻"}, {"time": "9:30 AM", "task": "Help mum — cleaning & kitchen prep", "cat": "family", "icon": "🏠"}, {"time": "10:00 AM", "task": "Breakfast with mum (family time)", "cat": "family", "icon": "☕"}, {"time": "10:30 AM", "task": "Run / Workout (40 min — alternate run & strength days)", "cat": "fitness", "icon": "🏃"}, {"time": "11:15 AM", "task": "LeetCode / Interview problems (1 hr)", "cat": "code", "icon": "🧠"}, {"time": "12:15 PM", "task": "Cool down + rest / nap if needed", "cat": "rest", "icon": "😴"}, {"time": "2:00 PM", "task": "Lunch with family", "cat": "family", "icon": "🍽️"}, {"time": "3:00 PM", "task": "Germany Window — Apply to jobs, emails, LinkedIn (2 hrs)", "cat": "jobs", "icon": "🇩🇪"}, {"time": "5:00 PM", "task": "Dog walk (30 min)", "cat": "routine", "icon": "🐕"}, {"time": "5:30 PM", "task": "Programming Block 2 — Portfolio project / Certification study (1 hr)", "cat": "code", "icon": "🚀"}, {"time": "6:30 PM", "task": "Leisure — Anime / TV series (earned)", "cat": "leisure", "icon": "📺"}, {"time": "7:00 PM", "task": "Dinner with family", "cat": "family", "icon": "🍛"}, {"time": "7:45 PM", "task": "Light reading — technical article or book (30 min)", "cat": "learn", "icon": "📚"}, {"time": "9:00 PM", "task": "Journal — 3 wins, what to improve tomorrow", "cat": "mindset", "icon": "✍️"}, {"time": "9:30 PM", "task": "Sleep", "cat": "rest", "icon": "🌙"}];
+
+function ls(key,def){try{const v=localStorage.getItem(key);return v?JSON.parse(v):def}catch{return def}}
+function lsSave(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch{}}
+
+let companies = ls('p_companies', COMPANIES_DEFAULT);
+let certs = ls('p_certs', CERTS_DEFAULT);
+let scheduleChecks = ls('p_sched_' + new Date().toDateString(), {});
+let weeklyChecks = ls('p_weekly_' + getWeekKey(), {});
+
+function getWeekKey(){const d=new Date();return d.getFullYear()+'-W'+Math.ceil((d.getDate()+new Date(d.getFullYear(),d.getMonth(),1).getDay())/7)}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg||'Saved!';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function saveAll(){
+  lsSave('p_companies', companies);
+  lsSave('p_certs', certs);
+  lsSave('p_sched_'+new Date().toDateString(), scheduleChecks);
+  lsSave('p_weekly_'+getWeekKey(), weeklyChecks);
+  showToast('💾 Saved!');
+}
+
+// Auto-save every 30s
+setInterval(saveAll, 30000);
+
+function showTab(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if(name==='jobs') renderJobs();
+  if(name==='certs') renderCerts();
+  if(name==='roadmap') renderRoadmap();
+  if(name==='dashboard') renderDashboard();
+  if(name==='schedule') renderSchedule();
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  const applied = companies.filter(c=>c.status!=='Not Applied').length;
+  const interviews = companies.filter(c=>c.status==='Interview').length;
+  const offers = companies.filter(c=>c.status==='Offer').length;
+  const certAvg = certs.length ? Math.round(certs.reduce((s,c)=>s+c.progress,0)/certs.length) : 0;
+  document.getElementById('dashStats').innerHTML = [
+    {val:applied,label:'Applied',color:'#2563eb'},
+    {val:interviews,label:'Interviews',color:'#d97706'},
+    {val:offers,label:'Offers',color:'#16a34a'},
+    {val:certAvg+'%',label:'Cert Progress',color:'#7c3aed'},
+  ].map(s=>`<div class="stat"><div class="stat-val" style="color:${s.color}">${s.val}</div><div class="stat-label">${s.label}</div></div>`).join('');
+  
+  // Pipeline
+  const statuses = ['Not Applied','Applied','Interview','Offer','Rejected'];
+  const colors = ['#94a3b8','#2563eb','#d97706','#16a34a','#dc2626'];
+  document.getElementById('pipeline').innerHTML = statuses.map((s,i)=>{
+    const cnt = companies.filter(c=>c.status===s).length;
+    const pct = Math.round((cnt/companies.length)*100);
+    return `<div style="margin-bottom:8px"><div class="progress-label"><span>${s}</span><span style="font-weight:600;color:${colors[i]}">${cnt}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${colors[i]}"></div></div></div>`;
+  }).join('');
+  
+  // Cert progress
+  document.getElementById('certProgress').innerHTML = certs.map(c=>`
+    <div style="margin-bottom:10px">
+      <div class="progress-label"><span style="font-size:12px">${c.name.substring(0,40)}...</span><span style="font-weight:600;color:${c.color}">${c.progress}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${c.progress}%;background:${c.color}"></div></div>
+    </div>`).join('');
+  
+  // Today quick checklist
+  const quickItems = [
+    {id:'code','label':'💻 Programming study (2+ hrs)'},
+    {id:'leetcode','label':'🧠 LeetCode problem (1+)'},
+    {id:'apply','label':'🇩🇪 Applied to 1+ company'},
+    {id:'run','label':'🏃 Workout done'},
+    {id:'read','label':'📚 Read / studied (30 min)'},
+    {id:'journal','label':'✍️ Journaled today'},
+  ];
+  document.getElementById('quickChecklist').innerHTML = quickItems.map(item=>`
+    <div class="sched-item" style="padding:8px 0">
+      <div class="sched-check ${weeklyChecks[item.id]?'done':''}" onclick="toggleWeekly('${item.id}',this)">${weeklyChecks[item.id]?'✓':''}</div>
+      <div class="sched-content" style="font-size:13px;padding-top:2px">${item.label}</div>
+    </div>`).join('');
+}
+
+function toggleWeekly(id,el){
+  weeklyChecks[id] = !weeklyChecks[id];
+  el.className = 'sched-check' + (weeklyChecks[id]?' done':'');
+  el.textContent = weeklyChecks[id]?'✓':'';
+  lsSave('p_weekly_'+getWeekKey(), weeklyChecks);
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────
+function renderSchedule(){
+  const list = document.getElementById('scheduleList');
+  list.innerHTML = SCHEDULE_DEFAULT.map((item,i)=>`
+    <div class="sched-item">
+      <div class="sched-icon cat-${item.cat}">${item.icon}</div>
+      <div class="sched-content">
+        <div class="sched-time">${item.time}</div>
+        <div class="sched-task cat-${item.cat}">${item.task}</div>
+      </div>
+      <div class="sched-check ${scheduleChecks[i]?'done':''}" onclick="toggleSchedule(${i},this)">${scheduleChecks[i]?'✓':''}</div>
+    </div>`).join('');
+}
+
+function toggleSchedule(i,el){
+  scheduleChecks[i] = !scheduleChecks[i];
+  el.className = 'sched-check' + (scheduleChecks[i]?' done':'');
+  el.textContent = scheduleChecks[i]?'✓':'';
+  lsSave('p_sched_'+new Date().toDateString(), scheduleChecks);
+}
+
+function resetSchedule(){
+  if(!confirm('Reset today schedule?')) return;
+  scheduleChecks = {};
+  lsSave('p_sched_'+new Date().toDateString(), scheduleChecks);
+  renderSchedule();
+}
+
+// ── JOBS ──────────────────────────────────────────────────
+let activeFilter = 'All';
+const statusColors = {'Not Applied':'chip-gray','Applied':'chip-blue','Interview':'','Offer':'chip-green','Rejected':'chip-red','Withdrawn':'chip-gray'};
+
+function renderStatusFilters(){
+  const statuses = ['All','Not Applied','Applied','Interview','Offer','Rejected'];
+  document.getElementById('statusFilters').innerHTML = statuses.map(s=>`
+    <button class="filter-btn${s===activeFilter?' active':''}" onclick="setFilter('${s}')">${s} <span style="opacity:.7">(${s==='All'?companies.length:companies.filter(c=>c.status===s).length})</span></button>`).join('');
+}
+
+function setFilter(s){ activeFilter=s; renderStatusFilters(); filterJobs(); }
+
+function filterJobs(){
+  const q = (document.getElementById('jobSearch').value||'').toLowerCase();
+  const sort = document.getElementById('sortBy').value;
+  let list = companies.filter(c=>{
+    const matchFilter = activeFilter==='All'||c.status===activeFilter;
+    const matchSearch = !q || c.company.toLowerCase().includes(q) || c.position.toLowerCase().includes(q) || c.location.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+  if(sort==='company') list.sort((a,b)=>a.company.localeCompare(b.company));
+  else if(sort==='salary') list.sort((a,b)=>b.salary.localeCompare(a.salary));
+  else if(sort==='status') list.sort((a,b)=>a.status.localeCompare(b.status));
+  else list.sort((a,b)=>(a.priority==='HIGH'?0:1)-(b.priority==='HIGH'?0:1));
+  document.getElementById('jobCount').textContent = list.length + ' companies shown';
+  document.getElementById('companyList').innerHTML = list.map(c=>renderCompanyCard(c)).join('');
+}
+
+function renderJobs(){
+  renderStatusFilters();
+  filterJobs();
+}
+
+function renderCompanyCard(c){
+  const cls = c.status==='Applied'?'applied':c.status==='Interview'?'interview':c.status==='Offer'?'offer':c.status==='Rejected'?'rejected':'';
+  const chipCls = c.status==='Interview'?'chip-green':statusColors[c.status]||'chip-gray';
+  return `<div class="company-card ${cls}" id="co-${c.id}">
+    <div class="co-top">
+      <div>
+        <div class="co-name">${c.company}</div>
+        <div class="co-pos">${c.position}</div>
+      </div>
+      <span class="co-pri-badge pri-${c.priority}">${c.priority}</span>
+    </div>
+    <div class="co-meta">
+      <span class="co-tag">📍 ${c.location}</span>
+      <span class="co-salary">${c.salary}</span>
+      <span class="co-tag">🎯 ${c.chance}</span>
+    </div>
+    <div class="status-row">
+      <select class="status-sel" onchange="updateStatus(${c.id},this.value)" style="border-left:3px solid ${getStatusColor(c.status)}">
+        ${['Not Applied','Applied','Interview','Offer','Rejected','Withdrawn'].map(s=>`<option${s===c.status?' selected':''}>${s}</option>`).join('')}
+      </select>
+      <span class="status-badge status-${c.status.replace(' ','-')}">${c.status}</span>
+      <a href="${c.url}" target="_blank" class="co-link">Apply →</a>
+    </div>
+    ${c.appliedDate?`<div class="text-sm mt-2">📅 Applied: ${c.appliedDate}</div>`:''}
+    <textarea class="notes-input" rows="1" placeholder="Notes..." onchange="updateNotes(${c.id},this.value)">${c.notes||''}</textarea>
+    <button class="edit-co-btn" onclick="openEditCompany(${c.id})">✏️ Edit / Delete</button>
+  </div>`;
+}
+
+function getStatusColor(s){
+  return {Applied:'#2563eb',Interview:'#d97706',Offer:'#16a34a',Rejected:'#dc2626'}[s]||'#94a3b8';
+}
+
+function updateStatus(id,val){
+  const idx = companies.findIndex(c=>c.id===id);
+  if(idx>-1){
+    companies[idx].status=val;
+    if(val==='Applied'&&!companies[idx].appliedDate) companies[idx].appliedDate=new Date().toISOString().split('T')[0];
+    lsSave('p_companies',companies);
+    renderStatusFilters();
+    filterJobs();
+  }
+}
+
+function updateNotes(id,val){
+  const idx = companies.findIndex(c=>c.id===id);
+  if(idx>-1){companies[idx].notes=val;lsSave('p_companies',companies);}
+}
+
+// ── CERTS ──────────────────────────────────────────────────
+function renderCerts(){
+  document.getElementById('certList').innerHTML = certs.map((c,i)=>`
+    <div class="cert-card">
+      <div class="cert-top">
+        <div class="cert-name">${c.name}</div>
+        <span class="cert-pri pri-${c.priority}">${c.priority}</span>
+      </div>
+      <div class="cert-meta">
+        <div>⏱ Duration: <span>${c.duration}</span></div>
+        <div>💰 Cost: <span>${c.cost}</span></div>
+        <div>📅 Target: <span>${c.deadline}</span></div>
+        <div>📈 Progress: <span>${c.progress}%</span></div>
+      </div>
+      <div class="cert-notes">${c.notes}</div>
+      <div class="progress-wrap" style="margin-bottom:10px">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${c.progress}%;background:${c.color}"></div>
+        </div>
+      </div>
+      <div class="cert-actions">
+        <a href="${c.url}" target="_blank" class="cert-link">📖 Study Link →</a>
+        <div style="flex:1"></div>
+        <span style="font-size:12px;color:var(--gray);margin-right:6px">Progress:</span>
+        <input type="number" class="prog-input" min="0" max="100" value="${c.progress}" onchange="updateCertProgress(${i},this.value)" />
+        <span style="font-size:12px;color:var(--gray);margin-left:4px">%</span>
+      </div>
+    </div>`).join('');
+}
+
+function updateCertProgress(i,val){
+  certs[i].progress=Math.min(100,Math.max(0,parseInt(val)||0));
+  lsSave('p_certs',certs);
+  renderCerts();
+  renderDashboard();
+}
+
+// ── ROADMAP ──────────────────────────────────────────────
+function renderRoadmap(){
+  const stages = [
+    {icon:'🌱',bg:'#dcfce7',month:'Now – June 2026',title:'Stage 1 — Entry Level',salary:'€65k – €80k',color:'#16a34a',items:['Apply to PHP/Symfony roles immediately','Pass 2-week interview prep plan','Push 1+ project to GitHub this week','Update CV + LinkedIn profile','Target: first German interview within 4 weeks']},
+    {icon:'📈',bg:'#dbeafe',month:'July – September 2026',title:'Stage 2 — Mid-Senior Level',salary:'€80k – €100k',color:'#2563eb',items:['AWS Solutions Architect Associate completed','Symfony + PHP cert obtained','2+ real projects on GitHub','Actively in interview processes','Building system design knowledge (ByteByteGo + DDIA)']},
+    {icon:'🚀',bg:'#fef3c7',month:'October 2026 – March 2027',title:'Stage 3 — Senior Backend',salary:'€100k – €120k',color:'#d97706',items:['CKAD Kubernetes cert completed','1 LLM/RAG project shipped','Elasticsearch hands-on experience','System design interview-ready','Targeting fintech, cloud-native, AI companies']},
+    {icon:'🏆',bg:'#f3e8ff',month:'2027 +',title:'Stage 4 — Senior AI Backend / Platform',salary:'€120k – €160k+',color:'#7c3aed',items:['Deep AI backend expertise (LLM infra, RAG pipelines)','Platform engineering credibility (K8s, distributed systems)','Strong GitHub portfolio with real projects','Leadership on technical design','Companies: Elastic, Databricks, N26, Trade Republic, Stripe']},
+  ];
+  document.getElementById('roadmapContent').innerHTML = stages.map(s=>`
+    <div class="roadmap-stage">
+      <div class="stage-header">
+        <div class="stage-icon" style="background:${s.bg}">${s.icon}</div>
+        <div style="flex:1">
+          <div class="stage-title">${s.title}</div>
+          <div class="stage-date">${s.month}</div>
+        </div>
+        <div class="stage-salary" style="color:${s.color}">${s.salary}</div>
+      </div>
+      <ul class="stage-items">${s.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+    </div>`).join('');
+}
+
+// ── ADD / EDIT / DELETE COMPANY ──────────────────────────
+function openAddCompany(){
+  document.getElementById('addModalTitle').textContent='+ Add New Company';
+  document.getElementById('addModalSub').textContent='Track a company not in the list';
+  document.getElementById('saveCompanyBtn').textContent='Save Company';
+  document.getElementById('editCompanyId').value='';
+  document.getElementById('deleteCompanyWrap').style.display='none';
+  document.getElementById('f_error').style.display='none';
+  // Clear fields
+  ['f_company','f_position','f_location','f_salary','f_url','f_notes'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('f_priority').value='MED';
+  document.getElementById('f_chance').value='Medium-Strong';
+  document.getElementById('f_status').value='Not Applied';
+  document.getElementById('addCompanyModal').style.display='flex';
+  setTimeout(()=>document.getElementById('f_company').focus(),100);
+}
+
+function openEditCompany(id){
+  const c=companies.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('addModalTitle').textContent='Edit Company';
+  document.getElementById('addModalSub').textContent=c.company;
+  document.getElementById('saveCompanyBtn').textContent='Update Company';
+  document.getElementById('editCompanyId').value=id;
+  document.getElementById('deleteCompanyWrap').style.display='block';
+  document.getElementById('f_error').style.display='none';
+  document.getElementById('f_company').value=c.company||'';
+  document.getElementById('f_position').value=c.position||'';
+  document.getElementById('f_location').value=c.location||'';
+  document.getElementById('f_salary').value=c.salary||'';
+  document.getElementById('f_url').value=c.url||'';
+  document.getElementById('f_priority').value=c.priority||'MED';
+  document.getElementById('f_chance').value=c.chance||'Medium-Strong';
+  document.getElementById('f_status').value=c.status||'Not Applied';
+  document.getElementById('f_notes').value=c.notes||'';
+  document.getElementById('addCompanyModal').style.display='flex';
+}
+
+function closeAddCompany(){
+  document.getElementById('addCompanyModal').style.display='none';
+}
+
+function saveCompany(){
+  const company=document.getElementById('f_company').value.trim();
+  const position=document.getElementById('f_position').value.trim();
+  const errEl=document.getElementById('f_error');
+  if(!company||!position){
+    errEl.textContent='Company name and position are required.';
+    errEl.style.display='block';
+    return;
+  }
+  errEl.style.display='none';
+
+  const editId=document.getElementById('editCompanyId').value;
+  const status=document.getElementById('f_status').value;
+  const entry={
+    company,
+    position,
+    location:document.getElementById('f_location').value.trim()||'Germany',
+    salary:document.getElementById('f_salary').value.trim()||'—',
+    url:document.getElementById('f_url').value.trim()||'',
+    priority:document.getElementById('f_priority').value,
+    chance:document.getElementById('f_chance').value,
+    status,
+    notes:document.getElementById('f_notes').value.trim(),
+    appliedDate: status==='Applied' ? new Date().toISOString().split('T')[0] : '',
+  };
+
+  if(editId){
+    // Edit existing
+    const idx=companies.findIndex(c=>c.id===parseInt(editId));
+    if(idx>-1){
+      entry.id=parseInt(editId);
+      // preserve appliedDate if already set
+      if(companies[idx].appliedDate) entry.appliedDate=companies[idx].appliedDate;
+      companies[idx]={...companies[idx],...entry};
+    }
+  } else {
+    // Add new
+    const maxId=companies.reduce((m,c)=>Math.max(m,c.id||0),0);
+    entry.id=maxId+1;
+    entry.stage='';
+    companies.unshift(entry); // add to top
+  }
+
+  lsSave('p_companies',companies);
+  closeAddCompany();
+  renderStatusFilters();
+  filterJobs();
+  renderDashboard();
+  showToast(editId?'Company updated!':'Company added!');
+}
+
+function deleteCompany(){
+  const editId=parseInt(document.getElementById('editCompanyId').value);
+  if(!editId) return;
+  const c=companies.find(x=>x.id===editId);
+  if(!c) return;
+  if(!confirm('Delete "'+c.company+'" from your tracker? This cannot be undone.')) return;
+  companies=companies.filter(x=>x.id!==editId);
+  lsSave('p_companies',companies);
+  closeAddCompany();
+  renderStatusFilters();
+  filterJobs();
+  renderDashboard();
+  showToast('Company removed.');
+}
+
+// ── BACKUP / EXPORT / IMPORT ──────────────────────────────
+function openBackup(){
+  updateBackupMeta();
+  document.getElementById('backupModal').style.display='flex';
+}
+function closeBackup(){
+  document.getElementById('backupModal').style.display='none';
+}
+
+function collectAllData(){
+  // Collect all schedule check keys from localStorage
+  const schedKeys={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('p_sched_')){
+      try{schedKeys[k]=JSON.parse(localStorage.getItem(k));}catch{}
+    }
+  }
+  const weekKeys={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('p_weekly_')){
+      try{weekKeys[k]=JSON.parse(localStorage.getItem(k));}catch{}
+    }
+  }
+  return{
+    version:2,
+    exportedAt:new Date().toISOString(),
+    exportedFrom:navigator.userAgent.includes('Mobile')?'mobile':'desktop',
+    companies,
+    certs,
+    scheduleChecks:schedKeys,
+    weeklyChecks:weekKeys,
+  };
+}
+
+function exportBackup(){
+  saveAll();
+  const data=collectAllData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const dateStr=new Date().toISOString().split('T')[0];
+  a.href=url;
+  a.download=`pramod-career-backup-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  lsSave('p_last_backup',new Date().toISOString());
+  updateBackupMeta();
+  showToast('✅ Backup downloaded!');
+}
+
+function importBackup(input){
+  const file=input.files[0];
+  if(!file){return;}
+  if(!file.name.endsWith('.json')){showToast('❌ Please select a .json file');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.version||!data.companies){
+        showToast('❌ Invalid backup file');
+        return;
+      }
+      const from=data.exportedFrom||'unknown device';
+      const date=data.exportedAt?new Date(data.exportedAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'unknown';
+      const ok=confirm(`Import backup from ${from}?\nExported: ${date}\n\nThis will replace your current data on this device.\n\nContinue?`);
+      if(!ok){input.value='';return;}
+
+      // Restore companies
+      if(data.companies&&Array.isArray(data.companies)){
+        companies=data.companies;
+        lsSave('p_companies',companies);
+      }
+      // Restore certs
+      if(data.certs&&Array.isArray(data.certs)){
+        certs=data.certs;
+        lsSave('p_certs',certs);
+      }
+      // Restore all schedule checks
+      if(data.scheduleChecks){
+        Object.entries(data.scheduleChecks).forEach(([k,v])=>lsSave(k,v));
+        scheduleChecks=ls('p_sched_'+new Date().toDateString(),{});
+      }
+      // Restore all weekly checks
+      if(data.weeklyChecks){
+        Object.entries(data.weeklyChecks).forEach(([k,v])=>lsSave(k,v));
+        weeklyChecks=ls('p_weekly_'+getWeekKey(),{});
+      }
+
+      lsSave('p_last_import',new Date().toISOString());
+      lsSave('p_last_import_from',from);
+      updateBackupMeta();
+
+      // Re-render current active page
+      renderDashboard();
+      renderSchedule();
+      showToast('✅ Backup imported successfully!');
+      input.value='';
+    }catch(err){
+      showToast('❌ Failed to read file');
+      input.value='';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function updateBackupMeta(){
+  const lastBackup=ls('p_last_backup',null);
+  const lastImport=ls('p_last_import',null);
+  const lastImportFrom=ls('p_last_import_from',null);
+  let html='';
+  if(lastBackup){
+    const d=new Date(lastBackup).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    html+=`<div>⬇️ Last export: <strong>${d}</strong></div>`;
+  } else {
+    html+=`<div style="color:#94a3b8">No export yet</div>`;
+  }
+  if(lastImport){
+    const d=new Date(lastImport).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    html+=`<div>⬆️ Last import: <strong>${d}</strong> from ${lastImportFrom||'?'}</div>`;
+  }
+  const appCnt=companies.filter(c=>c.status!=='Not Applied').length;
+  const certAvg=certs.length?Math.round(certs.reduce((s,c)=>s+c.progress,0)/certs.length):0;
+  html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e2e8f0;color:#64748b">📦 ${companies.length} companies · ${appCnt} applied · Certs ${certAvg}%</div>`;
+  document.getElementById('backupMeta').innerHTML=html;
+}
+
+// ── INIT ──────────────────────────────────────────────────
+renderDashboard();
+renderSchedule();
+</script>
+</body>
+</html>

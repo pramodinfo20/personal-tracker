@@ -17,23 +17,28 @@ export interface StatBalanceChartProps {
 interface AxisTickProps {
   x?: number | string
   y?: number | string
+  cy?: number | string
   textAnchor?: 'start' | 'middle' | 'end' | 'inherit'
   payload?: { value: string }
   data: StatRadarPoint[]
 }
 
+const LABEL_NUDGE = 8
+
 // Each axis label shows the stat key plus its current value underneath, in
-// the same muted label color / font the XP chart's axes use.
-function AxisTick({ x = 0, y = 0, textAnchor = 'middle', payload, data }: AxisTickProps) {
+// the same muted label color / font the XP chart's axes use. The two-line
+// label is nudged away from the chart's centre vertically, so the value
+// line never sits on a grid vertex (the top one did).
+function AxisTick({ x = 0, y = 0, cy = 0, textAnchor = 'middle', payload, data }: AxisTickProps) {
   const point = data.find((d) => d.stat === payload?.value)
-  const cx = Number(x)
-  const cy = Number(y)
+  const tx = Number(x)
+  const ty = Number(y) + (Number(y) < Number(cy) ? -LABEL_NUDGE : LABEL_NUDGE / 2)
   return (
-    <text x={cx} y={cy} textAnchor={textAnchor} fontSize={11} fontWeight={700}>
-      <tspan x={cx} dy="-0.2em" fill="var(--color-text-muted)">
+    <text x={tx} y={ty} textAnchor={textAnchor} fontSize={11} fontWeight={700}>
+      <tspan x={tx} dy="-0.2em" fill="var(--color-text-muted)">
         {payload?.value}
       </tspan>
-      <tspan x={cx} dy="1.2em" fill="var(--color-text-secondary)" fontFamily="var(--font-mono)">
+      <tspan x={tx} dy="1.2em" fill="var(--color-text-secondary)" fontFamily="var(--font-mono)">
         {point?.value ?? 0}
       </tspan>
     </text>
