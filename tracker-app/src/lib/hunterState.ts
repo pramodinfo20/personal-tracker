@@ -1,6 +1,7 @@
 // Ported as-is from pramod-2026-tracker.html — the localStorage-backed
 // `hunter` state shape (DEFAULT_HUNTER) plus its supporting types.
 
+import type { ActivityCategoryKey } from './activities'
 import type { ActiveGate } from './gates'
 import type { StatKey } from './types'
 
@@ -72,6 +73,12 @@ export interface Hunter {
    * appear here — they carry their own `active` flag. See lib/questVisibility.ts.
    */
   hiddenQuestIds?: string[]
+  /** Optional profile details from setup — display only, never used in any XP/health calculation. */
+  age?: number
+  heightCm?: number
+  weightKg?: number
+  /** Goal categories picked in setup (activity-library category keys). Absent for hunters who onboarded before goals existed. */
+  goals?: ActivityCategoryKey[]
   /** ISO timestamp of finishing onboarding. Absent for hunters who onboarded before this was tracked — see joinDateFor in lib/profile.ts. */
   joinedAt?: string
 }

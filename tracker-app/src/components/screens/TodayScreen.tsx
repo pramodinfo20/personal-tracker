@@ -141,6 +141,19 @@ export function TodayScreen({
           onUndo={onUndoQuest}
           enterOffset={3 + visibleFixed.length}
         />
+        {/* Discovery hint for Manage Quests — not shown with the empty
+            state above, which already has its own button there. Left-
+            aligned so it never sits under the floating "+" at page end. */}
+        {visible.length > 0 && (
+          <button
+            type="button"
+            onClick={onManageQuests}
+            className="cursor-pointer self-start rounded-full bg-black/50 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
+          >
+            Want different quests?{' '}
+            <span className="font-bold text-accent-hover">Manage Quests →</span>
+          </button>
+        )}
       </div>
 
       <button

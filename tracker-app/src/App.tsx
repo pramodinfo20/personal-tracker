@@ -11,6 +11,7 @@ import {
   ProfileSheet,
 } from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
+import { starterActivitiesForGoals, type OnboardingResult } from './lib/onboarding'
 import { questEntries } from './lib/questVisibility'
 
 // Code-split: recharts (Progress screen's chart library) is a meaningful
@@ -24,6 +25,7 @@ function App() {
   const [tab, setTab] = useState<Tab>('today')
   const [profileOpen, setProfileOpen] = useState(false)
   const [manageQuestsOpen, setManageQuestsOpen] = useState(false)
+  const [retakeSetupOpen, setRetakeSetupOpen] = useState(false)
   const {
     hunter,
     dev,
@@ -44,10 +46,22 @@ function App() {
   } = useHunter()
   const { customQuests, addQuest, renameQuest, setQuestActive, deleteQuest } = useCustomQuests()
 
+  // Setup's goals also seed starter quests for goals that have no built-in
+  // quest behind them (e.g. Hydration -> Drinking Water) — through the
+  // normal add-quest path, and never a second copy of one already there.
+  const finishSetup = (result: OnboardingResult) => {
+    completeOnboarding(result)
+    for (const activityId of starterActivitiesForGoals(result.goals)) {
+      if (!customQuests.some((q) => q.activityId === activityId)) addQuest(activityId)
+    }
+    setRetakeSetupOpen(false)
+  }
+
   // First launch only — hunter.name stays '' (the DEFAULT_HUNTER value)
-  // until onboarding finishes, so this never reappears afterward.
+  // until setup finishes (the name is required there), so an existing save
+  // never lands here and setup never reappears on its own afterward.
   if (!hunter.name.trim()) {
-    return <OnboardingFlow onComplete={completeOnboarding} />
+    return <OnboardingFlow onComplete={finishSetup} />
   }
 
   return (
@@ -108,6 +122,10 @@ function App() {
             setProfileOpen(false)
             setManageQuestsOpen(true)
           }}
+          onRetakeSetup={() => {
+            setProfileOpen(false)
+            setRetakeSetupOpen(true)
+          }}
           onClose={() => setProfileOpen(false)}
         />
       )}
@@ -126,6 +144,20 @@ function App() {
           onRename={renameQuest}
           onDelete={deleteQuest}
           onClose={() => setManageQuestsOpen(false)}
+        />
+      )}
+
+      {retakeSetupOpen && (
+        <OnboardingFlow
+          initial={{
+            name: hunter.name,
+            age: hunter.age,
+            heightCm: hunter.heightCm,
+            weightKg: hunter.weightKg,
+            goals: hunter.goals ?? [],
+          }}
+          onComplete={finishSetup}
+          onCancel={() => setRetakeSetupOpen(false)}
         />
       )}
 

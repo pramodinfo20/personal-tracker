@@ -10,6 +10,12 @@ export interface ActivityCardProps {
   /** Artwork URL (activityImage). When absent — or if it fails to load — the faded glyph is shown instead. */
   image?: string
   onClick?: () => void
+  /**
+   * Makes the card a toggle (aria-pressed) with a visible selected state —
+   * for multi-select grids like setup's goal picker. Leave undefined for a
+   * plain navigation card.
+   */
+  selected?: boolean
   /** 'tile' for the step 1/2 grids; 'banner' for the selected activity atop step 3. */
   size?: 'tile' | 'banner'
   children?: ReactNode
@@ -29,6 +35,7 @@ export function ActivityCard({
   gradient,
   image,
   onClick,
+  selected,
   size = 'tile',
   children,
 }: ActivityCardProps) {
@@ -96,19 +103,41 @@ export function ActivityCard({
         )}
         {children}
       </span>
+      {selected !== undefined && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border text-xs font-black transition-colors',
+            selected
+              ? 'border-white bg-accent text-white shadow-[0_0_10px_rgb(47_143_255/0.8)]'
+              : 'border-white/50 bg-black/40 text-transparent',
+          )}
+        >
+          ✓
+        </span>
+      )}
     </>
   )
 
   const className = cn(
     'relative block w-full overflow-hidden rounded-2xl border border-white/10 shadow-panel',
     isBanner ? 'h-28' : 'aspect-[4/3]',
+    // Unselected toggles dim back; the selected one gets a bright ring.
+    selected === true && 'ring-2 ring-accent-hover ring-offset-2 ring-offset-bg',
+    selected === false && 'opacity-70 saturate-50',
     onClick && 'cursor-pointer transition-transform duration-150 active:scale-[0.97] hover:brightness-110',
   )
   const style = { background: gradientCss(gradient) }
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={className} style={style}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        className={className}
+        style={style}
+      >
         {body}
       </button>
     )

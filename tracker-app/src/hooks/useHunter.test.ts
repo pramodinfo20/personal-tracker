@@ -506,11 +506,61 @@ describe('useHunter — Log Activity from the activity library', () => {
 describe('useHunter — profile/dev helpers', () => {
   afterEach(() => localStorage.clear())
 
-  it('records joinedAt at onboarding', () => {
+  it('setup writes name, details, goals and the goal-based starting quest visibility in one update', () => {
     localStorage.setItem(KEY, JSON.stringify(DEFAULT_HUNTER))
     const { result } = renderHook(() => useHunter())
-    act(() => result.current.completeOnboarding('Jin', []))
-    expect(result.current.hunter.joinedAt).toEqual(expect.any(String))
+    act(() =>
+      result.current.completeOnboarding({
+        name: '  Jin ',
+        age: 28,
+        heightCm: 178,
+        goals: ['exercise', 'learning'],
+      }),
+    )
+    const h = result.current.hunter
+    expect(h).toMatchObject({
+      name: 'Jin',
+      age: 28,
+      heightCm: 178,
+      goals: ['exercise', 'learning'],
+      focusStats: ['STR', 'INT'],
+      // Career, Recovery and Daily Habits weren't picked -> their quests start hidden.
+      hiddenQuestIds: ['q_hunt', 'q_recover', 'q_discipline'],
+    })
+    expect(h.weightKg).toBeUndefined()
+    expect(h.joinedAt).toEqual(expect.any(String))
+    // Progress is untouched.
+    expect(h).toMatchObject({ level: 1, xp: 0, log: [], completedToday: {} })
+  })
+
+  it('setup refuses a blank name (the name is what marks setup as done)', () => {
+    localStorage.setItem(KEY, JSON.stringify(DEFAULT_HUNTER))
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.completeOnboarding({ name: '   ', goals: ['exercise'] }))
+    expect(result.current.hunter.name).toBe('')
+    expect(result.current.hunter.hiddenQuestIds).toBeUndefined()
+  })
+
+  it('retaking setup keeps progress and the original join date', () => {
+    seed({
+      level: 4,
+      xp: 120,
+      joinedAt: '2026-09-01T00:00:00.000Z',
+      hiddenQuestIds: ['q_train'],
+      completedToday: { q_learn: true },
+      // This block doesn't freeze the clock — use the real date so the
+      // daily rollover doesn't clear the claim being checked.
+      lastQuestDate: new Date().toISOString().split('T')[0],
+    })
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.completeOnboarding({ name: 'Tester', goals: ['career'] }))
+    expect(result.current.hunter).toMatchObject({
+      level: 4,
+      xp: 120,
+      joinedAt: '2026-09-01T00:00:00.000Z',
+      completedToday: { q_learn: true },
+      hiddenQuestIds: ['q_train', 'q_learn', 'q_recover', 'q_discipline'],
+    })
   })
 
   it('dev.jumpToLevel / clearGateHistory / resetHunter write state directly', () => {

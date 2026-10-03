@@ -35,6 +35,11 @@ import {
 } from '../lib/quests'
 import { SHADOW_MILESTONES } from '../lib/shadows'
 import { today } from '../lib/format'
+import {
+  focusStatsForGoals,
+  hiddenQuestIdsForGoals,
+  type OnboardingResult,
+} from '../lib/onboarding'
 import { toggleHiddenQuest } from '../lib/questVisibility'
 import { wouldStrandProgress } from '../lib/undoGuard'
 import { useSaved } from './useSaved'
@@ -295,14 +300,23 @@ export function useHunter() {
     setHunter((h) => ({ ...h, name: trimmed }))
   }
 
-  // Onboarding's two screens land as one atomic update so there's no
-  // intermediate render with a name but no focus (or vice versa).
-  const completeOnboarding = (name: string, focusStats: StatKey[]) => {
-    const trimmed = name.trim() || 'Hunter'
+  // Setup (first launch, or "Retake setup" from Profile) lands as one atomic
+  // update. The chosen goals set the STARTING visibility of the fixed quests
+  // through the same hiddenQuestIds field Manage Quests edits — nothing
+  // here is locked in. Never called for an existing save unless the user
+  // explicitly retakes setup. XP, level, log and claims are untouched.
+  const completeOnboarding = (result: OnboardingResult) => {
+    const trimmed = result.name.trim()
+    if (!trimmed) return
     setHunter((h) => ({
       ...h,
       name: trimmed,
-      focusStats,
+      age: result.age,
+      heightCm: result.heightCm,
+      weightKg: result.weightKg,
+      goals: result.goals,
+      focusStats: focusStatsForGoals(result.goals),
+      hiddenQuestIds: hiddenQuestIdsForGoals(result.goals),
       joinedAt: h.joinedAt ?? new Date().toISOString(),
     }))
   }

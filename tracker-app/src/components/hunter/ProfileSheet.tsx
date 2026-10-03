@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
-import { avatarInitial, formatJoinDate, joinDateFor } from '../../lib/profile'
+import { avatarInitial, formatJoinDate, joinDateFor, profileDetails } from '../../lib/profile'
 import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { Badge, Button, ScreenBackground } from '../ui'
 import { DevTestingPanel, type DevActions } from './DevTestingPanel'
@@ -14,6 +14,8 @@ export interface ProfileSheetProps {
   dev: DevActions
   /** Opens the Manage Quests screen (the caller closes this sheet). */
   onManageQuests: () => void
+  /** Re-opens the setup flow, prefilled (the caller closes this sheet). */
+  onRetakeSetup: () => void
   onClose: () => void
 }
 
@@ -33,10 +35,12 @@ export function ProfileSheet({
   onRename,
   dev,
   onManageQuests,
+  onRetakeSetup,
   onClose,
 }: ProfileSheetProps) {
   const rank = rankForLevel(hunter.level || 1)
   const joined = joinDateFor(hunter)
+  const details = profileDetails(hunter)
   const [name, setName] = useState(hunter.name)
   const trimmed = name.trim()
   const nameChanged = trimmed.length > 0 && trimmed !== hunter.name
@@ -91,6 +95,10 @@ export function ProfileSheet({
               {joined.approximate ? 'Active since' : 'Joined'} {formatJoinDate(joined.date)}
             </div>
           )}
+          {/* Optional details from setup — display only. */}
+          {details.length > 0 && (
+            <div className="mt-1 text-xs text-text-secondary">{details.join(' · ')}</div>
+          )}
 
           <button
             type="button"
@@ -134,6 +142,26 @@ export function ProfileSheet({
                 </Button>
               </div>
             </form>
+            <button
+              type="button"
+              onClick={onRetakeSetup}
+              className="hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="text-lg" aria-hidden="true">
+                  🧭
+                </span>
+                <span>
+                  <span className="block text-sm font-bold text-text-primary">Retake setup</span>
+                  <span className="block text-xs text-text-secondary">
+                    Update your details and goals
+                  </span>
+                </span>
+              </span>
+              <span className="text-xl text-text-secondary" aria-hidden="true">
+                ›
+              </span>
+            </button>
             {COMING_SOON.map((item) => (
               <div
                 key={item.label}

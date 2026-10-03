@@ -39,3 +39,11 @@ export const formatJoinDate = (dateKey: string): string =>
     day: 'numeric',
     year: 'numeric',
   })
+
+// The optional body details from setup, formatted for the Profile sheet —
+// only the ones actually provided ("28 yrs", "178 cm", "74 kg").
+export const profileDetails = (hunter: Hunter): string[] => [
+  ...(hunter.age !== undefined ? [`${hunter.age} yrs`] : []),
+  ...(hunter.heightCm !== undefined ? [`${hunter.heightCm} cm`] : []),
+  ...(hunter.weightKg !== undefined ? [`${hunter.weightKg} kg`] : []),
+]
