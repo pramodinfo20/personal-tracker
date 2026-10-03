@@ -17,10 +17,10 @@ export interface CountdownTimerProps {
 }
 
 const URGENT_PULSE_STYLE: CSSProperties = {
-  '--pulse-ring': 'rgba(224, 41, 63, 0.4)',
-  '--pulse-ring-strong': 'rgba(224, 41, 63, 0.6)',
-  '--pulse-glow': 'rgba(224, 41, 63, 0.4)',
-  '--pulse-glow-strong': 'rgba(224, 41, 63, 0.75)',
+  '--pulse-ring': 'rgb(var(--rgb-red) / 0.4)',
+  '--pulse-ring-strong': 'rgb(var(--rgb-red) / 0.6)',
+  '--pulse-glow': 'rgb(var(--rgb-red) / 0.4)',
+  '--pulse-glow-strong': 'rgb(var(--rgb-red) / 0.75)',
 } as CSSProperties
 
 export function CountdownTimer({
@@ -61,9 +61,9 @@ export function CountdownTimer({
   return (
     <span
       className={cn(
-        // bg-black/50: its own dark backing, so the digits stay legible
+        // bg-backing/50: its own backing chip, so the digits stay legible
         // over screen art seen through see-through glass.
-        'inline-flex items-center rounded-md border bg-black/50 px-2 py-0.5 font-mono text-sm tracking-wider tabular-nums',
+        'inline-flex items-center rounded-md border bg-backing/50 px-2 py-0.5 font-mono text-sm tracking-wider tabular-nums',
         expired
           ? 'border-border text-text-muted'
           : urgent

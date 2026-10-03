@@ -29,7 +29,7 @@ export function ShadowArmyGrid({ unlockedShadows }: ShadowArmyGridProps) {
                 'rounded-xl border p-3 text-center transition-transform',
                 unlocked
                   ? 'hud-inset border-border-strong hover:-translate-y-0.5'
-                  : 'border-dashed border-border bg-black/15',
+                  : 'border-dashed border-border bg-track',
               )}
             >
               <span

@@ -15,9 +15,9 @@ const BASE_CLASSES =
   'disabled:pointer-events-none disabled:opacity-40'
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-white hover:bg-accent-hover hover:shadow-glow-accent',
+  primary: 'bg-accent-solid text-on-accent hover:brightness-110 hover:shadow-glow-accent',
   secondary:
-    'border border-border bg-surface text-text-primary hover:border-accent/60 hover:text-white hover:shadow-glow-accent',
+    'border border-border bg-surface text-text-primary hover:border-accent/60 hover:text-text-primary hover:shadow-glow-accent',
 }
 
 export function Button({

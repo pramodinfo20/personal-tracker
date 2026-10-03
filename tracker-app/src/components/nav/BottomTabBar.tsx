@@ -40,7 +40,7 @@ export function BottomTabBar({ active, onChange }: BottomTabBarProps) {
               <span
                 className={cn(
                   'text-xl leading-none',
-                  isActive && 'drop-shadow-[0_0_8px_rgba(47,143,255,0.6)]',
+                  isActive && 'drop-shadow-[0_0_8px_rgb(var(--rgb-accent)/0.6)]',
                 )}
                 aria-hidden="true"
               >

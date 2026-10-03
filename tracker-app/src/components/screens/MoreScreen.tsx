@@ -1,4 +1,3 @@
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { ScreenBackground } from '../ui'
 
 const MORE_ITEMS = [
@@ -18,7 +17,7 @@ const MORE_ITEMS = [
 export function MoreScreen() {
   return (
     <ScreenBackground
-      {...screenBackgroundProps('generic')}
+      screen="generic"
       className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10"
     >
       <div className="mx-auto max-w-3xl">
@@ -26,7 +25,7 @@ export function MoreScreen() {
         <p className="mt-1 mb-6 text-sm text-text-primary/80">
           Other trackers live here as they're rebuilt.
         </p>
-        <div className="hud-glass divide-y divide-white/5 overflow-hidden rounded-2xl">
+        <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
           {MORE_ITEMS.map((item) => (
             <div
               key={item.label}
@@ -39,7 +38,7 @@ export function MoreScreen() {
                 </span>
                 {item.label}
               </span>
-              <span className="shrink-0 rounded-full border border-border bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
+              <span className="shrink-0 rounded-full border border-border bg-backing/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
                 Coming soon
               </span>
             </div>

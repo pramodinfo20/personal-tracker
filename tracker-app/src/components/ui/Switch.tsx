@@ -22,15 +22,15 @@ export function Switch({ checked, onChange, label, className }: SwitchProps) {
         'relative h-7 w-12 shrink-0 cursor-pointer rounded-full border transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         checked
-          ? 'border-accent bg-accent shadow-[0_0_10px_-2px_rgb(47_143_255/0.7)]'
-          : 'border-border-strong bg-black/50',
+          ? 'border-accent bg-accent shadow-[0_0_10px_-2px_rgb(var(--rgb-accent)/0.7)]'
+          : 'border-border-strong bg-track',
         className,
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          'absolute top-0.5 left-0.5 h-[1.375rem] w-[1.375rem] rounded-full bg-white shadow transition-transform duration-150',
+          'absolute top-0.5 left-0.5 h-[1.375rem] w-[1.375rem] rounded-full bg-on-accent shadow transition-transform duration-150',
           checked ? 'translate-x-5' : 'translate-x-0 opacity-70',
         )}
       />

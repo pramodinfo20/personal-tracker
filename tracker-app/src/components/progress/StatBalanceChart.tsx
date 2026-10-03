@@ -67,7 +67,7 @@ export function StatBalanceChart({ stats }: StatBalanceChartProps) {
             fillOpacity={0.32}
             dot={{ r: 3, fill: 'var(--color-accent-hover)', strokeWidth: 0 }}
             isAnimationActive
-            style={{ filter: 'drop-shadow(0 0 6px rgb(47 143 255 / 0.55))' }}
+            style={{ filter: 'drop-shadow(0 0 6px rgb(var(--rgb-accent) / 0.55))' }}
           />
         </RadarChart>
       </ResponsiveContainer>

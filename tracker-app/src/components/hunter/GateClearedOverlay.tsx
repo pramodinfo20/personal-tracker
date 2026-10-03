@@ -21,7 +21,7 @@ export function GateClearedOverlay({ event, onDismiss }: GateClearedOverlayProps
         <div className="text-xs font-bold tracking-[0.3em] text-accent uppercase">
           System Notification
         </div>
-        <div className="mt-3 font-mono text-3xl font-black text-text-primary drop-shadow-[0_0_24px_rgba(47,143,255,0.8)] sm:text-4xl">
+        <div className="mt-3 font-mono text-3xl font-black text-text-primary drop-shadow-[0_0_24px_rgb(var(--rgb-accent)/0.8)] sm:text-4xl">
           GATE CLEARED!
         </div>
         <div className="mt-3 text-xl font-bold text-accent">{event.name}</div>

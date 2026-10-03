@@ -40,7 +40,7 @@ export function HunterHeader({ hunter, onOpenProfile, showProgress = true }: Hun
           type="button"
           onClick={onOpenProfile}
           aria-label="Open profile"
-          className="hud-icon hud-pressable h-10 w-10 cursor-pointer text-lg font-extrabold text-white"
+          className="hud-icon hud-pressable h-10 w-10 cursor-pointer text-lg font-extrabold text-text-primary"
         >
           {avatarInitial(hunter.name)}
         </button>

@@ -20,10 +20,10 @@ export interface GateBannerProps {
 const URGENT_MS = 60 * 60 * 1000
 
 const URGENT_PULSE_STYLE: CSSProperties = {
-  '--pulse-ring': 'rgba(224, 41, 63, 0.45)',
-  '--pulse-ring-strong': 'rgba(224, 41, 63, 0.65)',
-  '--pulse-glow': 'rgba(224, 41, 63, 0.4)',
-  '--pulse-glow-strong': 'rgba(224, 41, 63, 0.8)',
+  '--pulse-ring': 'rgb(var(--rgb-red) / 0.45)',
+  '--pulse-ring-strong': 'rgb(var(--rgb-red) / 0.65)',
+  '--pulse-glow': 'rgb(var(--rgb-red) / 0.4)',
+  '--pulse-glow-strong': 'rgb(var(--rgb-red) / 0.8)',
 } as CSSProperties
 
 // Prominent, "impossible to miss" gate summary for the Today screen — fully
@@ -86,7 +86,7 @@ export function GateBanner({ hunter, onStartGate, onCompleteTask, onGateExpire }
                   'flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-bold',
                   done
                     ? 'border-success/40 bg-success/10 text-success'
-                    : 'hud-pressable cursor-pointer border-[rgb(var(--glow)/0.3)] bg-black/30 text-text-primary',
+                    : 'hud-pressable cursor-pointer border-[rgb(var(--glow)/0.3)] bg-backing/30 text-text-primary',
                 )}
               >
                 <span>

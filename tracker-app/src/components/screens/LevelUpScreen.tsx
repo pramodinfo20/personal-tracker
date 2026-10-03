@@ -1,5 +1,4 @@
 import type { Hunter } from '../../lib/hunterState'
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import {
   GateCard,
   HunterStatusPanel,
@@ -31,7 +30,7 @@ export function LevelUpScreen({
   return (
     // The gate backdrop — this tab is where gates are started and cleared.
     <ScreenBackground
-      {...screenBackgroundProps('gate')}
+      screen="gate"
       className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-6">

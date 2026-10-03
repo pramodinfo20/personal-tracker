@@ -10,6 +10,23 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tracker" />
     <title>Pramod's Tracker</title>
+    <!-- Sets data-theme before first paint so there's no flash of the wrong
+         theme. Mirrors resolveTheme/applyTheme in src/lib/theme.ts (same
+         storage key, same fallback to the system preference). -->
+    <script>
+      ;(function () {
+        try {
+          var pref = JSON.parse(localStorage.getItem('p26_theme') || '"system"')
+          var dark = pref === 'dark' || (pref !== 'light' && (!window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches))
+          var theme = dark ? 'dark' : 'light'
+          document.documentElement.dataset.theme = theme
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', dark ? '#0a0e1a' : '#f3f6fb')
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark'
+        }
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

@@ -1,13 +1,20 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import { ThemeProvider } from '../../hooks/useTheme'
 import {
-  resolveBackground,
   SCREEN_BACKGROUND_FILES,
+  backgroundFileKey,
+  resolveBackground,
+  resolveBackgroundKey,
   screenBackground,
   screenBackgroundProps,
+  type ScreenBackgroundKey,
 } from '../../lib/screenBackgrounds'
+import { THEME_STORAGE_KEY } from '../../lib/theme'
 import { ScreenBackground } from './ScreenBackground'
+
+const SCREENS: ScreenBackgroundKey[] = ['today', 'gate', 'profile', 'generic']
 
 describe('ScreenBackground', () => {
   afterEach(cleanup)
@@ -24,7 +31,7 @@ describe('ScreenBackground', () => {
     expect((container.firstElementChild as HTMLElement).className).toContain('bg-bg')
   })
 
-  it('with an image: full-bleed cover image, lazy/async, under the legibility overlay', () => {
+  it('with an image: full-bleed cover image, lazy/async, fading in once loaded', () => {
     const { container } = render(
       <ScreenBackground image="/bg.webp">
         <p>content</p>
@@ -41,14 +48,13 @@ describe('ScreenBackground', () => {
     expect(img.className).toContain('opacity-100')
   })
 
-  // Alpha of each stop in the overlay's first (vertical) gradient, top to
-  // bottom. (jsdom normalizes `rgb(10 14 26 / a)` to `rgba(10, 14, 26, a)`.)
+  // Alpha of each stop in the overlay's first (vertical) gradient, top to bottom.
   const verticalStops = (bg: string): number[] =>
-    [...bg.split('radial-gradient')[0].matchAll(/rgba\(10, 14, 26, ([\d.]+)\)/g)].map((m) =>
+    [...bg.split('radial-gradient')[0].matchAll(/rgb\(var\(--rgb-bg\) \/ ([\d.]+)\)/g)].map((m) =>
       Number(m[1]),
     )
 
-  it('overlay is dark only behind the header and tab bar, light through the middle', () => {
+  it('overlay is strong only behind the header and tab bar, light through the middle', () => {
     render(
       <ScreenBackground image="/bg.webp">
         <p>content</p>
@@ -64,13 +70,25 @@ describe('ScreenBackground', () => {
     expect(middle).toBeLessThanOrEqual(0.25)
   })
 
-  it('dim adds a uniform extra darkening layer only when set', () => {
+  it('the overlay is drawn in the theme background color (a variable), never a fixed color', () => {
+    render(
+      <ScreenBackground image="/bg.webp" dim={0.35}>
+        <p>content</p>
+      </ScreenBackground>,
+    )
+    const bg = screen.getByTestId('screen-background-overlay').style.background
+    expect(bg).toContain('var(--rgb-bg)')
+    expect(bg).not.toMatch(/rgb\(\d+[ ,]/)
+    expect(bg).not.toMatch(/#[0-9a-f]{3,6}/i)
+  })
+
+  it('dim adds a uniform extra veil only when set', () => {
+    const dimLayer = 'linear-gradient(rgb(var(--rgb-bg) / 0.35), rgb(var(--rgb-bg) / 0.35))'
     const { rerender } = render(
       <ScreenBackground image="/bg.webp">
         <p>content</p>
       </ScreenBackground>,
     )
-    const dimLayer = 'linear-gradient(rgba(10, 14, 26, 0.35), rgba(10, 14, 26, 0.35))'
     expect(screen.getByTestId('screen-background-overlay').style.background).not.toContain(dimLayer)
     rerender(
       <ScreenBackground image="/bg.webp" dim={0.35}>
@@ -110,38 +128,6 @@ describe('ScreenBackground', () => {
     expect(screen.queryByTestId('screen-background-overlay')).toBeNull()
     expect(screen.getByText('content')).toBeTruthy()
   })
-})
-
-describe('screen background registry', () => {
-  it('has exactly the four keyed files — no misnamed (unused but still bundled) images', () => {
-    expect([...SCREEN_BACKGROUND_FILES].sort()).toEqual(['gate', 'generic', 'profile', 'today'])
-  })
-
-  it('resolves each screen to its own image', () => {
-    for (const key of ['today', 'gate', 'profile', 'generic'] as const) {
-      expect(screenBackground(key)).toMatch(new RegExp(`${key}.*\\.jpg`))
-    }
-    expect(new Set(['today', 'gate', 'profile'].map((k) => screenBackground(k as 'today'))).size).toBe(3)
-  })
-
-  it('falls back to generic for a screen without its own file', () => {
-    expect(resolveBackground({ generic: '/g.jpg' }, 'profile')).toBe('/g.jpg')
-  })
-
-  it("carries each image's own dim: the bright images are calmed wherever they're used", () => {
-    expect(screenBackgroundProps('generic')).toEqual({ image: screenBackground('generic'), dim: 0.35 })
-    expect(screenBackgroundProps('gate').dim).toBe(0.45)
-    expect(screenBackgroundProps('today').dim).toBe(0.35)
-    expect(screenBackgroundProps('profile').dim).toBe(0)
-  })
-
-  it('resolves to undefined (-> plain fallback) when neither exists', () => {
-    expect(resolveBackground({}, 'today')).toBeUndefined()
-  })
-})
-
-describe('ScreenBackground layouts', () => {
-  afterEach(cleanup)
 
   it("'overlay' is a fixed full-viewport layer; 'page' stays in-flow full-height", () => {
     const { container: overlay } = render(
@@ -162,5 +148,100 @@ describe('ScreenBackground layouts', () => {
     const pc = (page.firstElementChild as HTMLElement).className
     expect(pc).toContain('relative')
     expect(pc).toContain('min-h-dvh')
+  })
+})
+
+describe('ScreenBackground — picks the file for the active theme', () => {
+  afterEach(() => {
+    cleanup()
+    localStorage.clear()
+  })
+
+  const renderIn = (theme: 'light' | 'dark', key: ScreenBackgroundKey) => {
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme))
+    const { container } = render(
+      <ThemeProvider>
+        <ScreenBackground screen={key}>
+          <p>content</p>
+        </ScreenBackground>
+      </ThemeProvider>,
+    )
+    return container.querySelector('img')!
+  }
+
+  it.each(SCREENS)('%s: dark theme shows the dark file, light theme the -light file', (key) => {
+    const dark = renderIn('dark', key).getAttribute('src')
+    cleanup()
+    const light = renderIn('light', key).getAttribute('src')
+    expect(dark).toBe(screenBackground(key, 'dark'))
+    expect(light).toBe(screenBackground(key, 'light'))
+    expect(light).toContain(`${key}-light`)
+    expect(dark).not.toContain('-light')
+  })
+
+  it("applies the shown image's own dim for that theme", () => {
+    renderIn('light', 'today')
+    expect(screen.getByTestId('screen-background-overlay').getAttribute('data-dim')).toBe(
+      String(screenBackgroundProps('today', 'light').dim),
+    )
+  })
+
+  it('outside a ThemeProvider it behaves as the dark theme', () => {
+    const { container } = render(
+      <ScreenBackground screen="gate">
+        <p>content</p>
+      </ScreenBackground>,
+    )
+    expect(container.querySelector('img')!.getAttribute('src')).toBe(screenBackground('gate', 'dark'))
+  })
+})
+
+describe('screen background registry', () => {
+  it('has exactly the eight keyed files (4 screens x 2 themes) — no misnamed, unused-but-bundled images', () => {
+    const expected = SCREENS.flatMap((k) => [k, `${k}-light`]).sort()
+    expect([...SCREEN_BACKGROUND_FILES].sort()).toEqual(expected)
+  })
+
+  it('names files <screen>.jpg for dark and <screen>-light.jpg for light', () => {
+    expect(backgroundFileKey('today', 'dark')).toBe('today')
+    expect(backgroundFileKey('today', 'light')).toBe('today-light')
+  })
+
+  it('resolves each screen to its own image in each theme, all eight distinct', () => {
+    const urls = SCREENS.flatMap((k) => [screenBackground(k, 'dark'), screenBackground(k, 'light')])
+    for (const key of SCREENS) {
+      expect(screenBackground(key, 'dark')).toMatch(new RegExp(`${key}[^/]*\\.jpg`))
+      expect(screenBackground(key, 'light')).toMatch(new RegExp(`${key}-light[^/]*\\.jpg`))
+    }
+    expect(new Set(urls).size).toBe(8)
+  })
+
+  it("falls back to the SAME theme's generic image, never across themes", () => {
+    const registry = { generic: '/g.jpg', 'generic-light': '/gl.jpg', today: '/t.jpg' }
+    expect(resolveBackground(registry, 'profile', 'dark')).toBe('/g.jpg')
+    expect(resolveBackground(registry, 'profile', 'light')).toBe('/gl.jpg')
+    // today has only a dark file: light must NOT borrow it.
+    expect(resolveBackground(registry, 'today', 'light')).toBe('/gl.jpg')
+    expect(resolveBackgroundKey(registry, 'today', 'light')).toBe('generic-light')
+  })
+
+  it('resolves to undefined (-> plain fallback) when the theme has neither', () => {
+    expect(resolveBackground({}, 'today', 'dark')).toBeUndefined()
+    expect(resolveBackground({ today: '/t.jpg', generic: '/g.jpg' }, 'today', 'light')).toBeUndefined()
+  })
+
+  it("carries each image's own dim, per file — so per theme", () => {
+    expect(screenBackgroundProps('generic', 'dark')).toEqual({
+      image: screenBackground('generic', 'dark'),
+      dim: 0.35,
+    })
+    expect(screenBackgroundProps('gate', 'dark').dim).toBe(0.45)
+    expect(screenBackgroundProps('today', 'dark').dim).toBe(0.35)
+    expect(screenBackgroundProps('profile', 'dark').dim).toBe(0)
+    // Every light image has a measured dim of its own.
+    for (const key of SCREENS) {
+      expect(screenBackgroundProps(key, 'light').dim).toBeGreaterThan(0)
+      expect(screenBackgroundProps(key, 'light').image).toBe(screenBackground(key, 'light'))
+    }
   })
 })

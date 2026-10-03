@@ -12,10 +12,10 @@ export interface TierPickerProps {
 }
 
 const CLAIM_PULSE_STYLE: CSSProperties = {
-  '--pulse-ring': 'rgba(255, 255, 255, 0.5)',
-  '--pulse-ring-strong': 'rgba(255, 255, 255, 0.7)',
-  '--pulse-glow': 'rgba(47, 143, 255, 0.5)',
-  '--pulse-glow-strong': 'rgba(47, 143, 255, 0.9)',
+  '--pulse-ring': 'rgb(255 255 255 / 0.5)', // on the accent-blue button in both themes
+  '--pulse-ring-strong': 'rgb(255 255 255 / 0.7)',
+  '--pulse-glow': 'rgb(var(--rgb-accent) / 0.5)',
+  '--pulse-glow-strong': 'rgb(var(--rgb-accent) / 0.9)',
 } as CSSProperties
 
 // The one tier picker for every {label, xp} tier list — fixed quests,
@@ -43,7 +43,7 @@ export function TierPicker({ tiers, onPick, disabled, celebrating = {}, classNam
             onClick={() => onPick(tier)}
             style={isCelebrating ? CLAIM_PULSE_STYLE : undefined}
             className={cn(
-              'relative flex cursor-pointer flex-col items-center rounded-lg bg-accent px-2 py-2 text-white transition-all duration-150 active:scale-[0.97] hover:bg-accent-hover hover:shadow-glow-accent disabled:pointer-events-none disabled:opacity-40',
+              'relative flex cursor-pointer flex-col items-center rounded-lg bg-accent-solid px-2 py-2 text-on-accent transition-all duration-150 active:scale-[0.97] hover:brightness-110 hover:shadow-glow-accent disabled:pointer-events-none disabled:opacity-40',
               isCelebrating && 'animate-claim-pulse',
             )}
           >
@@ -51,7 +51,7 @@ export function TierPicker({ tiers, onPick, disabled, celebrating = {}, classNam
             <span className="font-mono text-xs font-bold opacity-90">+{tier.xp} XP</span>
             {isCelebrating && (
               <span
-                className="animate-float-up pointer-events-none absolute -top-2 right-2 font-mono text-sm font-black text-white"
+                className="animate-float-up pointer-events-none absolute -top-2 right-2 font-mono text-sm font-black text-on-accent"
                 aria-hidden="true"
               >
                 +{celebrating[tier.label]} XP

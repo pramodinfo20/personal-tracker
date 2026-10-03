@@ -26,10 +26,10 @@ export interface QuestCardsProps {
 }
 
 const CLAIM_PULSE_STYLE: CSSProperties = {
-  '--pulse-ring': 'rgba(34, 197, 94, 0.5)',
-  '--pulse-ring-strong': 'rgba(34, 197, 94, 0.7)',
-  '--pulse-glow': 'rgba(34, 197, 94, 0.45)',
-  '--pulse-glow-strong': 'rgba(34, 197, 94, 0.85)',
+  '--pulse-ring': 'rgb(var(--rgb-success) / 0.5)',
+  '--pulse-ring-strong': 'rgb(var(--rgb-success) / 0.7)',
+  '--pulse-glow': 'rgb(var(--rgb-success) / 0.45)',
+  '--pulse-glow-strong': 'rgb(var(--rgb-success) / 0.85)',
 } as CSSProperties
 
 // A confirm/message bubble auto-dismisses after this long if left untouched.
@@ -142,9 +142,9 @@ export function QuestCards({
                   </span>
                   <span className="shrink-0 text-right">
                     {/* Tier-colored XP range on its own dark chip (lightened a step
-                        toward white): the deep tier reds/purples can't hold contrast
+                        toward the text color — lighter in dark, darker in light): the tier colors can't hold contrast
                         over bright art through see-through glass on their own. */}
-                    <span className="inline-block rounded-md bg-black/50 px-1.5 font-mono text-lg font-bold text-[color-mix(in_srgb,rgb(var(--glow))_75%,white)] drop-shadow-[0_0_6px_rgb(var(--glow)/0.6)]">
+                    <span className="inline-block rounded-md bg-backing/50 px-1.5 font-mono text-lg font-bold text-[color-mix(in_srgb,rgb(var(--glow))_75%,var(--color-text-primary))] drop-shadow-[0_0_6px_rgb(var(--glow)/0.6)]">
                       {formatTierXPRange(q.tiers)}
                     </span>
                     <span className="block text-[10px] font-bold text-text-secondary uppercase">

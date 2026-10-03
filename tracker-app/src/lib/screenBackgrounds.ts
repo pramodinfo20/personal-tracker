@@ -1,12 +1,20 @@
-// Full-bleed screen backgrounds, looked up by screen key. Drop a file named
-// `<key>.{webp,jpg,jpeg,png}` into src/assets/backgrounds/ and the matching
-// screen picks it up; with no file, ScreenBackground falls back to the plain
-// dark background + ambient glow. All four keys currently have a file
-// (1080px-tall JPEGs, ~125-165 KB each; originals live outside the app in
+// Full-bleed screen backgrounds, looked up by screen key AND theme. Each
+// screen has a dark file `<key>.jpg` and a light file `<key>-light.jpg` in
+// src/assets/backgrounds/ (separately drawn art, not a re-tint); the active
+// theme decides which one ScreenBackground shows. With no file for a
+// key+theme it falls back to that theme's generic image, then to the plain
+// background + ambient glow. All eight currently exist (1080px-tall JPEGs,
+// ~130-280 KB each; originals live outside the app in
 // ../images/backgrounds-original/). Every file in that folder is bundled
-// and precached, so only the four keyed files should ever live there.
+// and precached, so only those keyed files should ever live there.
+
+import type { ResolvedTheme } from './theme'
 
 export type ScreenBackgroundKey = 'today' | 'gate' | 'profile' | 'generic'
+
+/** The file key for a screen in a theme: 'today' / 'today-light'. */
+export const backgroundFileKey = (key: ScreenBackgroundKey, theme: ResolvedTheme): string =>
+  theme === 'light' ? `${key}-light` : key
 
 const files = import.meta.glob<string>('../assets/backgrounds/*.{webp,jpg,jpeg,png}', {
   eager: true,
@@ -24,33 +32,62 @@ const BACKGROUNDS: Record<string, string> = Object.fromEntries(
 /** File keys present in the folder — exported so tests can catch a misnamed (never-used, still-bundled) file. */
 export const SCREEN_BACKGROUND_FILES: string[] = Object.keys(BACKGROUNDS)
 
-/** The screen's own image, else the generic one, else undefined (-> ScreenBackground's no-image fallback). */
+/**
+ * Which file a screen resolves to in a theme: its own, else that theme's
+ * generic one, else undefined (-> ScreenBackground's no-image fallback).
+ * Never crosses themes — a dark image under a light UI (or vice versa) is
+ * worse than no image.
+ */
+export const resolveBackgroundKey = (
+  registry: Record<string, string>,
+  key: ScreenBackgroundKey,
+  theme: ResolvedTheme = 'dark',
+): string | undefined =>
+  [backgroundFileKey(key, theme), backgroundFileKey('generic', theme)].find((k) => k in registry)
+
 export const resolveBackground = (
   registry: Record<string, string>,
   key: ScreenBackgroundKey,
-): string | undefined => registry[key] ?? registry.generic
+  theme: ResolvedTheme = 'dark',
+): string | undefined => {
+  const fileKey = resolveBackgroundKey(registry, key, theme)
+  return fileKey ? registry[fileKey] : undefined
+}
 
-export const screenBackground = (key: ScreenBackgroundKey): string | undefined =>
-  resolveBackground(BACKGROUNDS, key)
+export const screenBackground = (
+  key: ScreenBackgroundKey,
+  theme: ResolvedTheme = 'dark',
+): string | undefined => resolveBackground(BACKGROUNDS, key, theme)
 
-// Extra darkening an image needs on top of the standard overlay, by key.
-// It's a property of the artwork, not of the screen showing it: generic,
-// gate and (since their full-height redraw) today are busy/bright behind
-// the card area — the redrawn gate most of all (mean luma up to ~107/255
-// around the portal); profile's dark nebula needs none. Each value is the
-// smallest that keeps every text element at WCAG AA over that image.
-const BACKGROUND_DIM: Partial<Record<ScreenBackgroundKey, number>> = {
+// Extra veil an image needs on top of the standard overlay, per FILE (so per
+// theme). It's a property of the artwork, not of the screen showing it. The
+// veil is always the theme's background color — it darkens in dark, lightens
+// in light — pulling the art toward the surface the text was designed for.
+// Each value is the smallest that keeps every text element at WCAG AA over
+// that image (measured, see the theme/contrast work).
+const BACKGROUND_DIM: Record<string, number> = {
   generic: 0.35,
   gate: 0.45,
   today: 0.35,
+  // profile (dark nebula) needs none.
+  // Light art: dark text over bright images passes AA with no veil at all
+  // (measured), so these are small and purely to keep the scene calm.
+  'today-light': 0.15,
+  'gate-light': 0.15,
+  'profile-light': 0.1,
+  'generic-light': 0.15,
 }
 
 /** Spread into <ScreenBackground>: the image URL plus that image's dim. */
 export const screenBackgroundProps = (
   key: ScreenBackgroundKey,
+  theme: ResolvedTheme = 'dark',
 ): { image: string | undefined; dim: number } => {
-  const image = screenBackground(key)
-  // A screen falling back to the generic art inherits generic's dim too.
-  const resolvedKey = image && image === BACKGROUNDS[key] ? key : 'generic'
-  return { image, dim: BACKGROUND_DIM[resolvedKey] ?? 0 }
+  // Keyed by the file actually shown — a screen falling back to the generic
+  // art inherits generic's dim.
+  const fileKey = resolveBackgroundKey(BACKGROUNDS, key, theme)
+  return {
+    image: fileKey ? BACKGROUNDS[fileKey] : undefined,
+    dim: fileKey ? (BACKGROUND_DIM[fileKey] ?? 0) : 0,
+  }
 }

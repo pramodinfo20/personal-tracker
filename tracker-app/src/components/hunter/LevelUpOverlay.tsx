@@ -1,5 +1,8 @@
 import { useEffect } from 'react'
 import type { LevelUpEvent } from '../../hooks/useHunter'
+import { cn } from '../../lib/cn'
+import { TIER_CLASSES } from '../ui'
+import { rankTierColor } from './tierMapping'
 
 export interface LevelUpOverlayProps {
   event: LevelUpEvent
@@ -21,14 +24,19 @@ export function LevelUpOverlay({ event, onDismiss }: LevelUpOverlayProps) {
         <div className="text-xs font-bold tracking-[0.3em] text-accent uppercase">
           System Notification
         </div>
-        <div className="mt-3 font-mono text-4xl font-black text-text-primary drop-shadow-[0_0_24px_rgba(47,143,255,0.8)] sm:text-5xl">
+        <div className="mt-3 font-mono text-4xl font-black text-text-primary drop-shadow-[0_0_24px_rgb(var(--rgb-accent)/0.8)] sm:text-5xl">
           LEVEL UP!
         </div>
         <div className="mt-3 font-mono text-xl font-bold text-accent sm:text-2xl">
           You have reached Level {event.level}
         </div>
         {event.rankUp && (
-          <div className="mt-3 text-base font-bold" style={{ color: event.rank.color }}>
+          <div
+            className={cn(
+              'mt-3 text-base font-bold',
+              TIER_CLASSES[rankTierColor(event.rank.name)].text,
+            )}
+          >
             🎉 Rank Up: {event.rank.emoji} {event.rank.name}
           </div>
         )}

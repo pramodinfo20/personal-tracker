@@ -85,19 +85,19 @@ export function ActivityCard({
       )}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/55 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-art-scrim/55 to-transparent"
       />
       <span className="relative flex h-full flex-col justify-end p-3 text-left">
         <span
           className={cn(
-            'font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]',
+            'font-extrabold text-on-art drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]',
             isBanner ? 'text-xl' : 'text-sm leading-tight',
           )}
         >
           {title}
         </span>
         {subtitle && (
-          <span className="mt-0.5 text-[11px] font-bold text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+          <span className="mt-0.5 text-[11px] font-bold text-on-art/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
             {subtitle}
           </span>
         )}
@@ -109,8 +109,8 @@ export function ActivityCard({
           className={cn(
             'absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border text-xs font-black transition-colors',
             selected
-              ? 'border-white bg-accent text-white shadow-[0_0_10px_rgb(47_143_255/0.8)]'
-              : 'border-white/50 bg-black/40 text-transparent',
+              ? 'border-on-art bg-accent-solid text-on-accent shadow-[0_0_10px_rgb(var(--rgb-accent)/0.8)]'
+              : 'border-on-art/50 bg-art-scrim/40 text-transparent',
           )}
         >
           ✓
@@ -120,7 +120,7 @@ export function ActivityCard({
   )
 
   const className = cn(
-    'relative block w-full overflow-hidden rounded-2xl border border-white/10 shadow-panel',
+    'relative block w-full overflow-hidden rounded-2xl border border-on-art/10 shadow-panel',
     isBanner ? 'h-28' : 'aspect-[4/3]',
     // Unselected toggles dim back; the selected one gets a bright ring.
     selected === true && 'ring-2 ring-accent-hover ring-offset-2 ring-offset-bg',

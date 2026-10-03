@@ -33,11 +33,11 @@ export interface StatMeta {
 }
 
 export const STAT_META: StatMeta[] = [
-  { key: 'STR', label: 'Strength', icon: '💪', color: '#ef4444' },
-  { key: 'VIT', label: 'Vitality', icon: '❤️', color: '#22c55e' },
-  { key: 'INT', label: 'Intelligence', icon: '🧠', color: '#3b82f6' },
-  { key: 'PER', label: 'Perception', icon: '👁️', color: '#8b5cf6' },
-  { key: 'AGI', label: 'Agility', icon: '⚡', color: '#f59e0b' },
+  { key: 'STR', label: 'Strength', icon: '💪', color: 'var(--color-stat-str)' },
+  { key: 'VIT', label: 'Vitality', icon: '❤️', color: 'var(--color-stat-vit)' },
+  { key: 'INT', label: 'Intelligence', icon: '🧠', color: 'var(--color-stat-int)' },
+  { key: 'PER', label: 'Perception', icon: '👁️', color: 'var(--color-stat-per)' },
+  { key: 'AGI', label: 'Agility', icon: '⚡', color: 'var(--color-stat-agi)' },
 ]
 
 export interface Hunter {

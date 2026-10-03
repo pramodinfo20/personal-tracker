@@ -31,7 +31,7 @@ export function ProgressBar({ value, max, label, size = 'default', className }: 
     <div className={cn('w-full', className)}>
       <div
         className={cn(
-          'relative w-full rounded-full border border-white/5 bg-black/40 shadow-[inset_0_1px_2px_rgb(0_0_0/0.6)]',
+          'relative w-full rounded-full border border-hairline bg-track shadow-[inset_0_1px_2px_rgb(var(--rgb-shadow)/0.35)]',
           TRACK_HEIGHT[size],
         )}
       >

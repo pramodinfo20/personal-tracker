@@ -24,7 +24,7 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
             className={cn(
               'cursor-pointer rounded-lg px-4 py-1.5 text-xs font-bold transition-colors',
               active
-                ? 'bg-accent text-white shadow-glow-accent'
+                ? 'bg-accent-solid text-on-accent shadow-glow-accent'
                 : 'text-text-secondary hover:text-text-primary',
             )}
           >

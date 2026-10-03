@@ -4,7 +4,6 @@ import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
 import { questEntries, visibleQuests } from '../../lib/questVisibility'
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import {
   allQuestsClaimed,
   questXPOnDate,
@@ -83,7 +82,7 @@ export function TodayScreen({
   }
 
   return (
-    <ScreenBackground {...screenBackgroundProps('today')} className="pb-28 text-text-primary">
+    <ScreenBackground screen="today" className="pb-28 text-text-primary">
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
         <HunterHeroPanel hunter={hunter} />
         <GateBanner
@@ -148,7 +147,7 @@ export function TodayScreen({
           <button
             type="button"
             onClick={onManageQuests}
-            className="cursor-pointer self-start rounded-full bg-black/50 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
+            className="cursor-pointer self-start rounded-full bg-backing/50 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary"
           >
             Want different quests?{' '}
             <span className="font-bold text-accent-hover">Manage Quests →</span>
@@ -160,7 +159,7 @@ export function TodayScreen({
         type="button"
         onClick={() => setLogSheetOpen(true)}
         aria-label="Log an activity"
-        className="glow-accent fixed right-4 bottom-24 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#6fb4ff,var(--color-accent)_55%,var(--color-accent-active))] text-3xl leading-none font-bold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_10px_24px_-8px_rgb(0_0_0/0.7),0_0_var(--hud-glow-spread)_rgb(var(--glow)/0.6)] transition-transform active:scale-95"
+        className="glow-accent fixed right-4 bottom-24 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(var(--rgb-accent-hover)),var(--color-accent)_55%,var(--color-accent-active))] text-3xl leading-none font-bold text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_10px_24px_-8px_rgb(var(--rgb-shadow)/0.7),0_0_var(--hud-glow-spread)_rgb(var(--glow)/0.6)] transition-transform active:scale-95"
       >
         +
       </button>

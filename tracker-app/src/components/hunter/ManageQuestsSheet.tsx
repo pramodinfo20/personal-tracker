@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { STAT_META } from '../../lib/hunterState'
 import type { QuestEntry } from '../../lib/questVisibility'
 import { formatTierXPRange } from '../../lib/quests'
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { Badge, Button, ScreenBackground, Switch } from '../ui'
 import { ActivityPickerSheet } from './ActivityPickerSheet'
 
@@ -88,7 +87,7 @@ export function ManageQuestsSheet({
   }
 
   return (
-    <ScreenBackground {...screenBackgroundProps('profile')} layout="overlay" className="z-40">
+    <ScreenBackground screen="profile" layout="overlay" className="z-40">
       <div className="flex h-full items-end justify-center" onClick={onClose}>
         <div
           role="dialog"
@@ -118,7 +117,7 @@ export function ManageQuestsSheet({
             <div className="mb-2 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
               Built-in
             </div>
-            <div className="hud-inset divide-y divide-white/5 rounded-xl">
+            <div className="hud-inset divide-y divide-hairline rounded-xl">
               {fixed.map((entry) => (
                 <div key={entry.quest.id} className="px-3 py-2.5">
                   {row(entry)}
@@ -135,7 +134,7 @@ export function ManageQuestsSheet({
               <button
                 type="button"
                 onClick={() => setAdding(true)}
-                className="cursor-pointer text-xs font-bold text-accent-hover hover:text-white"
+                className="cursor-pointer text-xs font-bold text-accent-hover hover:text-text-primary"
               >
                 + Add Quest
               </button>
@@ -146,7 +145,7 @@ export function ManageQuestsSheet({
                 No custom quests yet — add one to track something the built-ins don't cover.
               </p>
             ) : (
-              <div className="hud-inset divide-y divide-white/5 rounded-xl">
+              <div className="hud-inset divide-y divide-hairline rounded-xl">
                 {custom.map((entry) =>
                   renamingId === entry.quest.id ? (
                     <form
@@ -160,7 +159,7 @@ export function ManageQuestsSheet({
                         aria-label="Quest name"
                         maxLength={40}
                         autoFocus
-                        className="min-w-0 flex-1 rounded-lg border border-border bg-black/40 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                        className="min-w-0 flex-1 rounded-lg border border-border bg-backing/40 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
                       />
                       <Button type="button" variant="secondary" onClick={() => setRenamingId(null)}>
                         Cancel

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useCustomQuests } from './hooks/useCustomQuests'
 import { useHunter } from './hooks/useHunter'
+import { ThemeProvider } from './hooks/useTheme'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
 import {
@@ -21,7 +22,7 @@ const ProgressScreen = lazy(() =>
   import('./components/screens/ProgressScreen').then((m) => ({ default: m.ProgressScreen })),
 )
 
-function App() {
+function AppShell() {
   const [tab, setTab] = useState<Tab>('today')
   const [profileOpen, setProfileOpen] = useState(false)
   const [manageQuestsOpen, setManageQuestsOpen] = useState(false)
@@ -166,6 +167,16 @@ function App() {
         <GateClearedOverlay event={gateClearedEvent} onDismiss={dismissGateCleared} />
       )}
     </div>
+  )
+}
+
+// The provider lives here (not in main.tsx) so anything rendering <App />
+// — including tests — gets working theme state.
+function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   )
 }
 

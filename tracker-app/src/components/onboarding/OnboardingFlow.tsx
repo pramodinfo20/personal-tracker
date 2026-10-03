@@ -6,7 +6,6 @@ import {
   parseOptionalNumber,
   type OnboardingResult,
 } from '../../lib/onboarding'
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { ActivityCard } from '../hunter/ActivityCard'
 import { Button, ScreenBackground } from '../ui'
 
@@ -81,7 +80,7 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
   }
 
   return (
-    <ScreenBackground {...screenBackgroundProps('generic')} layout="overlay" className="z-50">
+    <ScreenBackground screen="generic" layout="overlay" className="z-50">
       {/* The scroller and the centering box are separate: centering on the
           scroller itself would clip the top of the card on short screens. */}
       <div className="h-full overflow-y-auto">
@@ -120,8 +119,8 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
                       key={n}
                       className={
                         n <= step
-                          ? 'h-1.5 w-5 rounded-full bg-accent shadow-[0_0_8px_rgb(47_143_255/0.8)]'
-                          : 'h-1.5 w-5 rounded-full bg-white/15'
+                          ? 'h-1.5 w-5 rounded-full bg-accent shadow-[0_0_8px_rgb(var(--rgb-accent)/0.8)]'
+                          : 'h-1.5 w-5 rounded-full bg-[rgb(var(--rgb-ink)/0.15)]'
                       }
                     />
                   ))}
@@ -146,7 +145,7 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
                   onChange={(e) => setName(e.target.value)}
                   maxLength={40}
                   placeholder="Your name"
-                  className="mt-5 w-full rounded-xl border border-border bg-black/40 px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+                  className="mt-5 w-full rounded-xl border border-border bg-backing/40 px-4 py-3 text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
                 />
                 <Button type="submit" disabled={!nameOk} className="mt-5 w-full">
                   Continue
@@ -177,8 +176,8 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
                         placeholder="—"
                         className={
                           valid
-                            ? 'w-full rounded-xl border border-border bg-black/40 px-3 py-2.5 text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none'
-                            : 'w-full rounded-xl border border-warning bg-black/40 px-3 py-2.5 text-base text-text-primary focus:outline-none'
+                            ? 'w-full rounded-xl border border-border bg-backing/40 px-3 py-2.5 text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none'
+                            : 'w-full rounded-xl border border-warning bg-backing/40 px-3 py-2.5 text-base text-text-primary focus:outline-none'
                         }
                       />
                     </div>

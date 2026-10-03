@@ -17,7 +17,6 @@ import {
   XPBarChart,
   type ChartPoint,
 } from '../progress'
-import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import { Card, ScreenBackground } from '../ui'
 
 export interface ProgressScreenProps {
@@ -53,7 +52,7 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
     // Generic art; its built-in dim (screenBackgroundProps) keeps the
     // burst's bright center calm behind the XP chart.
     <ScreenBackground
-      {...screenBackgroundProps('generic')}
+      screen="generic"
       className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-4">

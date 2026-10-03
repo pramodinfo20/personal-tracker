@@ -34,14 +34,14 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
           <button
             type="button"
             onClick={rename}
-            className="mt-2 block cursor-pointer text-xs text-accent-hover hover:text-white"
+            className="mt-2 block cursor-pointer text-xs text-accent-hover hover:text-text-primary"
           >
             ✏️ rename
           </button>
         </div>
         <div className="text-right">
           <div className="text-xs font-bold tracking-wide text-accent-hover uppercase">Level</div>
-          <div className="font-mono text-5xl leading-none font-black text-accent-hover drop-shadow-[0_0_20px_rgba(47,143,255,0.6)]">
+          <div className="font-mono text-5xl leading-none font-black text-accent-hover drop-shadow-[0_0_20px_rgb(var(--rgb-accent)/0.6)]">
             {hunter.level || 1}
           </div>
         </div>

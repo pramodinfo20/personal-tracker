@@ -23,7 +23,7 @@ export function StatBreakdown({ data }: StatBreakdownProps) {
             {s.icon}
           </span>
           <span className="w-8 shrink-0 text-xs font-bold text-text-secondary">{s.stat}</span>
-          <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-black/35">
+          <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-track">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{ width: `${(s.xp / max) * 100}%`, backgroundColor: s.color }}
