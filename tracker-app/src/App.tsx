@@ -7,9 +7,11 @@ import {
   GateClearedOverlay,
   HunterHeader,
   LevelUpOverlay,
+  ManageQuestsSheet,
   ProfileSheet,
 } from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
+import { questEntries } from './lib/questVisibility'
 
 // Code-split: recharts (Progress screen's chart library) is a meaningful
 // chunk of weight that Today/Level Up/More never need — only load it once
@@ -21,11 +23,13 @@ const ProgressScreen = lazy(() =>
 function App() {
   const [tab, setTab] = useState<Tab>('today')
   const [profileOpen, setProfileOpen] = useState(false)
+  const [manageQuestsOpen, setManageQuestsOpen] = useState(false)
   const {
     hunter,
     dev,
     claimQuest,
     undoQuestClaim,
+    setFixedQuestEnabled,
     claimCustomQuest,
     logActivity,
     renameHunter,
@@ -64,6 +68,7 @@ function App() {
           onUndoQuest={undoQuestClaim}
           onClaimCustomQuest={claimCustomQuest}
           onLogActivity={logActivity}
+          onManageQuests={() => setManageQuestsOpen(true)}
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
@@ -72,15 +77,11 @@ function App() {
       {tab === 'levelup' && (
         <LevelUpScreen
           hunter={hunter}
-          customQuests={customQuests}
           onRename={renameHunter}
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
-          onAddCustomQuest={addQuest}
-          onRenameCustomQuest={renameQuest}
-          onSetCustomQuestActive={setQuestActive}
-          onDeleteCustomQuest={deleteQuest}
+          onManageQuests={() => setManageQuestsOpen(true)}
         />
       )}
       {tab === 'progress' && (
@@ -103,7 +104,28 @@ function App() {
           hunter={hunter}
           onRename={renameHunter}
           dev={dev}
+          onManageQuests={() => {
+            setProfileOpen(false)
+            setManageQuestsOpen(true)
+          }}
           onClose={() => setProfileOpen(false)}
+        />
+      )}
+
+      {manageQuestsOpen && (
+        <ManageQuestsSheet
+          entries={questEntries(hunter.hiddenQuestIds, customQuests)}
+          completedToday={hunter.completedToday}
+          // One toggle for both kinds; only where the flag is stored differs.
+          onSetEnabled={(entry, enabled) =>
+            entry.kind === 'fixed'
+              ? setFixedQuestEnabled(entry.quest.id, enabled)
+              : setQuestActive(entry.quest.id, enabled)
+          }
+          onAdd={addQuest}
+          onRename={renameQuest}
+          onDelete={deleteQuest}
+          onClose={() => setManageQuestsOpen(false)}
         />
       )}
 

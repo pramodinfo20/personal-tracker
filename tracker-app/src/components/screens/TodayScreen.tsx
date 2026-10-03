@@ -1,16 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
-import {
-  activeCustomQuests,
-  customQuestToClaimable,
-  type CustomQuest,
-} from '../../lib/customQuests'
+import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
+import { questEntries, visibleQuests } from '../../lib/questVisibility'
 import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import {
   allQuestsClaimed,
-  DAILY_QUESTS,
   questXPOnDate,
   type ClaimableQuest,
   type XPTier,
@@ -23,7 +19,7 @@ import {
   QuestCards,
   QuestsResetTimer,
 } from '../hunter'
-import { ScreenBackground } from '../ui'
+import { Button, ScreenBackground } from '../ui'
 
 export interface TodayScreenProps {
   hunter: Hunter
@@ -32,6 +28,8 @@ export interface TodayScreenProps {
   onClaimCustomQuest: (quest: CustomQuest, tier: XPTier) => void
   onUndoQuest: (quest: ClaimableQuest) => UndoResult
   onLogActivity: (activityId: string, tier: XPTier, note: string) => void
+  /** Opens the Manage Quests screen (from the "no quests enabled" empty state). */
+  onManageQuests: () => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
@@ -47,6 +45,7 @@ export function TodayScreen({
   onClaimCustomQuest,
   onUndoQuest,
   onLogActivity,
+  onManageQuests,
   onStartGate,
   onCompleteGateTask,
   onGateExpire,
@@ -57,11 +56,24 @@ export function TodayScreen({
   // without losing the celebratory state on every future visit.
   const [showQuestsAnyway, setShowQuestsAnyway] = useState(false)
 
-  const allDone = allQuestsClaimed(hunter.completedToday)
-  const customClaimables = useMemo(
-    () => activeCustomQuests(customQuests).map(customQuestToClaimable),
-    [customQuests],
+  // One visibility filter for every quest — fixed and custom alike (see
+  // lib/questVisibility.ts). The two kinds are only split afterwards for
+  // layout: the Day Complete card stands in for the built-in ones.
+  const visible = useMemo(
+    () => visibleQuests(questEntries(hunter.hiddenQuestIds, customQuests)),
+    [hunter.hiddenQuestIds, customQuests],
   )
+  const visibleFixed = useMemo(
+    () => visible.filter((e) => e.kind === 'fixed').map((e) => e.quest),
+    [visible],
+  )
+  const visibleCustom = useMemo(
+    () => visible.filter((e) => e.kind === 'custom').map((e) => e.quest),
+    [visible],
+  )
+  // "Day complete" = every built-in quest the user has left enabled is
+  // claimed (never true when none are enabled).
+  const allDone = allQuestsClaimed(hunter.completedToday, visibleFixed)
 
   // Custom cards render as ClaimableQuest; route the claim back through the
   // stored quest so claimCustomQuest can still check it's active.
@@ -81,15 +93,35 @@ export function TodayScreen({
           onGateExpire={onGateExpire}
         />
         <QuestsResetTimer />
+        {visible.length === 0 && (
+          // Everything hidden: say so and offer the way back, rather than
+          // leaving a blank screen.
+          <div
+            className="hud-glass hud-enter rounded-2xl p-6 text-center"
+            style={{ '--i': 3 } as CSSProperties}
+          >
+            <div className="hud-icon mx-auto h-14 w-14 text-3xl" aria-hidden="true">
+              🗒️
+            </div>
+            <div className="mt-3 text-base font-extrabold text-text-primary">No quests enabled</div>
+            <p className="mt-1 text-sm text-text-secondary">
+              Manage your quests to add some back.
+            </p>
+            <Button onClick={onManageQuests} className="mt-4">
+              Manage Quests
+            </Button>
+          </div>
+        )}
         {allDone && !showQuestsAnyway ? (
           <DayCompleteCard
             streak={hunter.streak}
-            xpToday={questXPOnDate(hunter.log, today())}
+            questCount={visibleFixed.length}
+            xpToday={questXPOnDate(hunter.log, today(), visibleFixed)}
             onEditClaims={() => setShowQuestsAnyway(true)}
           />
         ) : (
           <QuestCards
-            quests={DAILY_QUESTS}
+            quests={visibleFixed}
             completedToday={hunter.completedToday}
             log={hunter.log}
             onClaim={onClaimQuest}
@@ -97,17 +129,17 @@ export function TodayScreen({
             enterOffset={3}
           />
         )}
-        {/* Custom quests are independent of the fixed 5's "all done" state
-            above — they stay visible either way, since allQuestsClaimed /
-            DayCompleteCard are deliberately scoped to DAILY_QUESTS only.
+        {/* Custom quests are independent of the built-in ones' "all done"
+            state above — they stay visible either way, since
+            DayCompleteCard is deliberately scoped to the built-in quests.
             Same QuestCards component, so same picker and undo flow. */}
         <QuestCards
-          quests={customClaimables}
+          quests={visibleCustom}
           completedToday={hunter.completedToday}
           log={hunter.log}
           onClaim={claimCustom}
           onUndo={onUndoQuest}
-          enterOffset={3 + DAILY_QUESTS.length}
+          enterOffset={3 + visibleFixed.length}
         />
       </div>
 

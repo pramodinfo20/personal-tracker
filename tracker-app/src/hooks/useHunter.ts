@@ -35,6 +35,7 @@ import {
 } from '../lib/quests'
 import { SHADOW_MILESTONES } from '../lib/shadows'
 import { today } from '../lib/format'
+import { toggleHiddenQuest } from '../lib/questVisibility'
 import { wouldStrandProgress } from '../lib/undoGuard'
 import { useSaved } from './useSaved'
 
@@ -278,6 +279,14 @@ export function useHunter() {
     setHunter((h) => ({ ...h, logCount: (h.logCount || 0) + 1 }))
   }
 
+  // Show/hide one of the fixed DAILY_QUESTS on Today. Display preference
+  // only — it never touches completedToday, XP or the log, so a quest
+  // claimed earlier today keeps its claim (and can be undone once shown
+  // again).
+  const setFixedQuestEnabled = (questId: string, enabled: boolean) => {
+    setHunter((h) => ({ ...h, hiddenQuestIds: toggleHiddenQuest(h.hiddenQuestIds, questId, enabled) }))
+  }
+
   const renameHunter = (name: string) => {
     const trimmed = name.trim()
     // A blank name would make the onboarding gate (hunter.name === '') true
@@ -384,6 +393,7 @@ export function useHunter() {
     claimQuest,
     claimCustomQuest,
     undoQuestClaim,
+    setFixedQuestEnabled,
     logActivity,
     renameHunter,
     completeOnboarding,

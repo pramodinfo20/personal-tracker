@@ -66,6 +66,12 @@ export interface Hunter {
   logCount: number
   /** Cosmetic-only "focus" chosen during onboarding — which stats get slight visual emphasis. Multi-select: any number of stats, including none (e.g. only "Balanced" picked, or a hunter who predates onboarding). */
   focusStats: StatKey[]
+  /**
+   * Ids of fixed DAILY_QUESTS the user has hidden from Today (Manage
+   * Quests). Absent on older saves = nothing hidden. Custom quests don't
+   * appear here — they carry their own `active` flag. See lib/questVisibility.ts.
+   */
+  hiddenQuestIds?: string[]
   /** ISO timestamp of finishing onboarding. Absent for hunters who onboarded before this was tracked — see joinDateFor in lib/profile.ts. */
   joinedAt?: string
 }

@@ -1,10 +1,8 @@
-import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { screenBackgroundProps } from '../../lib/screenBackgrounds'
 import {
   GateCard,
   HunterStatusPanel,
-  MyQuestsSection,
   RecentActivityLog,
   ShadowArmyGrid,
 } from '../hunter'
@@ -12,15 +10,11 @@ import { ScreenBackground } from '../ui'
 
 export interface LevelUpScreenProps {
   hunter: Hunter
-  customQuests: CustomQuest[]
   onRename: (name: string) => void
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
-  onAddCustomQuest: (activityId: string) => void
-  onRenameCustomQuest: (id: string, name: string) => void
-  onSetCustomQuestActive: (id: string, active: boolean) => void
-  onDeleteCustomQuest: (id: string) => void
+  onManageQuests: () => void
 }
 
 // The full Hunter Status detail view — stats, shadow army, gate management,
@@ -28,15 +22,11 @@ export interface LevelUpScreenProps {
 // no longer the app's default screen (that's Today now).
 export function LevelUpScreen({
   hunter,
-  customQuests,
   onRename,
   onStartGate,
   onCompleteGateTask,
   onGateExpire,
-  onAddCustomQuest,
-  onRenameCustomQuest,
-  onSetCustomQuestActive,
-  onDeleteCustomQuest,
+  onManageQuests,
 }: LevelUpScreenProps) {
   return (
     // The gate backdrop — this tab is where gates are started and cleared.
@@ -53,14 +43,28 @@ export function LevelUpScreen({
           onCompleteTask={onCompleteGateTask}
           onGateExpire={onGateExpire}
         />
-        <MyQuestsSection
-          customQuests={customQuests}
-          completedToday={hunter.completedToday}
-          onAdd={onAddCustomQuest}
-          onRename={onRenameCustomQuest}
-          onSetActive={onSetCustomQuestActive}
-          onDelete={onDeleteCustomQuest}
-        />
+        {/* Quest management moved to the Manage Quests screen (also in
+            Profile) — this keeps a way in from where it used to live. */}
+        <button
+          type="button"
+          onClick={onManageQuests}
+          className="hud-glass hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl p-4 text-left"
+        >
+          <span className="flex items-center gap-3">
+            <span className="hud-icon h-10 w-10 text-xl" aria-hidden="true">
+              🗒️
+            </span>
+            <span>
+              <span className="block text-sm font-bold text-text-primary">Manage Quests</span>
+              <span className="block text-xs text-text-secondary">
+                Choose what shows on Today, add or rename your own
+              </span>
+            </span>
+          </span>
+          <span className="text-xl text-text-secondary" aria-hidden="true">
+            ›
+          </span>
+        </button>
         <RecentActivityLog log={hunter.log} />
       </div>
     </ScreenBackground>

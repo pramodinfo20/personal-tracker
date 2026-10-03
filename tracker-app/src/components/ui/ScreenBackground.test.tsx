@@ -119,7 +119,7 @@ describe('screen background registry', () => {
 
   it('resolves each screen to its own image', () => {
     for (const key of ['today', 'gate', 'profile', 'generic'] as const) {
-      expect(screenBackground(key)).toMatch(new RegExp(`${key}.*\.jpg`))
+      expect(screenBackground(key)).toMatch(new RegExp(`${key}.*\\.jpg`))
     }
     expect(new Set(['today', 'gate', 'profile'].map((k) => screenBackground(k as 'today'))).size).toBe(3)
   })

@@ -105,8 +105,13 @@ export const formatTierXPRange = (tiers: XPTier[]): string => {
   return min === max ? `+${min}` : `+${min}–${max}`
 }
 
-export const allQuestsClaimed = (completedToday: Record<string, boolean>): boolean =>
-  DAILY_QUESTS.every((q) => !!completedToday?.[q.id])
+// True once every quest in `quests` is claimed today (default: all the fixed
+// DAILY_QUESTS; Today passes just the ones the user has left enabled). An
+// empty list is never "all claimed" — there's nothing to have completed.
+export const allQuestsClaimed = (
+  completedToday: Record<string, boolean>,
+  quests: Pick<ClaimableQuest, 'id'>[] = DAILY_QUESTS,
+): boolean => quests.length > 0 && quests.every((q) => !!completedToday?.[q.id])
 
 // The log entry backing a quest claimed today (newest first, so the first
 // match is today's). Works for both old entries (xp only, no tier) and new

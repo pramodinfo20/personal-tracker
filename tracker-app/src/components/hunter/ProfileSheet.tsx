@@ -12,6 +12,8 @@ export interface ProfileSheetProps {
   hunter: Hunter
   onRename: (name: string) => void
   dev: DevActions
+  /** Opens the Manage Quests screen (the caller closes this sheet). */
+  onManageQuests: () => void
   onClose: () => void
 }
 
@@ -26,7 +28,13 @@ const COMING_SOON = [
 // Opened from the header avatar on every screen: a glass bottom sheet over
 // the profile backdrop (its own ScreenBackground in 'overlay' layout, in
 // place of a dimmed view of the current tab). Tapping the backdrop closes it.
-export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetProps) {
+export function ProfileSheet({
+  hunter,
+  onRename,
+  dev,
+  onManageQuests,
+  onClose,
+}: ProfileSheetProps) {
   const rank = rankForLevel(hunter.level || 1)
   const joined = joinDateFor(hunter)
   const [name, setName] = useState(hunter.name)
@@ -83,6 +91,27 @@ export function ProfileSheet({ hunter, onRename, dev, onClose }: ProfileSheetPro
               {joined.approximate ? 'Active since' : 'Joined'} {formatJoinDate(joined.date)}
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={onManageQuests}
+            className="hud-inset hud-pressable mt-6 flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left"
+          >
+            <span className="flex items-center gap-3">
+              <span className="text-lg" aria-hidden="true">
+                🗒️
+              </span>
+              <span>
+                <span className="block text-sm font-bold text-text-primary">Manage Quests</span>
+                <span className="block text-xs text-text-secondary">
+                  Show or hide quests on Today, add your own
+                </span>
+              </span>
+            </span>
+            <span className="text-xl text-text-secondary" aria-hidden="true">
+              ›
+            </span>
+          </button>
 
           <h3 className="mt-6 mb-2 text-xs font-bold tracking-wide text-text-secondary uppercase">
             Settings
