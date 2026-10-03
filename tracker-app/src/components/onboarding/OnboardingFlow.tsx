@@ -7,6 +7,7 @@ import {
   type OnboardingResult,
 } from '../../lib/onboarding'
 import { ActivityCard } from '../hunter/ActivityCard'
+import { BackupSection } from '../hunter/BackupSection'
 import { Button, ScreenBackground } from '../ui'
 
 export interface OnboardingFlowProps {
@@ -150,6 +151,16 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
                 <Button type="submit" disabled={!nameOk} className="mt-5 w-full">
                   Continue
                 </Button>
+                {/* A new phone or cleared browser lands here with no way
+                    into Profile — so restoring has to be offered here too. */}
+                {!retake && (
+                  <div className="mt-5 border-t border-hairline pt-4">
+                    <p className="mb-2 text-xs text-text-secondary">
+                      Already have a backup file?
+                    </p>
+                    <BackupSection />
+                  </div>
+                )}
               </form>
             )}
 

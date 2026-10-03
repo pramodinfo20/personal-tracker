@@ -12,8 +12,10 @@ import {
   statRadarData,
   statRadarDomainMax,
   totalXPInRange,
+  unattributedXPInRange,
   yAxisWidthFor,
 } from './progress'
+import { backfillDailyStatXP } from './statHistory'
 
 const END = new Date('2026-03-15T12:00:00.000Z') // a Sunday, mid-day UTC
 
@@ -94,14 +96,50 @@ describe('statBreakdown', () => {
       entry({ date: '2026-03-14T09:00:00.000Z', xp: 15, stat: 'VIT' }),
       entry({ date: '2026-03-14T10:00:00.000Z', xp: 300, stat: 'GATE' }),
     ]
-    const breakdown = statBreakdown(log, 3, END)
+    const breakdown = statBreakdown(backfillDailyStatXP(log), 3, END)
     const byStat = Object.fromEntries(breakdown.map((b) => [b.stat, b.xp]))
     expect(byStat).toEqual({ STR: 45, VIT: 15, INT: 0, PER: 0, AGI: 0 })
   })
 
   it('always returns all 5 stats, in STAT_META order', () => {
-    const breakdown = statBreakdown([], 7, END)
+    const breakdown = statBreakdown({}, 7, END)
     expect(breakdown.map((b) => b.stat)).toEqual(['STR', 'VIT', 'INT', 'PER', 'AGI'])
+  })
+
+  it('only counts days inside the range', () => {
+    const history = {
+      '2026-03-15': { STR: 10 },
+      '2026-03-01': { STR: 500 }, // outside a 7-day window
+    }
+    const week = statBreakdown(history, 7, END).find((b) => b.stat === 'STR')!.xp
+    const month = statBreakdown(history, 30, END).find((b) => b.stat === 'STR')!.xp
+    expect(week).toBe(10)
+    expect(month).toBe(510)
+  })
+
+  it('is complete past the 40-entry log cap: 200 actions over a year all count', () => {
+    // 200 days x 10 INT each — five times what hunter.log can hold.
+    const history = Object.fromEntries(
+      lastNDateKeys(200, END).map((key) => [key, { INT: 10 }]),
+    )
+    const year = statBreakdown(history, 365, END).find((b) => b.stat === 'INT')!.xp
+    expect(year).toBe(2000)
+  })
+})
+
+describe('unattributedXPInRange', () => {
+  it('is 0 when every day in range has its full per-stat record', () => {
+    const dailyXP = { '2026-03-15': 45, '2026-03-14': 315 }
+    const history = { '2026-03-15': { STR: 45 }, '2026-03-14': { VIT: 15, GATE: 300 } }
+    expect(unattributedXPInRange(dailyXP, history, 7, END)).toBe(0)
+  })
+
+  it('reports XP from days whose per-stat split was never recorded', () => {
+    const dailyXP = { '2026-03-15': 45, '2026-03-10': 80, '2026-01-01': 999 }
+    const history = { '2026-03-15': { STR: 45 } } // nothing for the 10th
+    expect(unattributedXPInRange(dailyXP, history, 7, END)).toBe(80)
+    // The January day is outside a week, inside a year.
+    expect(unattributedXPInRange(dailyXP, history, 365, END)).toBe(1079)
   })
 })
 

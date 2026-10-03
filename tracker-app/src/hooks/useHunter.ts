@@ -28,6 +28,7 @@ import { findActivity } from '../lib/activities'
 import { customQuestToClaimable, type CustomQuest } from '../lib/customQuests'
 import {
   DAILY_LOG_CAP,
+  isLoggedActivity,
   isValidTier,
   questClaimEntry,
   type ClaimableQuest,
@@ -41,6 +42,7 @@ import {
   type OnboardingResult,
 } from '../lib/onboarding'
 import { toggleHiddenQuest } from '../lib/questVisibility'
+import { addDailyStatXP, backfillDailyStatXP, subtractDailyStatXP } from '../lib/statHistory'
 import { wouldStrandProgress } from '../lib/undoGuard'
 import { useSaved } from './useSaved'
 
@@ -137,6 +139,9 @@ export function useHunter() {
   // is how this is distinguished from a real, already-backfilled `{}`.
   useEffect(() => {
     setHunter((h) => (h.dailyXP ? h : { ...h, dailyXP: backfillDailyXP(h.log || []) }))
+    // Same idea for the per-stat history added later: recover what the
+    // (capped) log still holds. Older per-stat detail is gone for good.
+    setHunter((h) => (h.dailyStatXP ? h : { ...h, dailyStatXP: backfillDailyStatXP(h.log || []) }))
     // Only ever needs to run once, on mount — matches the daily-rollover effect above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -168,6 +173,7 @@ export function useHunter() {
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
       const dailyXP = addDailyXP(h.dailyXP, entry.date, amount)
+      const dailyStatXP = addDailyStatXP(h.dailyStatXP, entry.date, stat, amount)
       const prevUnlocked = h.unlockedShadows || []
       const newlyUnlocked = SHADOW_MILESTONES.filter(
         (s) => level >= s.level && !prevUnlocked.includes(s.level),
@@ -190,7 +196,7 @@ export function useHunter() {
           50,
         )
       }
-      return { ...h, xp, level, statPoints, stats, log, unlockedShadows, dailyXP }
+      return { ...h, xp, level, statPoints, stats, log, unlockedShadows, dailyXP, dailyStatXP }
     })
   }
 
@@ -214,29 +220,29 @@ export function useHunter() {
     claimQuest(customQuestToClaimable(quest), tier)
   }
 
-  // The one undo path for every quest type (fixed or custom) — only the id
-  // is needed, since everything to reverse comes from the log entry.
-  // Undo a quest claimed earlier TODAY (respects the same midnight-reset
-  // boundary the daily-rollover effect uses — completedToday/lastQuestDate
-  // are only ever "today's" by construction). Does the guard checks against
-  // the current snapshot for an immediate synchronous result the UI can
-  // show, then re-validates inside the updater against the freshest state
-  // before actually mutating anything.
-  const undoQuestClaim = (quest: Pick<ClaimableQuest, 'id'>): UndoResult => {
-    if (hunter.lastQuestDate !== today()) {
-      return { ok: false, reason: "That claim wasn't from today." }
-    }
-    if (!hunter.completedToday?.[quest.id]) {
-      return { ok: false, reason: 'Nothing to undo.' }
-    }
-    // Reverses whatever XP the entry recorded — a new tiered claim or an old
-    // fixed-XP one alike — never a value re-derived from today's tier table.
-    const entry = questClaimEntry(hunter.log, quest.id, hunter.lastQuestDate)
-    if (!entry) {
-      return { ok: false, reason: "Couldn't find that claim in the log." }
-    }
+  // ── The one undo path ──────────────────────────────────────────────
+  // Every undo — a fixed quest, a custom quest, a logged activity — goes
+  // through undoEntry: same strand guard, same reverseXPGain, same reversal
+  // of exactly what the LOG ENTRY recorded (xp, stat, daily totals). The
+  // callers only say which entry, and what else to put back (the quest's
+  // completedToday flag, or the daily log slot).
+  //
+  // It checks against the current snapshot first, for an immediate result
+  // the UI can show, then re-validates inside the updater against the
+  // freshest state before actually mutating anything.
+  const undoEntry = (
+    find: (h: Hunter) => { entry: LogEntry } | { reason: string },
+    alsoRevert: (h: Hunter) => Partial<Hunter>,
+  ): UndoResult => {
+    const found = find(hunter)
+    if ('reason' in found) return { ok: false, reason: found.reason }
 
-    const { level: newLevel } = reverseXPGain(hunter.xp, hunter.level, hunter.statPoints, entry.xp)
+    const { level: newLevel } = reverseXPGain(
+      hunter.xp,
+      hunter.level,
+      hunter.statPoints,
+      found.entry.xp,
+    )
     const conflict = wouldStrandProgress(hunter, newLevel)
     if (conflict) {
       return {
@@ -246,14 +252,13 @@ export function useHunter() {
     }
 
     setHunter((h) => {
-      if (h.lastQuestDate !== today() || !h.completedToday?.[quest.id]) return h
-      const liveEntry = questClaimEntry(h.log, quest.id, h.lastQuestDate)
-      if (!liveEntry) return h
+      const live = find(h)
+      if ('reason' in live) return h
+      const liveEntry = live.entry
       const { xp, level, statPoints } = reverseXPGain(h.xp, h.level, h.statPoints, liveEntry.xp)
-      // The stat comes from the LOGGED entry, not the quest definition: a
+      // The stat comes from the LOGGED entry, not a quest definition: a
       // custom quest's stat can be edited between claim and undo, and the
-      // entry is what reflects exactly what was granted. (For fixed quests
-      // the two always agree.)
+      // entry is what reflects exactly what was granted.
       const entryStat = liveEntry.stat
       const stats =
         entryStat === 'GATE'
@@ -261,13 +266,51 @@ export function useHunter() {
           : { ...h.stats, [entryStat]: Math.max(0, (h.stats?.[entryStat] || 0) - 1) }
       const log = h.log.filter((e) => e !== liveEntry)
       const dailyXP = subtractDailyXP(h.dailyXP, liveEntry.date, liveEntry.xp)
-      const completedToday = { ...h.completedToday }
-      delete completedToday[quest.id]
-      return { ...h, xp, level, statPoints, stats, log, dailyXP, completedToday }
+      const dailyStatXP = subtractDailyStatXP(
+        h.dailyStatXP,
+        liveEntry.date,
+        entryStat,
+        liveEntry.xp,
+      )
+      return { ...h, xp, level, statPoints, stats, log, dailyXP, dailyStatXP, ...alsoRevert(h) }
     })
 
     return { ok: true }
   }
+
+  // Undo a quest claimed earlier TODAY (respects the same midnight-reset
+  // boundary the daily-rollover effect uses — completedToday/lastQuestDate
+  // are only ever "today's" by construction). Only the id is needed, since
+  // everything to reverse comes from the log entry.
+  const undoQuestClaim = (quest: Pick<ClaimableQuest, 'id'>): UndoResult =>
+    undoEntry(
+      (h) => {
+        if (h.lastQuestDate !== today()) return { reason: "That claim wasn't from today." }
+        if (!h.completedToday?.[quest.id]) return { reason: 'Nothing to undo.' }
+        // Whatever the entry recorded — a new tiered claim or an old
+        // fixed-XP one alike — never a value re-derived from today's tiers.
+        const entry = questClaimEntry(h.log, quest.id, h.lastQuestDate)
+        return entry ? { entry } : { reason: "Couldn't find that claim in the log." }
+      },
+      (h) => {
+        const completedToday = { ...h.completedToday }
+        delete completedToday[quest.id]
+        return { completedToday }
+      },
+    )
+
+  // Undo a Log Activity entry logged earlier TODAY — same rules as a quest
+  // undo, and it hands back the daily log slot it used.
+  const undoLogActivity = (entryId: number): UndoResult =>
+    undoEntry(
+      (h) => {
+        const entry = (h.log || []).find((e) => e.id === entryId)
+        if (!entry || !isLoggedActivity(entry)) return { reason: 'Nothing to undo.' }
+        if (entry.date.slice(0, 10) !== today()) return { reason: "That wasn't logged today." }
+        return { entry }
+      },
+      (h) => ({ logCount: Math.max(0, (h.logCount || 0) - 1) }),
+    )
 
   // A one-off log of an ACTIVITY_LIBRARY activity at one of its fixed tiers
   // — the same activities recurring custom quests are created from, just
@@ -351,6 +394,9 @@ export function useHunter() {
       }
       const log = [entry, ...(h.log || [])].slice(0, LOG_LIMIT)
       const dailyXP = addDailyXP(h.dailyXP, entry.date, bonus)
+      // Gate bonuses belong to no stat; the GATE bucket keeps each day's
+      // per-stat record summing to its dailyXP total.
+      const dailyStatXP = addDailyStatXP(h.dailyStatXP, entry.date, 'GATE', bonus)
       const clearedGates = [...(h.clearedGates || []), template.id]
       if (gained > 0) {
         const newRank = rankForLevel(level)
@@ -367,7 +413,7 @@ export function useHunter() {
           50,
         )
       }
-      return { ...h, xp, level, statPoints, log, clearedGates, dailyXP, activeGate: null }
+      return { ...h, xp, level, statPoints, log, clearedGates, dailyXP, dailyStatXP, activeGate: null }
     })
   }
 
@@ -407,6 +453,7 @@ export function useHunter() {
     claimQuest,
     claimCustomQuest,
     undoQuestClaim,
+    undoLogActivity,
     setFixedQuestEnabled,
     logActivity,
     renameHunter,

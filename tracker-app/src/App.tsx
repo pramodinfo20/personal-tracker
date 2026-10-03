@@ -32,6 +32,7 @@ function AppShell() {
     dev,
     claimQuest,
     undoQuestClaim,
+    undoLogActivity,
     setFixedQuestEnabled,
     claimCustomQuest,
     logActivity,
@@ -97,6 +98,7 @@ function AppShell() {
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
           onManageQuests={() => setManageQuestsOpen(true)}
+          onUndoActivity={undoLogActivity}
         />
       )}
       {tab === 'progress' && (

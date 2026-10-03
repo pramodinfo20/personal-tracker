@@ -4,6 +4,7 @@ import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
 import { avatarInitial, formatJoinDate, joinDateFor, profileDetails } from '../../lib/profile'
 import { Badge, Button, ScreenBackground, ThemeToggle } from '../ui'
+import { BackupSection } from './BackupSection'
 import { DevTestingPanel, type DevActions } from './DevTestingPanel'
 import { glowClass, rankTierColor } from './tierMapping'
 
@@ -183,6 +184,17 @@ export function ProfileSheet({
                 </span>
               </div>
             ))}
+          </div>
+
+          <h3 className="mt-6 mb-2 text-xs font-bold tracking-wide text-text-secondary uppercase">
+            Your data
+          </h3>
+          <div className="hud-inset rounded-2xl px-4 py-3">
+            <p className="mb-2.5 text-xs text-text-secondary">
+              Everything is stored only in this browser. Download a backup to keep your progress
+              safe, or to move it to another device.
+            </p>
+            <BackupSection current={hunter} />
           </div>
 
           {/* Dev Testing is compiled out of production builds entirely —

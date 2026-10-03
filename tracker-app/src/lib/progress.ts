@@ -3,15 +3,15 @@
 // UTC convention as today()/nextResetAt() in format.ts, so "today" here
 // always matches "today" on the Today screen.
 //
-// Week/Month/Year totals, the XP series and days-active all read from
-// hunter.dailyXP (an uncapped per-day total, keyed the same way) rather than
-// hunter.log — the log is capped at 40 entries (LOG_LIMIT in useHunter.ts)
-// for Recent Activity display, so it isn't a reliable source once a range
-// spans more than a handful of active days. statBreakdown is the one
-// exception: per-stat XP isn't tracked outside the log, so it still reads
-// hunter.log and inherits that same cap — see its doc comment.
+// Nothing here reads hunter.log — it's capped at 40 entries (LOG_LIMIT in
+// useHunter.ts) for Recent Activity display, so it isn't a reliable source
+// once a range spans more than a handful of active days. Totals, the XP
+// series and days-active read hunter.dailyXP (uncapped per-day totals);
+// statBreakdown reads hunter.dailyStatXP (the same, split by stat — see
+// lib/statHistory.ts).
 
-import { STAT_META, type LogEntry, type StatKey } from './hunterState'
+import { STAT_META, type StatKey } from './hunterState'
+import { unattributedXP, type DailyStatXP } from './statHistory'
 
 export type RangeKey = 'week' | 'month' | 'year'
 
@@ -87,26 +87,20 @@ export interface StatBreakdownEntry {
   xp: number
 }
 
-// XP per stat in range. Gate-clear entries (stat: 'GATE') aren't attributed
-// to any single stat, so they're excluded here — they still count toward
-// totalXPInRange. Unlike the other aggregations on this page, this one has
-// no uncapped source to read from — dailyXP only stores a daily total, not
-// a per-stat breakdown — so it stays sourced from hunter.log and inherits
-// its 40-entry cap. For Week (and usually Month) that's rarely a problem in
-// practice; for Year it will typically only reflect recent activity, not
-// the full range. The Progress screen surfaces that caveat in the UI for
-// the Year range.
+// XP per stat in range, from the uncapped per-day history — complete for
+// any range, not just the last 40 logged actions. Gate bonuses (the 'GATE'
+// bucket) aren't attributed to any single stat, so they're excluded here —
+// they still count toward totalXPInRange.
 export const statBreakdown = (
-  log: LogEntry[],
+  dailyStatXP: DailyStatXP,
   days: number,
   end: Date = new Date(),
 ): StatBreakdownEntry[] => {
-  const keys = new Set(lastNDateKeys(days, end))
   const totals: Record<StatKey, number> = { STR: 0, VIT: 0, INT: 0, PER: 0, AGI: 0 }
-  for (const entry of log) {
-    if (entry.stat === 'GATE') continue
-    if (!keys.has(entry.date.slice(0, 10))) continue
-    totals[entry.stat] += entry.xp
+  for (const key of lastNDateKeys(days, end)) {
+    const day = dailyStatXP[key]
+    if (!day) continue
+    for (const stat of Object.keys(totals) as StatKey[]) totals[stat] += day[stat] ?? 0
   }
   return STAT_META.map((s) => ({
     stat: s.key,
@@ -116,6 +110,16 @@ export const statBreakdown = (
     xp: totals[s.key],
   }))
 }
+
+// XP in range that has no per-stat record: history from before dailyStatXP
+// existed that had already rolled off the 40-entry log when it was
+// backfilled. 0 means the breakdown above is complete for the range.
+export const unattributedXPInRange = (
+  dailyXP: Record<string, number>,
+  dailyStatXP: DailyStatXP,
+  days: number,
+  end: Date = new Date(),
+): number => unattributedXP(dailyXP, dailyStatXP, lastNDateKeys(days, end))
 
 export const totalXPInRange = (
   dailyXP: Record<string, number>,

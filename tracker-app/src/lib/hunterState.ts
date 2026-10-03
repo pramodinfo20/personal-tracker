@@ -3,6 +3,7 @@
 
 import type { ActivityCategoryKey } from './activities'
 import type { ActiveGate } from './gates'
+import type { DailyStatXP } from './statHistory'
 import type { StatKey } from './types'
 
 export type { StatKey } from './types'
@@ -61,6 +62,13 @@ export interface Hunter {
    * failed gate), so "days active" stays correct.
    */
   dailyXP: Record<string, number>
+  /**
+   * Uncapped per-day, per-stat XP — dailyXP split by stat, so the Progress
+   * tab's stat breakdown isn't limited to the 40-entry log. Written and
+   * reversed everywhere dailyXP is. Absent on older saves until useHunter's
+   * one-time backfill runs. See lib/statHistory.ts.
+   */
+  dailyStatXP?: DailyStatXP
   unlockedShadows: number[]
   activeGate: ActiveGate | null
   clearedGates: string[]

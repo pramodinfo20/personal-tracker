@@ -138,3 +138,8 @@ export const questXPOnDate = (
     .filter((e) => e.questId && ids.has(e.questId) && e.date.slice(0, 10) === dateKey)
     .reduce((sum, e) => sum + e.xp, 0)
 }
+
+// A one-off Log Activity entry: XP that came from neither a quest claim
+// (those carry a questId) nor a gate (stat 'GATE'). Covers entries from the
+// old free-text Log Activity too, which predate the `category` field.
+export const isLoggedActivity = (entry: LogEntry): boolean => !entry.questId && entry.stat !== 'GATE'

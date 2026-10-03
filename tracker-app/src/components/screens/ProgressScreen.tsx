@@ -7,6 +7,7 @@ import {
   monthlyXPSeries,
   statBreakdown,
   totalXPInRange,
+  unattributedXPInRange,
   type RangeKey,
 } from '../../lib/progress'
 import {
@@ -23,10 +24,11 @@ export interface ProgressScreenProps {
   hunter: Hunter
 }
 
-// Aggregation + display only — no new tracking. Week/Month/Year totals, the
-// XP chart, and days-active all read hunter.dailyXP (uncapped); the stat
-// breakdown reads hunter.log (capped at 40 entries) since per-stat XP isn't
-// tracked outside it — see lib/progress.ts's top-of-file comment.
+// Aggregation + display only. Week/Month/Year totals, the XP chart and
+// days-active read hunter.dailyXP; the stat breakdown reads
+// hunter.dailyStatXP — both uncapped, so every range is complete. The only
+// gap possible is per-stat detail from before dailyStatXP existed; when the
+// selected range includes any, the card says exactly how much.
 export function ProgressScreen({ hunter }: ProgressScreenProps) {
   const [range, setRange] = useState<RangeKey>('week')
   const days = RANGE_DAYS[range]
@@ -44,7 +46,13 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
         : daily.map((d) => ({ key: d.date, xp: d.xp })),
     [range, daily, monthly],
   )
-  const breakdown = useMemo(() => statBreakdown(hunter.log, days), [hunter.log, days])
+  // Only briefly undefined, before useHunter's one-time backfill runs.
+  const dailyStatXP = useMemo(() => hunter.dailyStatXP || {}, [hunter.dailyStatXP])
+  const breakdown = useMemo(() => statBreakdown(dailyStatXP, days), [dailyStatXP, days])
+  const unattributed = useMemo(
+    () => unattributedXPInRange(dailyXP, dailyStatXP, days),
+    [dailyXP, dailyStatXP, days],
+  )
   const totalXP = useMemo(() => totalXPInRange(dailyXP, days), [dailyXP, days])
   const daysActive = useMemo(() => daysActiveInRange(dailyXP, days), [dailyXP, days])
 
@@ -80,10 +88,10 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
 
         <Card title="Stat Breakdown" icon="📊">
           <StatBreakdown data={breakdown} />
-          {range === 'year' && (
+          {unattributed > 0 && (
             <p className="mt-3 text-[11px] text-text-muted">
-              Based on your most recent activity — per-stat history isn't kept long enough to
-              cover a full year.
+              {unattributed} XP in this range was earned before per-stat history was kept, so it
+              isn't split by stat here. Everything since is complete.
             </p>
           )}
         </Card>

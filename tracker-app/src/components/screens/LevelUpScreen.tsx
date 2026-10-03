@@ -1,3 +1,4 @@
+import type { UndoResult } from '../../hooks/useHunter'
 import type { Hunter } from '../../lib/hunterState'
 import {
   GateCard,
@@ -14,6 +15,7 @@ export interface LevelUpScreenProps {
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
   onManageQuests: () => void
+  onUndoActivity: (entryId: number) => UndoResult
 }
 
 // The full Hunter Status detail view — stats, shadow army, gate management,
@@ -26,6 +28,7 @@ export function LevelUpScreen({
   onCompleteGateTask,
   onGateExpire,
   onManageQuests,
+  onUndoActivity,
 }: LevelUpScreenProps) {
   return (
     // The gate backdrop — this tab is where gates are started and cleared.
@@ -64,7 +67,7 @@ export function LevelUpScreen({
             ›
           </span>
         </button>
-        <RecentActivityLog log={hunter.log} />
+        <RecentActivityLog log={hunter.log} onUndoActivity={onUndoActivity} />
       </div>
     </ScreenBackground>
   )

@@ -39,7 +39,11 @@ describe('useHunter — hiding fixed quests is display-only', () => {
     act(() => result.current.setFixedQuestEnabled('q_hunt', false))
     const h = result.current.hunter
     expect(h.hiddenQuestIds).toEqual(['q_train', 'q_hunt'])
-    expect({ ...h, hiddenQuestIds: undefined }).toEqual({ ...before, hiddenQuestIds: undefined })
+    // dailyStatXP is filled in by the one-time history backfill on mount — not by the toggle.
+    expect({ ...h, hiddenQuestIds: undefined, dailyStatXP: undefined }).toEqual({
+      ...before,
+      hiddenQuestIds: undefined,
+    })
     expect(stored().hiddenQuestIds).toEqual(['q_train', 'q_hunt'])
 
     act(() => result.current.setFixedQuestEnabled('q_train', true))
