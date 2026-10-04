@@ -3,6 +3,12 @@
 // these names. Keep each to one short line: they are polish alongside the
 // functional text, never a replacement for it.
 
+/** The intro splash a brand-new user sees before setup. */
+export const INTRO_COPY = {
+  eyebrow: 'System online',
+  headline: 'Your journey begins now.',
+} as const
+
 /** Setup flow: one line under each step's heading, plus the welcome shown once on first arriving at Today. */
 export const ONBOARDING_COPY = {
   name: 'Every legend starts at Level 1.',

@@ -13,6 +13,12 @@ const stored = (): Hunter => JSON.parse(localStorage.getItem(HUNTER_KEY)!)
 const button = (name: RegExp | string) => screen.getByRole('button', { name })
 const today = () => new Date().toISOString().split('T')[0]
 
+// A fresh install starts on the intro splash; tap through it to reach setup.
+const launchFresh = () => {
+  render(<App />)
+  fireEvent.click(button('Skip intro'))
+}
+
 const completeSetup = (goals: RegExp[]) => {
   fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Jin' } })
   fireEvent.click(button('Continue'))
@@ -28,13 +34,13 @@ describe('App — first-launch setup', () => {
   })
 
   it('a fresh install (no save) opens setup and nothing else', () => {
-    render(<App />)
+    launchFresh()
     expect(screen.getByRole('dialog', { name: 'Welcome setup' })).toBeTruthy()
     expect(screen.queryByRole('navigation')).toBeNull()
   })
 
   it('finishing setup pre-hides the built-in quests whose goals were not picked', () => {
-    render(<App />)
+    launchFresh()
     completeSetup([/Physical \/ Fitness/, /Skills \/ Learning/])
 
     expect(screen.queryByRole('dialog', { name: 'Welcome setup' })).toBeNull()
@@ -52,7 +58,7 @@ describe('App — first-launch setup', () => {
   })
 
   it('picking Hydration adds the library Drinking Water quest (no built-in quest covers it)', () => {
-    render(<App />)
+    launchFresh()
     completeSetup([/Hydration/])
     const quests = JSON.parse(localStorage.getItem(QUESTS_KEY)!)
     expect(quests).toHaveLength(1)

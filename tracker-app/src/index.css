@@ -358,6 +358,13 @@ body {
     animation-delay: calc(var(--i, 0) * var(--hud-stagger));
   }
 
+  /* Intro splash (IntroSplash.tsx): a slower, softer version of hud-enter —
+     each line fades up out of a blur, staggered by --intro-delay. */
+  .intro-reveal {
+    animation: intro-reveal 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    animation-delay: var(--intro-delay, 0ms);
+  }
+
   /* Icon orb: bigger glyph on a radial halo in the card's --glow. */
   .hud-icon {
     display: flex;
@@ -410,6 +417,19 @@ body {
   }
 }
 
+@keyframes intro-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
 @keyframes hud-sheen {
   to {
     transform: translateX(120%);
@@ -418,6 +438,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .hud-enter,
+  .intro-reveal,
   .hud-bar-fill::after {
     animation: none;
   }

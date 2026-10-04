@@ -14,9 +14,10 @@ import {
   ManageQuestsSheet,
   ProfileSheet,
 } from './components/hunter'
-import { OnboardingFlow } from './components/onboarding'
+import { IntroSplash, OnboardingFlow } from './components/onboarding'
 import { HUNT_QUEST_ID, huntQuest } from './lib/jobApplications'
 import { CERTS, PROJECTS, SKILLS } from './lib/trackers'
+import { markIntroSeen, shouldShowIntro } from './lib/intro'
 import { starterActivitiesForGoals, type OnboardingResult } from './lib/onboarding'
 import { questEntries } from './lib/questVisibility'
 
@@ -27,6 +28,18 @@ const ProgressScreen = lazy(() =>
   import('./components/screens/ProgressScreen').then((m) => ({ default: m.ProgressScreen })),
 )
 
+// The saved hunter's name as it is in storage right now — read directly so
+// the intro decision doesn't depend on hook order.
+const readSavedName = (): string => {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem('p26_hunter') ?? 'null')
+    const name = (saved as { name?: unknown } | null)?.name
+    return typeof name === 'string' ? name : ''
+  } catch {
+    return ''
+  }
+}
+
 function AppShell() {
   const [tab, setTab] = useState<Tab>('today')
   const [profileOpen, setProfileOpen] = useState(false)
@@ -36,6 +49,8 @@ function AppShell() {
   // in memory, so it's shown once and never again after a reload.
   const [welcome, setWelcome] = useState(false)
   const dismissWelcome = useCallback(() => setWelcome(false), [])
+  // Decided once at launch: a fresh install that hasn't seen the intro yet.
+  const [intro, setIntro] = useState(() => shouldShowIntro(readSavedName(), localStorage))
   const {
     hunter,
     dev,
@@ -89,6 +104,17 @@ function AppShell() {
   // until setup finishes (the name is required there), so an existing save
   // never lands here and setup never reappears on its own afterward.
   if (!hunter.name.trim()) {
+    // ...and before setup, once, the intro splash (lib/intro.ts).
+    if (intro) {
+      return (
+        <IntroSplash
+          onDone={() => {
+            markIntroSeen(localStorage)
+            setIntro(false)
+          }}
+        />
+      )
+    }
     return <OnboardingFlow onComplete={finishSetup} />
   }
 
