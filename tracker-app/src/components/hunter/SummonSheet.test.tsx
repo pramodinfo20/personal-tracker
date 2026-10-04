@@ -55,6 +55,9 @@ describe('SummonSheet', () => {
     const revealed = within(screen.getByTestId('summon-result'))
     expect(revealed.getByText('Grey Wolf')).toBeTruthy()
     expect(revealed.getByText('D-rank')).toBeTruthy()
+    // The hero is the rank's artwork, in the rank's colour.
+    expect(screen.getByTestId('summon-art').getAttribute('src')).toMatch(/companion-d[^/]*\.jpg/)
+    expect(screen.getByTestId('summon-result').className).toContain('rank-d')
     expect(revealed.getByText('New companion recruited!')).toBeTruthy()
     expect(screen.queryByTestId('summon-roll')).toBeNull()
     expect(summonButton().textContent).toBe('Summon again (1 ticket)')
@@ -89,6 +92,49 @@ describe('SummonSheet', () => {
     mount(0)
     expect(screen.queryByRole('button', { name: /buy|purchase|get tickets|shop/i })).toBeNull()
     expect(screen.queryByRole('link')).toBeNull()
+  })
+})
+
+describe('SummonSheet — artwork', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
+
+  it('sits on the summoning-circle background', () => {
+    mount(1)
+    const bg = document.querySelector('img[src*="summon-circle"]')
+    expect(bg).toBeTruthy()
+    expect(screen.getByTestId('screen-background-overlay').dataset.tone).toBe('dark')
+  })
+
+  it.each(COMPANIONS.map((c) => [c.name, c] as const))(
+    '%s: the reveal shows its own art, with its rank\'s colour behind it',
+    (_name, companion) => {
+      mount(1, [companion.rank], vi.fn(() => ({ companion, duplicate: false })))
+      fireEvent.click(summonButton())
+      // The roll comes first: no art yet.
+      expect(screen.queryByTestId('summon-art')).toBeNull()
+      act(() => void vi.advanceTimersByTime(1600))
+      expect(screen.getByTestId('summon-art').getAttribute('src')).toMatch(
+        new RegExp(`${companion.art}[^/]*\\.jpg`),
+      )
+      // The glow is per RANK, not per companion.
+      const result = screen.getByTestId('summon-result')
+      expect(result.dataset.rank).toBe(companion.rank)
+      expect(result.className.split(' ')).toContain(`rank-${companion.rank.toLowerCase()}`)
+      expect(result.querySelector('.rank-glow')).toBeTruthy()
+      expect(within(result).getByText(companion.name, { exact: false })).toBeTruthy()
+    },
+  )
+
+  it('a companion with no file of its own falls back to its rank image', () => {
+    const ghost = { ...COMPANIONS.find((c) => c.rank === 'A')!, art: 'no-such-file' }
+    mount(1, ['A'], vi.fn(() => ({ companion: ghost, duplicate: false })))
+    fireEvent.click(summonButton())
+    act(() => void vi.advanceTimersByTime(1600))
+    expect(screen.getByTestId('summon-art').getAttribute('src')).toMatch(/companion-a[^/]*\.jpg/)
   })
 })
 

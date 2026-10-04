@@ -11,8 +11,6 @@
 // and the undo guard (lib/undoGuard.ts) still refuses an undo that would
 // drop the hunter back below one.
 
-import type { Tier } from '../components/ui/tiers'
-
 export const COMPANION_RANKS = ['D', 'C', 'B', 'A', 'S', 'SS'] as const
 export type CompanionRank = (typeof COMPANION_RANKS)[number]
 
@@ -31,16 +29,17 @@ export const RANK_ACCESS_LEVEL: Record<CompanionRank, number> = {
   SS: 100,
 }
 
-// Rank -> the app's existing 5-step rank-tier colour scale. Six ranks on
-// five colours: S and SS share the hottest tier, and SS is set apart by a
-// gold rim in the grid rather than a colour of its own.
-export const RANK_TIER: Record<CompanionRank, Tier> = {
-  D: 'bronze',
-  C: 'silver',
-  B: 'gold',
-  A: 'purple',
-  S: 'red',
-  SS: 'red',
+// Each rank's colour, as a CSS class that sets --rank (index.css): grey,
+// green, blue, violet, cyan, gold — D to SS. These follow the companion
+// artwork (lib/companionArt.ts), so a card's colour and its art agree, and
+// every rank has a colour of its own.
+export const RANK_CLASS: Record<CompanionRank, string> = {
+  D: 'rank-d',
+  C: 'rank-c',
+  B: 'rank-b',
+  A: 'rank-a',
+  S: 'rank-s',
+  SS: 'rank-ss',
 }
 
 export interface Companion {
@@ -48,21 +47,35 @@ export interface Companion {
   name: string
   rank: CompanionRank
   icon: string
+  /**
+   * File key of this companion's own image in src/assets/companions/
+   * ("stone-golem" -> stone-golem.jpg). See lib/companionArt.ts.
+   */
+  art: string
 }
 
-const roster = (rank: CompanionRank, entries: [name: string, icon: string][]): Companion[] =>
-  entries.map(([name, icon]) => ({
-    id: `${rank.toLowerCase()}_${name.toLowerCase().replace(/[^a-z]+/g, '_')}`,
+const slug = (name: string, separator: string): string =>
+  name.toLowerCase().replace(/[^a-z]+/g, separator)
+
+// [name, icon, art?] — art defaults to the name as a file key.
+const roster = (
+  rank: CompanionRank,
+  entries: [name: string, icon: string, art?: string][],
+): Companion[] =>
+  entries.map(([name, icon, art]) => ({
+    id: `${rank.toLowerCase()}_${slug(name, '_')}`,
     name,
     rank,
     icon,
+    art: art ?? slug(name, '-'),
   }))
 
 export const COMPANIONS: Companion[] = [
   ...roster('D', [
     ['Stone Golem', '🗿'],
     ['Marsh Slime', '🫧'],
-    ['Grey Wolf', '🐺'],
+    // The original D-rank image is this wolf, so it keeps that file.
+    ['Grey Wolf', '🐺', 'companion-d'],
     ['Cave Bat', '🦇'],
   ]),
   ...roster('C', [

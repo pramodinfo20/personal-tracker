@@ -197,9 +197,22 @@ describe('ScreenBackground — picks the file for the active theme', () => {
 })
 
 describe('screen background registry', () => {
-  it('has exactly the eight keyed files (4 screens x 2 themes) — no misnamed, unused-but-bundled images', () => {
-    const expected = SCREENS.flatMap((k) => [k, `${k}-light`]).sort()
+  it('has exactly the keyed files (4 screens x 2 themes, plus the summoning circle) — no misnamed, unused-but-bundled images', () => {
+    const expected = [...SCREENS.flatMap((k) => [k, `${k}-light`]), 'summon-circle'].sort()
     expect([...SCREEN_BACKGROUND_FILES].sort()).toEqual(expected)
+  })
+
+  it('the summoning circle is one dark image used in BOTH themes, veiled in black', () => {
+    expect(backgroundFileKey('summon-circle', 'dark')).toBe('summon-circle')
+    expect(backgroundFileKey('summon-circle', 'light')).toBe('summon-circle')
+    const dark = screenBackgroundProps('summon-circle', 'dark')
+    const light = screenBackgroundProps('summon-circle', 'light')
+    expect(dark.image).toMatch(/summon-circle[^/]*\.jpg/)
+    expect(light.image).toBe(dark.image)
+    expect(dark.tone).toBe('dark')
+    expect(light.tone).toBe('dark')
+    // Themed screens keep the theme's own veil.
+    expect(screenBackgroundProps('today', 'light').tone).toBe('theme')
   })
 
   it('names files <screen>.jpg for dark and <screen>-light.jpg for light', () => {
@@ -234,6 +247,7 @@ describe('screen background registry', () => {
     expect(screenBackgroundProps('generic', 'dark')).toEqual({
       image: screenBackground('generic', 'dark'),
       dim: 0.35,
+      tone: 'theme',
     })
     expect(screenBackgroundProps('gate', 'dark').dim).toBe(0.45)
     expect(screenBackgroundProps('today', 'dark').dim).toBe(0.35)

@@ -34,8 +34,10 @@ describe('MonsterCompanionsGrid', () => {
     expect(cards('D')).toHaveLength(4)
     expect(cards('C')).toHaveLength(4)
     for (const card of [...cards('D'), ...cards('C')]) expect(card.textContent).toContain('?')
-    expect(cards('D')[0].className).toContain('tier-bronze')
-    expect(cards('C')[0].className).toContain('tier-silver')
+    expect(unlocked('D')!.className).toContain('rank-d')
+    expect(unlocked('C')!.className).toContain('rank-c')
+    expect(cards('D')[0].className).toContain('rank-surface')
+    expect(cards('D')[0].querySelector('img')).toBeNull()
     for (const rank of ['B', 'A', 'S', 'SS']) {
       expect(locked(rank)).toBeTruthy()
       expect(locked(rank)!.className).toContain('border-dashed')
@@ -47,28 +49,52 @@ describe('MonsterCompanionsGrid', () => {
   it('high level reads differently: more ranks open, only SS still locked', () => {
     render(<MonsterCompanionsGrid level={60} unlockedMilestones={[5, 10, 15, 20, 25, 30, 40, 50]} />)
     for (const rank of ['D', 'C', 'B', 'A', 'S']) expect(unlocked(rank)).toBeTruthy()
-    expect(cards('B')[0].className).toContain('tier-gold')
-    expect(cards('A')[0].className).toContain('tier-purple')
-    expect(cards('S')[0].className).toContain('tier-red')
+    expect(unlocked('B')!.className).toContain('rank-b')
+    expect(unlocked('A')!.className).toContain('rank-a')
+    expect(unlocked('S')!.className).toContain('rank-s')
     expect(locked('SS')!.textContent).toContain('SS-rank locked — reach Lv.100')
     expect(screen.getAllByRole('listitem')).toHaveLength(20)
   })
 
-  it('level 100: everything open, SS marked out with a gold rim', () => {
+  it('level 100: everything open, SS in its own colour', () => {
     render(<MonsterCompanionsGrid level={100} unlockedMilestones={[]} />)
     expect(screen.queryByLabelText(/, locked$/)).toBeNull()
     expect(cards('SS')).toHaveLength(3)
-    expect(cards('SS')[0].className).toContain('ring-tier-gold')
-    expect(cards('S')[0].className).not.toContain('ring-tier-gold')
+    expect(unlocked('SS')!.className).toContain('rank-ss')
+    expect(unlocked('S')!.className).not.toContain('rank-ss')
     expect(screen.getByText('Every rank is open to you.')).toBeTruthy()
   })
 
-  it('a recruited companion shows its icon and name; the others in its rank stay "?"', () => {
+  it('a recruited companion shows its rank art and name; the others in its rank stay "?"', () => {
     const wolf = COMPANIONS.find((c) => c.name === 'Grey Wolf')!
     render(<MonsterCompanionsGrid level={12} unlockedMilestones={[5, 10]} recruited={[wolf.id]} />)
     const d = cards('D')
-    expect(d.filter((c) => c.textContent?.includes('Grey Wolf'))).toHaveLength(1)
-    expect(d.filter((c) => c.textContent?.includes('?'))).toHaveLength(3)
+    const wolfCard = d.filter((c) => c.textContent?.includes('Grey Wolf'))
+    expect(wolfCard).toHaveLength(1)
+    expect(wolfCard[0].querySelector('img')?.getAttribute('src')).toMatch(/companion-d[^/]*\.jpg/)
+    expect(wolfCard[0].textContent).not.toContain('?')
+    const unknown = d.filter((c) => c.textContent?.includes('?'))
+    expect(unknown).toHaveLength(3)
+    for (const card of unknown) expect(card.querySelector('img')).toBeNull()
     expect(within(unlocked('D')!).getByText('1/4 recruited')).toBeTruthy()
+  })
+
+  it('every recruited companion shows its OWN art — 23 different images', () => {
+    render(<MonsterCompanionsGrid level={100} unlockedMilestones={[]} recruited={COMPANIONS.map((c) => c.id)} />)
+    const shown = COMPANIONS.map((c) => {
+      const src = document.querySelector(`[data-companion="${c.id}"] img`)?.getAttribute('src') ?? ''
+      expect(src, c.name).toMatch(new RegExp(`${c.art}[^/]*\\.jpg`))
+      return src
+    })
+    expect(new Set(shown).size).toBe(23)
+    expect(screen.queryByText('?')).toBeNull()
+  })
+
+  it('two companions of the same rank show different art', () => {
+    const [golem, slime] = COMPANIONS.filter((c) => c.rank === 'D')
+    render(<MonsterCompanionsGrid level={12} unlockedMilestones={[5, 10]} recruited={[golem.id, slime.id]} />)
+    const src = (id: string) => document.querySelector(`[data-companion="${id}"] img`)!.getAttribute('src')
+    expect(src(golem.id)).toMatch(/stone-golem/)
+    expect(src(slime.id)).toMatch(/marsh-slime/)
   })
 })

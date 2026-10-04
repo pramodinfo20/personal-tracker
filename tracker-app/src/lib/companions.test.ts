@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { TIERS } from '../components/ui/tiers'
+import { readFileSync } from 'node:fs'
+import { COMPANION_ART_FILES, companionArt, hasOwnArt, rankArt, rankArtKey } from './companionArt'
 import {
   COMPANIONS,
   COMPANION_MILESTONES,
   COMPANION_RANKS,
   RANK_ACCESS_LEVEL,
-  RANK_TIER,
+  RANK_CLASS,
   accessibleRanks,
   companionsOfRank,
   describeMilestone,
@@ -42,12 +43,61 @@ describe('roster', () => {
 })
 
 describe('rank colours', () => {
-  it('use only the existing 5-step tier scale, never getting cooler as rank rises', () => {
-    const steps = COMPANION_RANKS.map((r) => TIERS.indexOf(RANK_TIER[r]))
-    expect(steps.every((s) => s >= 0)).toBe(true)
-    expect([...steps].sort((a, b) => a - b)).toEqual(steps)
-    expect(RANK_TIER.D).toBe('bronze')
-    expect(RANK_TIER.SS).toBe('red')
+  const css = readFileSync('src/index.css', 'utf8')
+
+  it('every rank has a colour class of its own', () => {
+    const classes = COMPANION_RANKS.map((r) => RANK_CLASS[r])
+    expect(classes).toEqual(['rank-d', 'rank-c', 'rank-b', 'rank-a', 'rank-s', 'rank-ss'])
+    expect(new Set(classes).size).toBe(6)
+  })
+
+  it('each class is defined in the stylesheet, with a light-theme text colour too', () => {
+    for (const rank of COMPANION_RANKS) {
+      const key = rank.toLowerCase()
+      expect(css).toContain(`.rank-${key} {`)
+      expect(css).toContain(`--fixed-rank-${key}:`)
+      // Once as the dark default, once overridden for light.
+      expect(css.match(new RegExp(`--rgb-rank-${key}:`, 'g'))).toHaveLength(2)
+    }
+  })
+})
+
+describe('companion artwork', () => {
+  const file = (url: string | undefined) => url?.split('/').pop()?.split('?')[0] ?? ''
+
+  it('every companion has an image of its OWN — none relies on the rank fallback', () => {
+    for (const c of COMPANIONS) {
+      expect(hasOwnArt(c), `${c.name} is missing ${c.art}.jpg`).toBe(true)
+      expect(file(companionArt(c))).toMatch(new RegExp(`^${c.art}[^/]*\\.jpg$`))
+    }
+  })
+
+  it('all 23 images are different files', () => {
+    expect(new Set(COMPANIONS.map((c) => companionArt(c))).size).toBe(23)
+  })
+
+  it('art keys are the companion names as file names; the Grey Wolf keeps the original D-rank wolf', () => {
+    const key = (name: string) => COMPANIONS.find((c) => c.name === name)!.art
+    expect(key('Stone Golem')).toBe('stone-golem')
+    expect(key('Blaze Phoenix Chick')).toBe('blaze-phoenix-chick')
+    expect(key('Primordial Titan')).toBe('primordial-titan')
+    expect(key('Grey Wolf')).toBe('companion-d')
+    expect(new Set(COMPANIONS.map((c) => c.art)).size).toBe(23)
+  })
+
+  it('the folder holds exactly those images plus the six rank fallbacks — nothing stray or misnamed', () => {
+    const expected = new Set([...COMPANIONS.map((c) => c.art), ...COMPANION_RANKS.map(rankArtKey)])
+    expect([...COMPANION_ART_FILES].sort()).toEqual([...expected].sort())
+    expect(expected.size).toBe(28)
+  })
+
+  it('a companion whose own file is missing falls back to its rank image', () => {
+    for (const rank of COMPANION_RANKS) {
+      const ghost = { art: 'no-such-file', rank }
+      expect(hasOwnArt(ghost)).toBe(false)
+      expect(companionArt(ghost)).toBe(rankArt(rank))
+      expect(file(rankArt(rank))).toMatch(new RegExp(`^companion-${rank.toLowerCase()}[^/]*\\.jpg$`))
+    }
   })
 })
 

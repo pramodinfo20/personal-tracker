@@ -179,6 +179,24 @@ body {
   --rgb-backing: 0 0 0; /* chip fill behind text over art */
   --rgb-ink: 255 255 255; /* the "opposite of bg": hairlines, edge highlights */
   --rgb-shadow: 0 0 0; /* drop shadows */
+  --fixed-art-scrim: 0 0 0; /* veil over art that is dark in every theme */
+
+  /* Companion rank colours, D..SS (grey, green, blue, violet, cyan, gold).
+     The --fixed-* set is the same in every theme: glows, and text sitting
+     on dark art. The --rgb-rank-* set is for text and borders on the
+     theme's own surfaces, so it is redefined for the light theme below. */
+  --fixed-rank-d: 156 163 175;
+  --fixed-rank-c: 74 222 128;
+  --fixed-rank-b: 96 165 250;
+  --fixed-rank-a: 167 139 250;
+  --fixed-rank-s: 34 211 238;
+  --fixed-rank-ss: 250 204 21;
+  --rgb-rank-d: var(--fixed-rank-d);
+  --rgb-rank-c: var(--fixed-rank-c);
+  --rgb-rank-b: var(--fixed-rank-b);
+  --rgb-rank-a: var(--fixed-rank-a);
+  --rgb-rank-s: var(--fixed-rank-s);
+  --rgb-rank-ss: var(--fixed-rank-ss);
 
   --rgb-accent: 47 143 255;
   --rgb-accent-hover: 87 166 255;
@@ -274,6 +292,14 @@ body {
   --rgb-stat-per: 109 40 217;
   --rgb-stat-agi: 152 67 4;
 
+  /* Companion rank colours, darkened to hold AA as text on light surfaces. */
+  --rgb-rank-d: 75 85 99;
+  --rgb-rank-c: 22 101 52;
+  --rgb-rank-b: 29 78 216;
+  --rgb-rank-a: 109 40 217;
+  --rgb-rank-s: 21 94 117;
+  --rgb-rank-ss: 133 77 14;
+
   --hud-fill: 0.5;
   --hud-fill-strong: 0.6;
   --hud-inset-fill: 0.05;
@@ -356,6 +382,58 @@ body {
   .hud-enter {
     animation: hud-enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
     animation-delay: calc(var(--i, 0) * var(--hud-stagger));
+  }
+
+  /* Companion rank colour: .rank-x sets --rank (theme-aware) and
+     --rank-bright (fixed), and the helpers below draw with them. */
+  .rank-d {
+    --rank: var(--rgb-rank-d);
+    --rank-bright: var(--fixed-rank-d);
+  }
+  .rank-c {
+    --rank: var(--rgb-rank-c);
+    --rank-bright: var(--fixed-rank-c);
+  }
+  .rank-b {
+    --rank: var(--rgb-rank-b);
+    --rank-bright: var(--fixed-rank-b);
+  }
+  .rank-a {
+    --rank: var(--rgb-rank-a);
+    --rank-bright: var(--fixed-rank-a);
+  }
+  .rank-s {
+    --rank: var(--rgb-rank-s);
+    --rank-bright: var(--fixed-rank-s);
+  }
+  .rank-ss {
+    --rank: var(--rgb-rank-ss);
+    --rank-bright: var(--fixed-rank-ss);
+  }
+  /* A tinted, bordered surface in the rank colour (cards, badges). */
+  .rank-surface {
+    border-color: rgb(var(--rank) / 0.55);
+    background-color: rgb(var(--rank) / 0.15);
+  }
+  .rank-text {
+    color: rgb(var(--rank));
+  }
+  /* For text and badges sitting on dark art, in any theme. */
+  .rank-text-art {
+    color: rgb(var(--rank-bright));
+  }
+  .rank-surface-art {
+    border-color: rgb(var(--rank-bright) / 0.7);
+    background-color: rgb(0 0 0 / 0.55);
+    color: rgb(var(--rank-bright));
+  }
+  /* The glow behind a revealed companion. */
+  .rank-glow {
+    border-color: rgb(var(--rank-bright) / 0.85);
+    box-shadow:
+      0 0 0 1px rgb(var(--rank-bright) / 0.5),
+      0 0 28px 2px rgb(var(--rank-bright) / 0.55),
+      0 0 80px 10px rgb(var(--rank-bright) / 0.3);
   }
 
   /* Intro splash (IntroSplash.tsx): a slower, softer version of hud-enter —

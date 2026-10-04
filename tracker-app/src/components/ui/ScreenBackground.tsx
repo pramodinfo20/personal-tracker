@@ -58,6 +58,10 @@ export function ScreenBackground({
   const themed = useScreenBackground(screen ?? 'generic')
   const image = imageProp ?? (screen ? themed.image : undefined)
   const dim = dimProp ?? (screen && !imageProp ? themed.dim : 0)
+  // Dark-by-nature art (the summoning circle) is veiled in black in every
+  // theme; everything else in the theme's own background colour.
+  const darkArt = !!screen && !imageProp && themed.tone === 'dark'
+  const veil = darkArt ? 'var(--fixed-art-scrim)' : 'var(--rgb-bg)'
 
   // Tracked per URL, so a theme switch (new file) starts hidden and fades
   // in on ITS load rather than inheriting the previous image's state.
@@ -76,11 +80,13 @@ export function ScreenBackground({
   return (
     <div
       className={cn(
-        'isolate bg-bg',
+        'isolate',
+        darkArt ? 'bg-art-scrim' : 'bg-bg',
         layout === 'page' ? 'relative min-h-dvh' : 'fixed inset-0',
         // Text sitting straight on the art (screen titles, subtitles) gets
         // a soft halo — dark in the dark theme, light in the light one.
-        showImage && '[text-shadow:var(--hud-art-text-shadow)]',
+        // (Dark art carries its own white-on-black text styling.)
+        showImage && !darkArt && '[text-shadow:var(--hud-art-text-shadow)]',
         className,
       )}
     >
@@ -117,14 +123,13 @@ export function ScreenBackground({
             <div
               data-testid="screen-background-overlay"
               data-dim={dim}
+              data-tone={darkArt ? 'dark' : 'theme'}
               className="absolute inset-0"
               style={{
                 background: [
-                  'linear-gradient(180deg, rgb(var(--rgb-bg) / 0.85) 0%, rgb(var(--rgb-bg) / 0.3) 13%, rgb(var(--rgb-bg) / 0.18) 50%, rgb(var(--rgb-bg) / 0.35) 80%, rgb(var(--rgb-bg) / 0.92) 100%)',
-                  'radial-gradient(140% 100% at 50% 45%, transparent 55%, rgb(var(--rgb-bg) / 0.45) 100%)',
-                  ...(dim > 0
-                    ? [`linear-gradient(rgb(var(--rgb-bg) / ${dim}), rgb(var(--rgb-bg) / ${dim}))`]
-                    : []),
+                  `linear-gradient(180deg, rgb(${veil} / 0.85) 0%, rgb(${veil} / 0.3) 13%, rgb(${veil} / 0.18) 50%, rgb(${veil} / 0.35) 80%, rgb(${veil} / 0.92) 100%)`,
+                  `radial-gradient(140% 100% at 50% 45%, transparent 55%, rgb(${veil} / 0.45) 100%)`,
+                  ...(dim > 0 ? [`linear-gradient(rgb(${veil} / ${dim}), rgb(${veil} / ${dim}))`] : []),
                 ].join(', '),
               }}
             />

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SummonResult } from '../../hooks/useHunter'
 import { cn } from '../../lib/cn'
-import { COMPANIONS, RANK_TIER, type CompanionRank } from '../../lib/companions'
+import { companionArt } from '../../lib/companionArt'
+import { COMPANIONS, RANK_CLASS, type CompanionRank } from '../../lib/companions'
 import {
   CLAIMS_PER_TICKET,
   STREAK_TICKET_EVERY,
@@ -10,7 +11,7 @@ import {
   rankOdds,
   type TicketState,
 } from '../../lib/lottery'
-import { Badge, Button, ScreenBackground, TIER_CLASSES } from '../ui'
+import { Button, ScreenBackground } from '../ui'
 
 export interface SummonSheetProps {
   tickets: TicketState
@@ -25,16 +26,21 @@ export interface SummonSheetProps {
 
 const ROLL_MS = 1500
 const ROLL_TICK_MS = 90
-const SS_RIM = 'ring-2 ring-tier-gold/70'
+
+// Text placed straight on the summoning-circle art: white with a dark halo,
+// in both themes (the art is dark in both).
+const ON_ART = 'text-on-art [text-shadow:0_1px_10px_rgb(0_0_0/0.9)]'
 
 const prefersReducedMotion = () =>
   typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 type Phase = { kind: 'idle' } | { kind: 'rolling'; result: SummonResult } | { kind: 'revealed'; result: SummonResult }
 
-// The Summon screen: spend one ticket, watch a short roll, see who answered.
-// The draw itself has already happened (and been saved) by the time the
-// roll starts — the animation only delays showing it.
+// The Summon screen: full-screen over the summoning circle. The stage — the
+// "?", the roll and the revealed companion — sits directly on the art; the
+// tickets, button and odds are on a glass panel at the bottom. The draw has
+// already happened (and been saved) by the time the roll starts; the
+// animation only delays showing it.
 export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_MS }: SummonSheetProps) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
   const [rollIcon, setRollIcon] = useState('?')
@@ -76,90 +82,110 @@ export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_M
   }
 
   const revealed = phase.kind === 'revealed' ? phase.result : null
-  const tier = revealed ? RANK_TIER[revealed.companion.rank] : null
-  const t = tier ? TIER_CLASSES[tier] : null
+  const art = revealed ? companionArt(revealed.companion) : undefined
 
   return (
-    <ScreenBackground screen="gate" layout="overlay" className="z-40">
-      <div className="flex h-full items-end justify-center" onClick={onClose}>
-        <div
-          role="dialog"
-          aria-label="Summon a companion"
-          className="hud-glass hud-glass-strong max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-t-3xl border-b-0 p-5 pb-8"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border-strong" aria-hidden="true" />
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold tracking-wide text-text-primary uppercase">🎟️ Summon</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="cursor-pointer text-2xl leading-none text-text-muted hover:text-text-primary"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </div>
-
-          {/* The stage: idle "?", the roll, then the result. */}
-          <div
-            className="flex min-h-[15rem] flex-col items-center justify-center text-center"
-            aria-live="polite"
+    <ScreenBackground screen="summon-circle" layout="overlay" className="z-40">
+      <div role="dialog" aria-label="Summon a companion" className="flex h-full flex-col">
+        <div className={cn('flex items-center justify-between px-5 pt-5', ON_ART)}>
+          <h2 className="text-sm font-bold tracking-wide uppercase">🎟️ Summon</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer text-3xl leading-none opacity-80 hover:opacity-100"
+            aria-label="Close"
           >
-            {phase.kind === 'idle' && (
-              <>
-                <div className="hud-icon h-24 w-24 font-mono text-5xl font-black text-text-secondary">?</div>
-                <p className="mt-4 text-sm text-text-secondary">
-                  {ranks.length === 0
-                    ? 'Reach Lv.5 to unlock D-rank companions before you can summon.'
-                    : 'One ticket, one companion. Who answers the call?'}
-                </p>
-              </>
-            )}
+            ×
+          </button>
+        </div>
 
-            {phase.kind === 'rolling' && (
-              <>
-                <div
-                  className="hud-icon animate-glow-pulse h-24 w-24 text-5xl"
-                  aria-hidden="true"
-                  data-testid="summon-roll"
-                >
-                  {rollIcon}
-                </div>
-                <p className="mt-4 text-sm font-bold text-text-primary">Summoning…</p>
-              </>
-            )}
-
-            {revealed && t && (
+        {/* The stage: idle "?", the roll, then the companion — on the circle. */}
+        <div
+          className="flex min-h-0 flex-1 flex-col items-center justify-center px-5 text-center"
+          aria-live="polite"
+        >
+          {phase.kind === 'idle' && (
+            <>
               <div
-                key={revealed.companion.id + tickets.tickets}
-                className="hud-enter flex flex-col items-center"
-                data-testid="summon-result"
+                className={cn(
+                  'flex h-24 w-24 items-center justify-center rounded-full border border-on-art/40 bg-art-scrim/50 font-mono text-5xl font-black',
+                  ON_ART,
+                )}
               >
-                <Badge tier={tier!} className={cn(revealed.companion.rank === 'SS' && 'ring-1 ring-tier-gold/70')}>
-                  {revealed.companion.rank}-rank
-                </Badge>
-                <div
-                  className={cn(
-                    'mt-3 flex h-32 w-28 flex-col items-center justify-center rounded-2xl border-2',
-                    t.bg,
-                    t.border,
-                    revealed.companion.rank === 'SS' && SS_RIM,
-                  )}
-                >
-                  <span className="text-5xl" aria-hidden="true">
+                ?
+              </div>
+              <p className={cn('mt-4 max-w-xs text-sm', ON_ART)}>
+                {ranks.length === 0
+                  ? 'Reach Lv.5 to unlock D-rank companions before you can summon.'
+                  : 'One ticket, one companion. Who answers the call?'}
+              </p>
+            </>
+          )}
+
+          {phase.kind === 'rolling' && (
+            <>
+              <div
+                className="animate-glow-pulse flex h-24 w-24 items-center justify-center rounded-full border border-on-art/50 bg-art-scrim/50 text-5xl"
+                aria-hidden="true"
+                data-testid="summon-roll"
+              >
+                {rollIcon}
+              </div>
+              <p className={cn('mt-4 text-sm font-bold', ON_ART)}>Summoning…</p>
+            </>
+          )}
+
+          {revealed && (
+            <div
+              key={revealed.companion.id + tickets.tickets}
+              className={cn('flex flex-col items-center', RANK_CLASS[revealed.companion.rank])}
+              data-testid="summon-result"
+              data-rank={revealed.companion.rank}
+            >
+              <span className="rank-surface-art intro-reveal rounded-full border px-3 py-0.5 text-xs font-bold tracking-wide uppercase">
+                {revealed.companion.rank}-rank
+              </span>
+              {/* The hero: this companion's own artwork, fading and scaling
+                  in with its RANK's colour glowing behind it. */}
+              <div
+                className="intro-reveal rank-glow relative mt-3 aspect-[3/4] w-44 overflow-hidden rounded-2xl border-2 bg-art-scrim"
+                style={{ animationDelay: '120ms' }}
+              >
+                {art ? (
+                  <img
+                    src={art}
+                    alt=""
+                    draggable={false}
+                    data-testid="summon-art"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-6xl" aria-hidden="true">
                     {revealed.companion.icon}
                   </span>
-                </div>
-                <div className="mt-3 text-lg font-extrabold text-text-primary">{revealed.companion.name}</div>
-                <p className={cn('mt-1 text-sm font-bold', revealed.duplicate ? 'text-text-secondary' : t.text)}>
-                  {revealed.duplicate ? 'You already have this one.' : 'New companion recruited!'}
-                </p>
+                )}
               </div>
-            )}
-          </div>
+              <div className={cn('mt-3 text-lg font-extrabold', ON_ART)}>
+                <span aria-hidden="true">{revealed.companion.icon} </span>
+                {revealed.companion.name}
+              </div>
+              <p
+                className={cn(
+                  'mt-0.5 text-sm font-bold [text-shadow:0_1px_10px_rgb(0_0_0/0.9)]',
+                  revealed.duplicate ? 'text-on-art/80' : 'rank-text-art',
+                )}
+              >
+                {revealed.duplicate ? 'You already have this one.' : 'New companion recruited!'}
+              </p>
+            </div>
+          )}
+        </div>
 
-          <div className="mt-2 flex items-center justify-between gap-3 text-xs text-text-secondary">
+        {/* Controls: a SOLID panel in the app's own theme. Not glass — over
+            art this dark, translucent light-theme glass turns grey and its
+            text loses contrast. */}
+        <div className="max-h-[45dvh] overflow-y-auto rounded-t-3xl border border-b-0 border-border-strong bg-bg-elevated p-5 pb-7 shadow-panel">
+          <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
             <span>
               Tickets:{' '}
               <span className="font-mono text-sm font-bold text-text-primary" data-testid="ticket-count">
@@ -182,28 +208,30 @@ export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_M
           </Button>
 
           {odds.length > 0 && (
-            <div className="mt-5">
+            <div className="mt-4">
               <div className="mb-1.5 text-[11px] font-bold tracking-wide text-text-secondary uppercase">
                 Your odds
               </div>
               <ul className="flex flex-wrap gap-1.5" aria-label="Draw odds by rank">
                 {odds.map(({ rank, chance }) => (
-                  <li key={rank}>
-                    <Badge tier={RANK_TIER[rank]}>
-                      {rank} {formatChance(chance)}
-                    </Badge>
+                  <li
+                    key={rank}
+                    className={cn(
+                      RANK_CLASS[rank],
+                      'rank-surface rank-text rounded-full border px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase',
+                    )}
+                  >
+                    {rank} {formatChance(chance)}
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[11px] text-text-muted">
-                You only ever draw from ranks you've unlocked. Reaching a new rank adds it to the pool.
-              </p>
             </div>
           )}
 
-          <p className="mt-4 text-[11px] text-text-muted">
-            Tickets are earned, never bought: one for every {CLAIMS_PER_TICKET} quest claims, plus a bonus
-            each time your streak reaches a multiple of {STREAK_TICKET_EVERY} days.
+          <p className="mt-3 text-[11px] text-text-muted">
+            You only ever draw from ranks you've unlocked. Tickets are earned, never bought: one for
+            every {CLAIMS_PER_TICKET} quest claims, plus a bonus each time your streak reaches a
+            multiple of {STREAK_TICKET_EVERY} days.
           </p>
         </div>
       </div>
