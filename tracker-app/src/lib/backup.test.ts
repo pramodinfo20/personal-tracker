@@ -12,6 +12,7 @@ import {
 } from './backup'
 import type { CustomQuest } from './customQuests'
 import type { Goal } from './goals'
+import type { TrackerItem } from './trackers'
 import { DEFAULT_HUNTER, type Hunter } from './hunterState'
 import type { JobApplication } from './jobApplications'
 
@@ -78,12 +79,24 @@ const GOALS: Goal[] = [
   { id: 'goal_1', title: 'Reach B2 German', category: 'learning', targetDate: '2026-12-31', status: 'in_progress', createdAt: '2026-10-01T09:00:00.000Z' },
   { id: 'goal_2', title: 'Run 10K', category: 'exercise', status: 'done', createdAt: '2026-09-01T09:00:00.000Z' },
 ]
+const SKILL_ITEMS = [
+  { id: 'skills_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'SQL', category: 'Data', level: 'advanced', notes: 'Window functions' },
+] as TrackerItem[]
+const CERT_ITEMS = [
+  { id: 'certs_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'AWS Cloud Practitioner', issuer: 'Amazon', dateEarned: '2025-03-01', expiryDate: '2028-03-01', link: 'https://aws.amazon.com/verify/abc' },
+] as TrackerItem[]
+const PROJECT_ITEMS = [
+  { id: 'projects_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'Tracker app', description: 'Solo-Leveling habit PWA', status: 'in_progress' },
+] as TrackerItem[]
 const SAVED = {
   [BACKUP_KEYS.hunter]: JSON.stringify(HUNTER),
   [BACKUP_KEYS.customQuests]: JSON.stringify(QUESTS),
   [BACKUP_KEYS.theme]: JSON.stringify('light'),
   [BACKUP_KEYS.jobApplications]: JSON.stringify(JOBS),
   [BACKUP_KEYS.trackedGoals]: JSON.stringify(GOALS),
+  [BACKUP_KEYS.skills]: JSON.stringify(SKILL_ITEMS),
+  [BACKUP_KEYS.certs]: JSON.stringify(CERT_ITEMS),
+  [BACKUP_KEYS.projects]: JSON.stringify(PROJECT_ITEMS),
 }
 const NOW = new Date('2026-10-03T12:00:00.000Z')
 
@@ -94,7 +107,7 @@ describe('buildBackup', () => {
       app: BACKUP_APP,
       version: BACKUP_VERSION,
       exportedAt: '2026-10-03T12:00:00.000Z',
-      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light', jobApplications: JOBS, trackedGoals: GOALS },
+      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light', jobApplications: JOBS, trackedGoals: GOALS, skills: SKILL_ITEMS, certs: CERT_ITEMS, projects: PROJECT_ITEMS },
     })
   })
 
@@ -284,6 +297,41 @@ describe('goals in backups', () => {
       ok: false,
       reason: 'That backup is damaged (invalid goal status).',
     })
+  })
+})
+
+describe('skills, certs and projects in backups', () => {
+  const keys = [
+    ['skills', SKILL_ITEMS],
+    ['certs', CERT_ITEMS],
+    ['projects', PROJECT_ITEMS],
+  ] as const
+
+  it.each(keys)('%s survive export -> restore unchanged', (id, items) => {
+    const parsed = parseBackup(JSON.stringify(buildBackup(memoryStore(SAVED), NOW)))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    const fresh = memoryStore()
+    applyBackup(parsed.backup, fresh)
+    expect(JSON.parse(fresh.getItem(BACKUP_KEYS[id])!)).toEqual(items)
+  })
+
+  it.each(keys)('a backup from before %s existed restores with none', (id) => {
+    const { [BACKUP_KEYS[id]]: _dropped, ...older } = SAVED
+    const backup = buildBackup(memoryStore(older), NOW)!
+    expect(id in backup.data).toBe(false)
+    const target = memoryStore(SAVED)
+    applyBackup(backup, target)
+    expect(target.getItem(BACKUP_KEYS[id])).toBeNull()
+  })
+
+  it('rejects a backup with a damaged list', () => {
+    const backup = buildBackup(memoryStore(SAVED), NOW)!
+    const tampered = {
+      ...backup,
+      data: { ...backup.data, certs: [{ ...CERT_ITEMS[0], link: 'javascript:alert(1)' }] },
+    }
+    expect(parseBackup(JSON.stringify(tampered)).ok).toBe(false)
   })
 })
 

@@ -3,6 +3,7 @@ import { useCustomQuests } from './hooks/useCustomQuests'
 import { useGoals } from './hooks/useGoals'
 import { useHunter } from './hooks/useHunter'
 import { useJobApplications } from './hooks/useJobApplications'
+import { useTracker } from './hooks/useTracker'
 import { ThemeProvider } from './hooks/useTheme'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
@@ -15,6 +16,7 @@ import {
 } from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
 import { HUNT_QUEST_ID, huntQuest } from './lib/jobApplications'
+import { CERTS, PROJECTS, SKILLS } from './lib/trackers'
 import { starterActivitiesForGoals, type OnboardingResult } from './lib/onboarding'
 import { questEntries } from './lib/questVisibility'
 
@@ -57,6 +59,7 @@ function AppShell() {
   const { customQuests, addQuest, renameQuest, setQuestActive, deleteQuest } = useCustomQuests()
   const { applications, addApplication, updateApplication, deleteApplication } = useJobApplications()
   const { goals, addGoal, updateGoal, setGoalStatus, deleteGoal } = useGoals()
+  const trackers = { skills: useTracker(SKILLS), certs: useTracker(CERTS), projects: useTracker(PROJECTS) }
 
   // Setup's goals also seed starter quests for goals that have no built-in
   // quest behind them (e.g. Hydration -> Drinking Water) — through the
@@ -130,6 +133,7 @@ function AppShell() {
       )}
       {tab === 'more' && (
         <MoreScreen
+          trackers={trackers}
           goals={{
             goals,
             onAdd: addGoal,

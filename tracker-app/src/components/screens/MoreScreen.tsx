@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { GoalsScreen, type GoalsScreenProps } from '../goals/GoalsScreen'
 import { JobSearchScreen, type JobSearchScreenProps } from '../jobs/JobSearchScreen'
+import type { TrackerList } from '../../hooks/useTracker'
+import { TRACKERS, type TrackerDef } from '../../lib/trackers'
+import { TrackerScreen } from '../trackers/TrackerScreen'
 import { ScreenBackground } from '../ui'
 
 // Trackers that haven't been rebuilt in this app yet.
 const COMING_SOON = [
-  { icon: '🧠', label: 'Skills' },
   { icon: '📊', label: 'Calendar' },
-  { icon: '📜', label: 'Certs' },
-  { icon: '🛠️', label: 'Projects' },
   { icon: '✈️', label: 'Travel' },
 ]
 
@@ -16,15 +16,19 @@ export interface MoreScreenProps {
   /** Everything the Job Search tracker needs (it opens inside this tab). */
   jobSearch: Omit<JobSearchScreenProps, 'onBack'>
   goals: Omit<GoalsScreenProps, 'onBack'>
+  /** The saved list for each simple tracker (Skills, Certs, Projects). */
+  trackers: Record<TrackerDef['id'], TrackerList>
 }
+
+type View = 'menu' | 'jobs' | 'goals' | TrackerDef['id']
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
 // Houses everything that isn't part of the core Today / Level Up loop.
-// Goals and Job Search are built and open from here; the rest are listed as coming
+// Goals, Job Search, Skills, Certs and Projects are built and open from here; the rest are listed as coming
 // soon rather than linking to screens that don't exist.
-export function MoreScreen({ jobSearch, goals }: MoreScreenProps) {
-  const [view, setView] = useState<'menu' | 'jobs' | 'goals'>('menu')
+export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
+  const [view, setView] = useState<View>('menu')
 
   if (view === 'jobs') {
     return <JobSearchScreen {...jobSearch} onBack={() => setView('menu')} />
@@ -34,21 +38,37 @@ export function MoreScreen({ jobSearch, goals }: MoreScreenProps) {
     return <GoalsScreen {...goals} onBack={() => setView('menu')} />
   }
 
+  const openTracker = TRACKERS.find((t) => t.id === view)
+  if (openTracker) {
+    return (
+      <TrackerScreen
+        key={openTracker.id}
+        def={openTracker}
+        list={trackers[openTracker.id]}
+        onBack={() => setView('menu')}
+      />
+    )
+  }
+
   // The trackers that are built: each row opens its screen inside this tab.
   const active = goals.goals.filter((g) => g.status !== 'done').length
-  const trackers = [
+  const rows: { view: View; icon: string; label: string; note: string }[] = [
     {
-      view: 'goals' as const,
+      view: 'goals',
       icon: '🎯',
       label: 'Goals',
       note: goals.goals.length > 0 ? `${active} active` : '',
     },
     {
-      view: 'jobs' as const,
+      view: 'jobs',
       icon: '💼',
       label: 'Job Search',
       note: jobSearch.applications.length > 0 ? plural(jobSearch.applications.length, 'application') : '',
     },
+    ...TRACKERS.map((t) => {
+      const n = trackers[t.id].items.length
+      return { view: t.id, icon: t.icon, label: t.title, note: n > 0 ? `${n} ${n === 1 ? t.singular : t.plural}` : '' }
+    }),
   ]
 
   return (
@@ -62,7 +82,7 @@ export function MoreScreen({ jobSearch, goals }: MoreScreenProps) {
           Other trackers live here as they're rebuilt.
         </p>
         <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
-          {trackers.map((t) => (
+          {rows.map((t) => (
             <button
               key={t.view}
               type="button"

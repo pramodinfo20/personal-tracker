@@ -12,6 +12,7 @@ import { validateGoals, type Goal } from './goals'
 import type { Hunter } from './hunterState'
 import { validateJobApplications, type JobApplication } from './jobApplications'
 import { isThemePreference, type ThemePreference } from './theme'
+import { TRACKERS, validateTrackerItems, type TrackerItem } from './trackers'
 
 export const BACKUP_APP = 'pramod-tracker'
 export const BACKUP_VERSION = 1
@@ -25,6 +26,9 @@ export const BACKUP_KEYS = {
   theme: 'p26_theme',
   jobApplications: 'p26_job_applications',
   trackedGoals: 'p26_goals',
+  skills: 'p26_skills',
+  certs: 'p26_certs',
+  projects: 'p26_projects',
 } as const
 
 export interface BackupData {
@@ -39,6 +43,10 @@ export interface BackupData {
    * categories picked in setup). Absent in older backups.
    */
   trackedGoals?: Goal[]
+  /** The simple trackers' lists (lib/trackers.ts). Each absent in older backups. */
+  skills?: TrackerItem[]
+  certs?: TrackerItem[]
+  projects?: TrackerItem[]
 }
 
 export interface Backup {
@@ -80,6 +88,11 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
       ...(isThemePreference(theme) ? { theme } : {}),
       ...(validateJobApplications(jobs) === null ? { jobApplications: jobs as JobApplication[] } : {}),
       ...(validateGoals(goals) === null ? { trackedGoals: goals as Goal[] } : {}),
+      ...Object.fromEntries(
+        TRACKERS.map((t) => [t.id, readJson(store, BACKUP_KEYS[t.id])] as const).filter(
+          ([id, list]) => validateTrackerItems(TRACKERS.find((t) => t.id === id)!, list) === null,
+        ),
+      ),
     },
   }
 }
@@ -159,6 +172,7 @@ export const parseBackup = (text: string): ParseResult => {
     }
   }
   if (!isObject(raw.data)) return { ok: false, reason: 'That backup is incomplete (no data).' }
+  const data = raw.data
   const hunterProblem = validateHunter(raw.data.hunter)
   if (hunterProblem) return { ok: false, reason: `That backup is damaged (${hunterProblem}).` }
   const questsProblem = validateCustomQuests(raw.data.customQuests ?? [])
@@ -174,6 +188,11 @@ export const parseBackup = (text: string): ParseResult => {
     const goalsProblem = validateGoals(raw.data.trackedGoals)
     if (goalsProblem) return { ok: false, reason: `That backup is damaged (${goalsProblem}).` }
   }
+  for (const t of TRACKERS) {
+    if (raw.data[t.id] === undefined) continue
+    const problem = validateTrackerItems(t, raw.data[t.id])
+    if (problem) return { ok: false, reason: `That backup is damaged (${problem}).` }
+  }
   return {
     ok: true,
     backup: {
@@ -188,6 +207,9 @@ export const parseBackup = (text: string): ParseResult => {
           ? { jobApplications: raw.data.jobApplications as JobApplication[] }
           : {}),
         ...(raw.data.trackedGoals !== undefined ? { trackedGoals: raw.data.trackedGoals as Goal[] } : {}),
+        ...Object.fromEntries(
+          TRACKERS.filter((t) => data[t.id] !== undefined).map((t) => [t.id, data[t.id] as TrackerItem[]]),
+        ),
       },
     },
   }
@@ -217,6 +239,11 @@ export const applyBackup = (backup: Backup, store: Store): ApplyResult => {
       store.setItem(BACKUP_KEYS.trackedGoals, JSON.stringify(backup.data.trackedGoals))
     } else {
       store.removeItem(BACKUP_KEYS.trackedGoals)
+    }
+    for (const t of TRACKERS) {
+      const list = backup.data[t.id]
+      if (list !== undefined) store.setItem(BACKUP_KEYS[t.id], JSON.stringify(list))
+      else store.removeItem(BACKUP_KEYS[t.id])
     }
     return { ok: true }
   } catch {
