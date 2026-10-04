@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CalendarScreen, type CalendarScreenProps } from '../calendar/CalendarScreen'
 import { GoalsScreen, type GoalsScreenProps } from '../goals/GoalsScreen'
 import { JobSearchScreen, type JobSearchScreenProps } from '../jobs/JobSearchScreen'
 import type { TrackerList } from '../../hooks/useTracker'
@@ -6,27 +7,23 @@ import { TRACKERS, type TrackerDef } from '../../lib/trackers'
 import { TrackerScreen } from '../trackers/TrackerScreen'
 import { ScreenBackground } from '../ui'
 
-// Trackers that haven't been rebuilt in this app yet.
-const COMING_SOON = [
-  { icon: '📊', label: 'Calendar' },
-]
-
 export interface MoreScreenProps {
   /** Everything the Job Search tracker needs (it opens inside this tab). */
   jobSearch: Omit<JobSearchScreenProps, 'onBack'>
   goals: Omit<GoalsScreenProps, 'onBack'>
   /** The saved list for each simple tracker (Skills, Certs, Projects). */
   trackers: Record<TrackerDef['id'], TrackerList>
+  /** The XP history the Calendar heatmap is drawn from. */
+  calendar: Omit<CalendarScreenProps, 'onBack'>
 }
 
-type View = 'menu' | 'jobs' | 'goals' | TrackerDef['id']
+type View = 'menu' | 'jobs' | 'goals' | 'calendar' | TrackerDef['id']
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 
 // Houses everything that isn't part of the core Today / Level Up loop.
-// Goals, Job Search, Skills, Certs and Projects are built and open from here; the rest are listed as coming
-// soon rather than linking to screens that don't exist.
-export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
+// Every row opens its screen inside this tab.
+export function MoreScreen({ jobSearch, goals, trackers, calendar }: MoreScreenProps) {
   const [view, setView] = useState<View>('menu')
 
   if (view === 'jobs') {
@@ -35,6 +32,10 @@ export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
 
   if (view === 'goals') {
     return <GoalsScreen {...goals} onBack={() => setView('menu')} />
+  }
+
+  if (view === 'calendar') {
+    return <CalendarScreen {...calendar} onBack={() => setView('menu')} />
   }
 
   const openTracker = TRACKERS.find((t) => t.id === view)
@@ -49,7 +50,6 @@ export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
     )
   }
 
-  // The trackers that are built: each row opens its screen inside this tab.
   const active = goals.goals.filter((g) => g.status !== 'done').length
   const rows: { view: View; icon: string; label: string; note: string }[] = [
     {
@@ -68,6 +68,7 @@ export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
       const n = trackers[t.id].items.length
       return { view: t.id, icon: t.icon, label: t.title, note: n > 0 ? `${n} ${n === 1 ? t.singular : t.plural}` : '' }
     }),
+    { view: 'calendar', icon: '🗓️', label: 'Calendar', note: '' },
   ]
 
   return (
@@ -77,9 +78,7 @@ export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
     >
       <div className="mx-auto max-w-3xl">
         <h1 className="text-xl font-extrabold text-text-primary">More</h1>
-        <p className="mt-1 mb-6 text-sm text-text-primary/80">
-          Other trackers live here as they're rebuilt.
-        </p>
+        <p className="mt-1 mb-6 text-sm text-text-primary/80">Your other trackers and history.</p>
         <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
           {rows.map((t) => (
             <button
@@ -101,23 +100,6 @@ export function MoreScreen({ jobSearch, goals, trackers }: MoreScreenProps) {
                 </span>
               </span>
             </button>
-          ))}
-          {COMING_SOON.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between gap-3 px-4 py-3.5"
-            >
-              {/* Only the not-yet-built item itself is faded — the badge stays fully legible. */}
-              <span className="flex items-center gap-3 text-sm font-bold text-text-primary opacity-60">
-                <span className="text-lg" aria-hidden="true">
-                  {item.icon}
-                </span>
-                {item.label}
-              </span>
-              <span className="shrink-0 rounded-full border border-border bg-backing/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
-                Coming soon
-              </span>
-            </div>
           ))}
         </div>
       </div>

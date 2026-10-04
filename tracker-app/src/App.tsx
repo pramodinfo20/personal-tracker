@@ -134,6 +134,7 @@ function AppShell() {
       {tab === 'more' && (
         <MoreScreen
           trackers={trackers}
+          calendar={{ dailyXP: hunter.dailyXP ?? {}, dailyStatXP: hunter.dailyStatXP }}
           goals={{
             goals,
             onAdd: addGoal,
