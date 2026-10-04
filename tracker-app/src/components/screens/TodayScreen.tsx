@@ -1,5 +1,6 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
+import { ONBOARDING_COPY, TODAY_COPY } from '../../lib/copy'
 import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
@@ -32,7 +33,15 @@ export interface TodayScreenProps {
   onStartGate: () => void
   onCompleteGateTask: (taskId: string) => void
   onGateExpire: () => void
+  /**
+   * Show the one-time welcome banner (first arrival after finishing setup).
+   * It dismisses itself after a few seconds, or on tap, via onDismissWelcome.
+   */
+  showWelcome?: boolean
+  onDismissWelcome?: () => void
 }
+
+const WELCOME_MS = 6000
 
 // The app's default/home view: gate banner up top (impossible to miss),
 // then the day's quests as big one-tap cards, with a floating "+" for
@@ -48,7 +57,15 @@ export function TodayScreen({
   onStartGate,
   onCompleteGateTask,
   onGateExpire,
+  showWelcome = false,
+  onDismissWelcome,
 }: TodayScreenProps) {
+  useEffect(() => {
+    if (!showWelcome || !onDismissWelcome) return
+    const t = setTimeout(onDismissWelcome, WELCOME_MS)
+    return () => clearTimeout(t)
+  }, [showWelcome, onDismissWelcome])
+
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   // Once every quest is claimed, DayCompleteCard normally replaces the
   // quest list — this lets the player peek back at it (to undo a claim)
@@ -84,6 +101,22 @@ export function TodayScreen({
   return (
     <ScreenBackground screen="today" className="pb-28 text-text-primary">
       <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
+        {showWelcome && (
+          <div
+            role="status"
+            className="hud-glass hud-enter flex items-center justify-between gap-3 rounded-2xl px-4 py-3"
+          >
+            <p className="text-[13px] text-text-secondary">{ONBOARDING_COPY.complete}</p>
+            <button
+              type="button"
+              onClick={onDismissWelcome}
+              aria-label="Dismiss welcome"
+              className="shrink-0 cursor-pointer text-xl leading-none text-text-muted hover:text-text-primary"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <HunterHeroPanel hunter={hunter} />
         <GateBanner
           hunter={hunter}
@@ -102,7 +135,8 @@ export function TodayScreen({
             <div className="hud-icon mx-auto h-14 w-14 text-3xl" aria-hidden="true">
               🗒️
             </div>
-            <div className="mt-3 text-base font-extrabold text-text-primary">No quests enabled</div>
+            <p className="mt-3 text-sm text-text-secondary">{TODAY_COPY.emptyQuests}</p>
+            <div className="mt-1 text-base font-extrabold text-text-primary">No quests enabled</div>
             <p className="mt-1 text-sm text-text-secondary">
               Manage your quests to add some back.
             </p>

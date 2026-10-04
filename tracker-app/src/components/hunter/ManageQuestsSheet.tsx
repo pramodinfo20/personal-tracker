@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { MANAGE_QUESTS_COPY } from '../../lib/copy'
 import { STAT_META } from '../../lib/hunterState'
 import type { QuestEntry } from '../../lib/questVisibility'
 import { formatTierXPRange } from '../../lib/quests'
@@ -109,6 +110,7 @@ export function ManageQuestsSheet({
               ×
             </button>
           </div>
+          <p className="mb-1 text-xs text-text-secondary">{MANAGE_QUESTS_COPY.subtitle}</p>
           <p className="mb-4 text-xs text-text-secondary">
             Choose which quests show on Today. {enabledCount} of {entries.length} shown.
           </p>

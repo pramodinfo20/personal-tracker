@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useCallback, useState } from 'react'
 import { useCustomQuests } from './hooks/useCustomQuests'
 import { useHunter } from './hooks/useHunter'
 import { ThemeProvider } from './hooks/useTheme'
@@ -27,6 +27,10 @@ function AppShell() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [manageQuestsOpen, setManageQuestsOpen] = useState(false)
   const [retakeSetupOpen, setRetakeSetupOpen] = useState(false)
+  // The welcome banner on Today — only after FIRST-launch setup, and only
+  // in memory, so it's shown once and never again after a reload.
+  const [welcome, setWelcome] = useState(false)
+  const dismissWelcome = useCallback(() => setWelcome(false), [])
   const {
     hunter,
     dev,
@@ -56,6 +60,10 @@ function AppShell() {
     completeOnboarding(result)
     for (const activityId of starterActivitiesForGoals(result.goals)) {
       if (!customQuests.some((q) => q.activityId === activityId)) addQuest(activityId)
+    }
+    if (!retakeSetupOpen) {
+      setWelcome(true)
+      setTab('today')
     }
     setRetakeSetupOpen(false)
   }
@@ -89,6 +97,8 @@ function AppShell() {
           onStartGate={startGate}
           onCompleteGateTask={completeGateTask}
           onGateExpire={handleGateExpire}
+          showWelcome={welcome}
+          onDismissWelcome={dismissWelcome}
         />
       )}
       {tab === 'levelup' && (

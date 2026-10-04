@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { LevelUpEvent } from '../../hooks/useHunter'
 import { cn } from '../../lib/cn'
+import { LEVEL_UP_COPY } from '../../lib/copy'
 import { TIER_CLASSES } from '../ui'
 import { rankTierColor } from './tierMapping'
 
@@ -43,6 +44,7 @@ export function LevelUpOverlay({ event, onDismiss }: LevelUpOverlayProps) {
         <div className="mt-3 text-sm text-text-secondary">
           +{event.gained * 3} stat points earned
         </div>
+        <div className="mt-3 text-xs text-text-secondary sm:text-sm">{LEVEL_UP_COPY.encouragement}</div>
         <div className="mt-4 text-xs text-text-muted">tap anywhere to dismiss</div>
       </div>
     </div>

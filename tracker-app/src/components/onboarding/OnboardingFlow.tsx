@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { ActivityCategoryKey } from '../../lib/activities'
+import { ONBOARDING_COPY } from '../../lib/copy'
 import {
   BODY_FIELDS,
   GOAL_OPTIONS,
@@ -29,6 +30,13 @@ const STEP_TITLES: Record<Step, string> = {
   1: 'What should we call you, Hunter?',
   2: 'A little about you',
   3: 'What are you here for?',
+}
+
+// One line of encouragement under each heading (wording lives in lib/copy.ts).
+const STEP_TAGLINES: Record<Step, string> = {
+  1: ONBOARDING_COPY.name,
+  2: ONBOARDING_COPY.body,
+  3: ONBOARDING_COPY.goals,
 }
 
 // First-launch setup (App gates it on hunter.name being empty) and the
@@ -130,12 +138,11 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
             </div>
 
             <h1 className="hud-text-glow text-2xl leading-tight font-black">{STEP_TITLES[step]}</h1>
+            {/* 13px, not text-sm: the longest tagline then stays on one line at 390px. */}
+            <p className="mt-2 text-[13px] text-text-secondary">{STEP_TAGLINES[step]}</p>
 
             {step === 1 && (
               <form onSubmit={submitName}>
-                <p className="mt-2 text-sm text-text-secondary">
-                  Every System Window needs a name at the top.
-                </p>
                 <label htmlFor="setup-name" className="sr-only">
                   Your name
                 </label>
@@ -166,7 +173,7 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
 
             {step === 2 && (
               <form onSubmit={submitBody}>
-                <p className="mt-2 text-sm text-text-secondary">
+                <p className="mt-1 text-xs text-text-secondary">
                   Optional — shown on your profile only. Skip anything you'd rather not share.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
@@ -215,7 +222,7 @@ export function OnboardingFlow({ onComplete, initial, onCancel }: OnboardingFlow
 
             {step === 3 && (
               <div>
-                <p className="mt-2 text-sm text-text-secondary">
+                <p className="mt-1 text-xs text-text-secondary">
                   Pick everything that applies. Your daily quests start from these — you can change
                   them any time in Manage Quests.
                 </p>
