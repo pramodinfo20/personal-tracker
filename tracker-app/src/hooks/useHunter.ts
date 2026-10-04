@@ -25,6 +25,7 @@ import {
 } from '../lib/hunterState'
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
 import { findActivity } from '../lib/activities'
+import { devGrantTickets, devSetLevel, devSetStreak } from '../lib/devTools'
 import { isAvatarDataUrl } from '../lib/avatar'
 import { customQuestToClaimable, type CustomQuest } from '../lib/customQuests'
 import {
@@ -509,14 +510,21 @@ export function useHunter() {
   // ── DEV TESTING ONLY — ported from pramod-2026-tracker.html's throwaway
   // debug panel. Writes hunter state directly; never goes through
   // applyXPGain/grantXP/claimQuest or the real gate-progress logic.
+  //
+  // The panel that calls these only renders under import.meta.env.DEV. As a
+  // second lock, every action is also a no-op outside a dev build, so
+  // nothing in production can grant tickets or set a level even if it
+  // somehow got hold of this object.
+  const devEdit = (edit: (h: Hunter) => Hunter) => {
+    if (import.meta.env.DEV) setHunter(edit)
+  }
   const dev = {
     // Wipes everything, including the name — so onboarding shows again.
-    resetHunter: () => setHunter(() => ({ ...DEFAULT_HUNTER, lastQuestDate: today() })),
-    jumpToLevel: (level: number) => {
-      const lvl = Math.max(1, Math.floor(Number(level) || 1))
-      setHunter((h) => ({ ...h, level: lvl, xp: 0 }))
-    },
-    clearGateHistory: () => setHunter((h) => ({ ...h, clearedGates: [] })),
+    resetHunter: () => devEdit(() => ({ ...DEFAULT_HUNTER, lastQuestDate: today() })),
+    jumpToLevel: (level: number) => devEdit((h) => devSetLevel(h, level)),
+    clearGateHistory: () => devEdit((h) => ({ ...h, clearedGates: [] })),
+    grantTickets: (count: number) => devEdit((h) => devGrantTickets(h, count)),
+    setStreak: (days: number) => devEdit((h) => devSetStreak(h, days)),
   }
 
   return {

@@ -1,10 +1,15 @@
 import { useState } from 'react'
+import { accessibleRanks } from '../../lib/companions'
 import type { Hunter } from '../../lib/hunterState'
+import { currentStreak } from '../../lib/progress'
 
 export interface DevActions {
   resetHunter: () => void
+  /** Sets the level (and the matching milestone record — see lib/devTools.ts). */
   jumpToLevel: (level: number) => void
   clearGateHistory: () => void
+  grantTickets: (count: number) => void
+  setStreak: (days: number) => void
 }
 
 export interface DevTestingPanelProps {
@@ -14,13 +19,53 @@ export interface DevTestingPanelProps {
   onClose: () => void
 }
 
+const BUTTON =
+  'cursor-pointer rounded-md border border-dashed border-border-strong px-2.5 py-1.5 text-[10px] font-bold text-text-secondary hover:text-text-primary'
+const INPUT =
+  'w-16 rounded-md border border-dashed border-border-strong bg-surface-2 px-1.5 py-1 text-[11px] text-text-primary'
+
+interface NumberActionProps {
+  id: string
+  label: string
+  button: string
+  initial: number
+  min: number
+  onApply: (value: number) => void
+}
+
+// One "label [number] [button]" row.
+function NumberAction({ id, label, button, initial, min, onApply }: NumberActionProps) {
+  const [value, setValue] = useState(String(initial))
+  return (
+    <div className="flex items-center gap-2">
+      <label htmlFor={id} className="w-24 shrink-0 text-[10px] text-text-secondary">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        min={min}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={INPUT}
+      />
+      <button type="button" onClick={() => onApply(Number(value))} className={BUTTON}>
+        {button}
+      </button>
+    </div>
+  )
+}
+
 // ── DEV TESTING ONLY — ported from pramod-2026-tracker.html's throwaway
 // debug panel. Rendered by ProfileSheet only under import.meta.env.DEV, so
 // it never ships in a production build. Delete this file (and useHunter's
-// `dev`) when it's no longer needed.
+// `dev`, and lib/devTools.ts) when it's no longer needed.
+//
+// To test the companion lottery end to end in under a minute:
+//   Set level 12  ->  Grant tickets  ->  Level Up tab -> Summon.
+// For the streak bonus: Set streak 7, then claim any quest on Today.
 export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) {
   const [devOpen, setDevOpen] = useState(false)
-  const [devLevel, setDevLevel] = useState(String(hunter.level || 1))
 
   const resetHunter = () => {
     const ok = window.confirm(
@@ -32,6 +77,8 @@ export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) 
     // close first so the sheet doesn't reopen on top of the fresh hunter.
     onClose()
   }
+
+  const ranks = accessibleRanks(hunter.level || 1, hunter.unlockedShadows ?? [])
 
   return (
     <div className="mt-6 rounded-xl border border-dashed border-border-strong px-3 py-2.5">
@@ -47,48 +94,50 @@ export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) 
       {devOpen && (
         <div className="mt-2.5 flex flex-col gap-2.5 border-t border-dashed border-border-strong pt-2.5">
           <p className="text-[10px] text-text-muted">
-            Debug-only controls for testing gates across levels. These write state directly
-            and bypass the real XP/quest logic.
+            Debug-only controls for testing gates, companion ranks and the lottery. These write
+            state directly and bypass the real XP/quest/ticket logic.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={resetHunter}
-              className="cursor-pointer rounded-md border border-dashed border-border-strong px-2.5 py-1.5 text-[10px] font-bold text-text-secondary hover:text-text-primary"
-            >
+            <button type="button" onClick={resetHunter} className={BUTTON}>
               Reset Hunter to Level 1
             </button>
-            <button
-              type="button"
-              onClick={dev.clearGateHistory}
-              className="cursor-pointer rounded-md border border-dashed border-border-strong px-2.5 py-1.5 text-[10px] font-bold text-text-secondary hover:text-text-primary"
-            >
+            <button type="button" onClick={dev.clearGateHistory} className={BUTTON}>
               Clear Cleared-Gates History
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="dev-level" className="text-[10px] text-text-secondary">
-              Jump to Level:
-            </label>
-            <input
-              id="dev-level"
-              type="number"
-              min={1}
-              value={devLevel}
-              onChange={(e) => setDevLevel(e.target.value)}
-              className="w-16 rounded-md border border-dashed border-border-strong bg-surface-2 px-1.5 py-1 text-[11px] text-text-primary"
-            />
-            <button
-              type="button"
-              onClick={() => dev.jumpToLevel(Number(devLevel))}
-              className="cursor-pointer rounded-md border border-dashed border-border-strong px-2.5 py-1.5 text-[10px] font-bold text-text-secondary hover:text-text-primary"
-            >
-              Jump
-            </button>
-          </div>
-          <div className="text-[10px] text-text-muted">
+          <NumberAction
+            id="dev-level"
+            label="Set level:"
+            button="Set level"
+            initial={hunter.level || 1}
+            min={1}
+            onApply={dev.jumpToLevel}
+          />
+          <NumberAction
+            id="dev-tickets"
+            label="Lottery tickets:"
+            button="Grant tickets"
+            initial={3}
+            min={0}
+            onApply={dev.grantTickets}
+          />
+          <NumberAction
+            id="dev-streak"
+            label="Streak (days):"
+            button="Set streak"
+            initial={7}
+            min={0}
+            onApply={dev.setStreak}
+          />
+          <p className="text-[10px] text-text-muted">
+            Set streak rewrites the daily XP history to end today. To see the streak bonus ticket:
+            set it to 7, then claim any quest.
+          </p>
+          <div className="text-[10px] text-text-muted" data-testid="dev-current">
             Current: Level {hunter.level || 1} · {hunter.xp || 0} XP ·{' '}
-            {(hunter.clearedGates || []).length} gate(s) cleared
+            {(hunter.clearedGates || []).length} gate(s) cleared · {hunter.tickets ?? 0} ticket(s) ·{' '}
+            {currentStreak(hunter.dailyXP ?? {})}-day streak · ranks open:{' '}
+            {ranks.length > 0 ? ranks.join(' ') : 'none'}
           </div>
         </div>
       )}
