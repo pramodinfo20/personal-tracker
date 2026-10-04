@@ -4,7 +4,7 @@ import {
   GateCard,
   HunterStatusPanel,
   RecentActivityLog,
-  ShadowArmyGrid,
+  MonsterCompanionsGrid,
 } from '../hunter'
 import { ScreenBackground } from '../ui'
 
@@ -18,7 +18,7 @@ export interface LevelUpScreenProps {
   onUndoActivity: (entryId: number) => UndoResult
 }
 
-// The full Hunter Status detail view — stats, shadow army, gate management,
+// The full Hunter Status detail view — stats, monster companions, gate management,
 // quest management, and activity history. Reachable via the bottom tab bar,
 // no longer the app's default screen (that's Today now).
 export function LevelUpScreen({
@@ -38,7 +38,11 @@ export function LevelUpScreen({
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <HunterStatusPanel hunter={hunter} onRename={onRename} />
-        <ShadowArmyGrid unlockedShadows={hunter.unlockedShadows} />
+        <MonsterCompanionsGrid
+          level={hunter.level || 1}
+          unlockedMilestones={hunter.unlockedShadows ?? []}
+          recruited={hunter.recruitedCompanions}
+        />
         <GateCard
           hunter={hunter}
           onStartGate={onStartGate}

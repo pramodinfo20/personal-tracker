@@ -24,7 +24,7 @@ export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) 
 
   const resetHunter = () => {
     const ok = window.confirm(
-      'Reset hunter to Level 1? This wipes real progress (XP, log, shadows, gates).',
+      'Reset hunter to Level 1? This wipes real progress (XP, log, companions, gates).',
     )
     if (!ok) return
     dev.resetHunter()

@@ -1,4 +1,4 @@
-// Wires the ported hunter/gate/quest/shadow logic from src/lib into real,
+// Wires the ported hunter/gate/quest/companion logic from src/lib into real,
 // localStorage-persisted state. Mirrors the handler logic from the
 // HunterTab section of pramod-2026-tracker.html (grantXP, claimQuest,
 // logTierAction, startGateAction, completeGateTaskAction, and the
@@ -35,7 +35,7 @@ import {
   type ClaimableQuest,
   type XPTier,
 } from '../lib/quests'
-import { SHADOW_MILESTONES } from '../lib/shadows'
+import { COMPANION_MILESTONES } from '../lib/companions'
 import { today } from '../lib/format'
 import {
   focusStatsForGoals,
@@ -176,12 +176,11 @@ export function useHunter() {
       const dailyXP = addDailyXP(h.dailyXP, entry.date, amount)
       const dailyStatXP = addDailyStatXP(h.dailyStatXP, entry.date, stat, amount)
       const prevUnlocked = h.unlockedShadows || []
-      const newlyUnlocked = SHADOW_MILESTONES.filter(
-        (s) => level >= s.level && !prevUnlocked.includes(s.level),
+      // Milestone levels reached — some open a companion rank (lib/companions.ts).
+      const newlyUnlocked = COMPANION_MILESTONES.filter(
+        (milestone) => level >= milestone && !prevUnlocked.includes(milestone),
       )
-      const unlockedShadows = newlyUnlocked.length
-        ? [...prevUnlocked, ...newlyUnlocked.map((s) => s.level)]
-        : prevUnlocked
+      const unlockedShadows = newlyUnlocked.length ? [...prevUnlocked, ...newlyUnlocked] : prevUnlocked
       if (gained > 0) {
         const newRank = rankForLevel(level)
         const oldRank = rankForLevel(h.level || 1)

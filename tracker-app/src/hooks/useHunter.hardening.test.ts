@@ -123,8 +123,8 @@ describe('useHunter — Log Activity undo', () => {
   })
 
   it('is refused by the same strand guard as quest undo', () => {
-    // 5 XP shy of level 5 with the level-5 shadow already unlocked: a +45 log
-    // crosses into level 5, so undoing it would strand Ash Wolf.
+    // 5 XP shy of level 5 with the level-5 milestone already recorded: a +45 log
+    // crosses into level 5, so undoing it would strand D-rank access.
     seed({ level: 4, xp: xpForLevel(4) - 5, unlockedShadows: [5] })
     const { result } = renderHook(() => useHunter())
     act(() => result.current.logActivity('running', tier('running', 2)))
@@ -137,7 +137,7 @@ describe('useHunter — Log Activity undo', () => {
       r = result.current.undoLogActivity(id)
     })
     expect(r?.ok).toBe(false)
-    expect(r?.reason).toMatch(/Ash Wolf/)
+    expect(r?.reason).toMatch(/D-rank companion access/)
     expect(result.current.hunter).toEqual(before)
   })
 

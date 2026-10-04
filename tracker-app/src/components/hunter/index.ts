@@ -1,7 +1,7 @@
 export { HunterHeader, type HunterHeaderProps } from './HunterHeader'
 export { HunterHeroPanel, type HunterHeroPanelProps } from './HunterHeroPanel'
 export { HunterStatusPanel, type HunterStatusPanelProps } from './HunterStatusPanel'
-export { ShadowArmyGrid, type ShadowArmyGridProps } from './ShadowArmyGrid'
+export { MonsterCompanionsGrid, type MonsterCompanionsGridProps } from './MonsterCompanionsGrid'
 export { GateCard, type GateCardProps } from './GateCard'
 export { GateBanner, type GateBannerProps } from './GateBanner'
 export { QuestCards, type QuestCardsProps } from './QuestCards'

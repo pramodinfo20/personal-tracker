@@ -75,7 +75,14 @@ export interface Hunter {
    * one-time backfill runs. See lib/statHistory.ts.
    */
   dailyStatXP?: DailyStatXP
+  /**
+   * Milestone levels reached (5, 10, 15 … 100). The name is from when each
+   * milestone granted a "shadow"; it now records Monster Companions rank
+   * access (lib/companions.ts) and is kept so existing saves load unchanged.
+   */
   unlockedShadows: number[]
+  /** Ids of recruited companions. Nothing writes this yet — recruiting is a later phase. */
+  recruitedCompanions?: string[]
   activeGate: ActiveGate | null
   clearedGates: string[]
   logCount: number

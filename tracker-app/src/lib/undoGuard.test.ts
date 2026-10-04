@@ -29,9 +29,9 @@ describe('wouldStrandProgress', () => {
     expect(wouldStrandProgress(hunter, 20)).toBeNull()
   })
 
-  it('flags an unlocked shadow milestone now out of reach', () => {
-    const hunter: Hunter = { ...DEFAULT_HUNTER, unlockedShadows: [5] } // Ash Wolf at level 5
-    expect(wouldStrandProgress(hunter, 4)).toMatch(/Ash Wolf/)
+  it('flags a reached companion milestone now out of reach', () => {
+    const hunter: Hunter = { ...DEFAULT_HUNTER, unlockedShadows: [5] } // D-rank access at level 5
+    expect(wouldStrandProgress(hunter, 4)).toBe('unlocking D-rank companion access (Lv.5)')
     expect(wouldStrandProgress(hunter, 5)).toBeNull()
   })
 

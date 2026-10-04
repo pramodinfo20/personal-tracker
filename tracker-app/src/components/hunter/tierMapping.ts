@@ -1,6 +1,6 @@
-// Maps the original app's letter-tier gates and shadow "class" titles onto
+// Maps the original app's letter-tier gates and hunter rank names onto
 // the 5-step bronze/silver/gold/purple/red rank-tier scale from the design
-// system (src/index.css), so GateCard and ShadowArmyGrid can reuse Badge's
+// system (src/index.css), so GateCard and the status panels can reuse Badge's
 // tier coloring instead of inventing their own palette.
 
 import type { StatKey } from '../../lib/types'
@@ -31,15 +31,6 @@ export const rankTierColor = (rankName: string): Tier => {
   if (rankName.startsWith('S-Rank')) return 'purple'
   if (rankName === 'National Level Hunter') return 'purple'
   // Shadow Monarch — the final rank.
-  return 'red'
-}
-
-export const shadowTierColor = (title: string): Tier => {
-  if (title.startsWith('Beast')) return 'bronze'
-  if (title.startsWith('Knight')) return 'silver'
-  if (title.startsWith('Elite')) return 'gold'
-  if (title.startsWith('Marshal')) return 'purple'
-  // Monarch-class, Sovereign-class, and the final "???" title.
   return 'red'
 }
 

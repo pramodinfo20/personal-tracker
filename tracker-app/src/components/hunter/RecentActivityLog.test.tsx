@@ -43,11 +43,11 @@ describe('RecentActivityLog — undo for logged activities', () => {
   })
 
   it('shows the reason when the undo is refused', () => {
-    const onUndo = vi.fn(() => ({ ok: false, reason: 'Would strand Ash Wolf.' }))
+    const onUndo = vi.fn(() => ({ ok: false, reason: 'Would strand D-rank access.' }))
     render(<RecentActivityLog log={LOG} onUndoActivity={onUndo} />)
     fireEvent.click(screen.getByRole('button', { name: 'Undo Running: Riverside' }))
     fireEvent.click(screen.getByRole('button', { name: 'Yes, undo' }))
-    expect(screen.getByRole('alert').textContent).toBe('Would strand Ash Wolf.')
+    expect(screen.getByRole('alert').textContent).toBe('Would strand D-rank access.')
   })
 
   it('is read-only when no undo handler is given', () => {

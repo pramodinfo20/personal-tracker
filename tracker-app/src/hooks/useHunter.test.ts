@@ -142,9 +142,9 @@ describe('useHunter — tiered daily quests', () => {
     expect(result.current.hunter.statPoints).toBe(0)
   })
 
-  it('undo is refused by the strand guard when it would drop below an unlocked shadow', () => {
-    // Level 10 with 10 XP banked and the level-10 shadow unlocked: undoing a
-    // +50 claim would drop to level 9 and strand that shadow.
+  it('undo is refused by the strand guard when it would drop below a reached companion milestone', () => {
+    // Level 10 with 10 XP banked and the level-10 milestone reached: undoing a
+    // +50 claim would drop to level 9 and strand C-rank access.
     const claim: LogEntry = {
       id: 1,
       date: NOW.toISOString(),
@@ -170,7 +170,7 @@ describe('useHunter — tiered daily quests', () => {
     })
 
     expect(r?.ok).toBe(false)
-    expect(r?.reason).toMatch(/Iron Sentinel/)
+    expect(r?.reason).toMatch(/C-rank companion access/)
     expect(result.current.hunter.level).toBe(10)
     expect(result.current.hunter.xp).toBe(10)
     expect(result.current.hunter.log).toEqual(before.log)
@@ -392,8 +392,8 @@ describe('useHunter — custom quests through the shared claim/undo path', () =>
   })
 
   it('refuses a custom undo that would strand already-unlocked progress', () => {
-    // 5 XP shy of level 5 with the level-5 shadow already unlocked: a +10
-    // claim crosses into level 5, so undoing it would strand Ash Wolf.
+    // 5 XP shy of level 5 with the level-5 milestone already recorded: a +10
+    // claim crosses into level 5, so undoing it would strand D-rank access.
     const big: CustomQuest = { ...HYDRATION_QUEST, tiers: [{ label: 'Big', xp: 10 }] }
     seed({ level: 4, xp: xpForLevel(4) - 5, unlockedShadows: [5] })
     const { result } = renderHook(() => useHunter())
@@ -405,7 +405,7 @@ describe('useHunter — custom quests through the shared claim/undo path', () =>
       r = result.current.undoQuestClaim(big)
     })
     expect(r?.ok).toBe(false)
-    expect(r?.reason).toMatch(/Ash Wolf/)
+    expect(r?.reason).toMatch(/D-rank companion access/)
     expect(result.current.hunter.level).toBe(5)
     expect(result.current.hunter.completedToday[big.id]).toBe(true)
   })

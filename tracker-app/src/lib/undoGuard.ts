@@ -1,17 +1,17 @@
 // Undoing a quest claim can roll the level back down (see reverseXPGain).
 // If that new, lower level is below something the hunter has ALREADY
 // unlocked/cleared/started on the strength of the XP now being removed —
-// a gate's clearedGates entry, an active gate in progress, or a shadow
+// a gate's clearedGates entry, an active gate in progress, or a companion
 // milestone — the resulting state would be self-contradictory (e.g. a
 // cleared C-Rank Gate on a hunter who, per their level, was never eligible
 // for it). Rather than guessing how to reconcile that (revoke the gate?
-// the shadow? let it stand?), this only detects the conflict so the
+// the rank access? let it stand?), this only detects the conflict so the
 // caller can refuse the undo and surface it — a real product decision,
 // not something to silently paper over.
 
 import { GATE_TEMPLATES } from './gates'
 import type { Hunter } from './hunterState'
-import { SHADOW_MILESTONES } from './shadows'
+import { describeMilestone } from './companions'
 
 export const wouldStrandProgress = (hunter: Hunter, newLevel: number): string | null => {
   for (const gateId of hunter.clearedGates || []) {
@@ -30,8 +30,7 @@ export const wouldStrandProgress = (hunter: Hunter, newLevel: number): string | 
 
   for (const milestoneLevel of hunter.unlockedShadows || []) {
     if (newLevel < milestoneLevel) {
-      const shadow = SHADOW_MILESTONES.find((s) => s.level === milestoneLevel)
-      return `unlocking ${shadow ? shadow.name : `the level ${milestoneLevel} shadow`}`
+      return `unlocking ${describeMilestone(milestoneLevel)}`
     }
   }
 
