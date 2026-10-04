@@ -8,6 +8,7 @@
 
 import { isAvatarDataUrl } from './avatar'
 import type { CustomQuest } from './customQuests'
+import { validateGoals, type Goal } from './goals'
 import type { Hunter } from './hunterState'
 import { validateJobApplications, type JobApplication } from './jobApplications'
 import { isThemePreference, type ThemePreference } from './theme'
@@ -23,6 +24,7 @@ export const BACKUP_KEYS = {
   customQuests: 'p26_custom_quests',
   theme: 'p26_theme',
   jobApplications: 'p26_job_applications',
+  trackedGoals: 'p26_goals',
 } as const
 
 export interface BackupData {
@@ -32,6 +34,11 @@ export interface BackupData {
   theme?: ThemePreference
   /** Absent in backups from before the Job Search tracker (and when none were ever saved). */
   jobApplications?: JobApplication[]
+  /**
+   * The Goals tracker's list (not to be confused with hunter.goals, the
+   * categories picked in setup). Absent in older backups.
+   */
+  trackedGoals?: Goal[]
 }
 
 export interface Backup {
@@ -62,6 +69,7 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
   const customQuests = readJson(store, BACKUP_KEYS.customQuests)
   const theme = readJson(store, BACKUP_KEYS.theme)
   const jobs = readJson(store, BACKUP_KEYS.jobApplications)
+  const goals = readJson(store, BACKUP_KEYS.trackedGoals)
   return {
     app: BACKUP_APP,
     version: BACKUP_VERSION,
@@ -71,6 +79,7 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
       customQuests: validateCustomQuests(customQuests) === null ? (customQuests as CustomQuest[]) : [],
       ...(isThemePreference(theme) ? { theme } : {}),
       ...(validateJobApplications(jobs) === null ? { jobApplications: jobs as JobApplication[] } : {}),
+      ...(validateGoals(goals) === null ? { trackedGoals: goals as Goal[] } : {}),
     },
   }
 }
@@ -161,6 +170,10 @@ export const parseBackup = (text: string): ParseResult => {
     const jobsProblem = validateJobApplications(raw.data.jobApplications)
     if (jobsProblem) return { ok: false, reason: `That backup is damaged (${jobsProblem}).` }
   }
+  if (raw.data.trackedGoals !== undefined) {
+    const goalsProblem = validateGoals(raw.data.trackedGoals)
+    if (goalsProblem) return { ok: false, reason: `That backup is damaged (${goalsProblem}).` }
+  }
   return {
     ok: true,
     backup: {
@@ -174,6 +187,7 @@ export const parseBackup = (text: string): ParseResult => {
         ...(raw.data.jobApplications !== undefined
           ? { jobApplications: raw.data.jobApplications as JobApplication[] }
           : {}),
+        ...(raw.data.trackedGoals !== undefined ? { trackedGoals: raw.data.trackedGoals as Goal[] } : {}),
       },
     },
   }
@@ -198,6 +212,11 @@ export const applyBackup = (backup: Backup, store: Store): ApplyResult => {
       store.setItem(BACKUP_KEYS.jobApplications, JSON.stringify(backup.data.jobApplications))
     } else {
       store.removeItem(BACKUP_KEYS.jobApplications)
+    }
+    if (backup.data.trackedGoals !== undefined) {
+      store.setItem(BACKUP_KEYS.trackedGoals, JSON.stringify(backup.data.trackedGoals))
+    } else {
+      store.removeItem(BACKUP_KEYS.trackedGoals)
     }
     return { ok: true }
   } catch {

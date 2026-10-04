@@ -14,6 +14,7 @@ import {
 } from '../../lib/jobApplications'
 import type { XPTier } from '../../lib/quests'
 import { ScreenBackground } from '../ui'
+import { FAB_CLASS } from '../ui/formStyles'
 import { JobApplicationSheet } from './JobApplicationSheet'
 import { STATUS_PILL } from './statusPill'
 
@@ -157,7 +158,7 @@ export function JobSearchScreen({
         type="button"
         onClick={() => setSheet({ mode: 'add' })}
         aria-label="Add application"
-        className="glow-accent fixed right-4 bottom-24 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(var(--rgb-accent-hover)),var(--color-accent)_55%,var(--color-accent-active))] text-3xl leading-none font-bold text-on-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.35),0_10px_24px_-8px_rgb(var(--rgb-shadow)/0.7),0_0_var(--hud-glow-spread)_rgb(var(--glow)/0.6)] transition-transform active:scale-95"
+        className={FAB_CLASS}
       >
         +
       </button>

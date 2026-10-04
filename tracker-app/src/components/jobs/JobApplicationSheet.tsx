@@ -12,6 +12,7 @@ import {
 } from '../../lib/jobApplications'
 import type { XPTier } from '../../lib/quests'
 import { Button, ScreenBackground } from '../ui'
+import { FIELD_CLASS as FIELD, LABEL_CLASS as LABEL } from '../ui/formStyles'
 import { STATUS_PILL } from './statusPill'
 
 export interface JobApplicationSheetProps {
@@ -27,12 +28,6 @@ export interface JobApplicationSheetProps {
   onDelete?: () => void
   onClose: () => void
 }
-
-// text-base (16px): anything smaller makes iOS Safari zoom the page in when
-// the field is focused.
-const FIELD =
-  'w-full rounded-lg border border-border bg-backing/40 px-3 py-2 text-base text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none'
-const LABEL = 'mb-1.5 block text-xs font-bold text-text-secondary'
 
 // Add or edit one application: a glass bottom sheet, same shape as the
 // Profile and Manage Quests sheets. Tapping the backdrop closes it.

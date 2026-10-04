@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import { GoalsScreen, type GoalsScreenProps } from '../goals/GoalsScreen'
 import { JobSearchScreen, type JobSearchScreenProps } from '../jobs/JobSearchScreen'
 import { ScreenBackground } from '../ui'
 
 // Trackers that haven't been rebuilt in this app yet.
 const COMING_SOON = [
-  { icon: '🎯', label: 'Goals' },
   { icon: '🧠', label: 'Skills' },
   { icon: '📊', label: 'Calendar' },
   { icon: '📜', label: 'Certs' },
@@ -15,19 +15,41 @@ const COMING_SOON = [
 export interface MoreScreenProps {
   /** Everything the Job Search tracker needs (it opens inside this tab). */
   jobSearch: Omit<JobSearchScreenProps, 'onBack'>
+  goals: Omit<GoalsScreenProps, 'onBack'>
 }
 
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+
 // Houses everything that isn't part of the core Today / Level Up loop.
-// Job Search is built and opens from here; the rest are listed as coming
+// Goals and Job Search are built and open from here; the rest are listed as coming
 // soon rather than linking to screens that don't exist.
-export function MoreScreen({ jobSearch }: MoreScreenProps) {
-  const [view, setView] = useState<'menu' | 'jobs'>('menu')
+export function MoreScreen({ jobSearch, goals }: MoreScreenProps) {
+  const [view, setView] = useState<'menu' | 'jobs' | 'goals'>('menu')
 
   if (view === 'jobs') {
     return <JobSearchScreen {...jobSearch} onBack={() => setView('menu')} />
   }
 
-  const count = jobSearch.applications.length
+  if (view === 'goals') {
+    return <GoalsScreen {...goals} onBack={() => setView('menu')} />
+  }
+
+  // The trackers that are built: each row opens its screen inside this tab.
+  const active = goals.goals.filter((g) => g.status !== 'done').length
+  const trackers = [
+    {
+      view: 'goals' as const,
+      icon: '🎯',
+      label: 'Goals',
+      note: goals.goals.length > 0 ? `${active} active` : '',
+    },
+    {
+      view: 'jobs' as const,
+      icon: '💼',
+      label: 'Job Search',
+      note: jobSearch.applications.length > 0 ? plural(jobSearch.applications.length, 'application') : '',
+    },
+  ]
 
   return (
     <ScreenBackground
@@ -40,24 +62,27 @@ export function MoreScreen({ jobSearch }: MoreScreenProps) {
           Other trackers live here as they're rebuilt.
         </p>
         <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
-          <button
-            type="button"
-            onClick={() => setView('jobs')}
-            className="hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left"
-          >
-            <span className="flex items-center gap-3 text-sm font-bold text-text-primary">
-              <span className="text-lg" aria-hidden="true">
-                💼
+          {trackers.map((t) => (
+            <button
+              key={t.view}
+              type="button"
+              onClick={() => setView(t.view)}
+              className="hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left"
+            >
+              <span className="flex items-center gap-3 text-sm font-bold text-text-primary">
+                <span className="text-lg" aria-hidden="true">
+                  {t.icon}
+                </span>
+                {t.label}
               </span>
-              Job Search
-            </span>
-            <span className="flex shrink-0 items-center gap-2 text-xs text-text-secondary">
-              {count > 0 && `${count} application${count === 1 ? '' : 's'}`}
-              <span className="text-xl" aria-hidden="true">
-                ›
+              <span className="flex shrink-0 items-center gap-2 text-xs text-text-secondary">
+                {t.note}
+                <span className="text-xl" aria-hidden="true">
+                  ›
+                </span>
               </span>
-            </span>
-          </button>
+            </button>
+          ))}
           {COMING_SOON.map((item) => (
             <div
               key={item.label}

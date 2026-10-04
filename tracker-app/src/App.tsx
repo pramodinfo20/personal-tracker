@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useState } from 'react'
 import { useCustomQuests } from './hooks/useCustomQuests'
+import { useGoals } from './hooks/useGoals'
 import { useHunter } from './hooks/useHunter'
 import { useJobApplications } from './hooks/useJobApplications'
 import { ThemeProvider } from './hooks/useTheme'
@@ -55,6 +56,7 @@ function AppShell() {
   } = useHunter()
   const { customQuests, addQuest, renameQuest, setQuestActive, deleteQuest } = useCustomQuests()
   const { applications, addApplication, updateApplication, deleteApplication } = useJobApplications()
+  const { goals, addGoal, updateGoal, setGoalStatus, deleteGoal } = useGoals()
 
   // Setup's goals also seed starter quests for goals that have no built-in
   // quest behind them (e.g. Hydration -> Drinking Water) — through the
@@ -128,6 +130,13 @@ function AppShell() {
       )}
       {tab === 'more' && (
         <MoreScreen
+          goals={{
+            goals,
+            onAdd: addGoal,
+            onUpdate: updateGoal,
+            onSetStatus: setGoalStatus,
+            onDelete: deleteGoal,
+          }}
           jobSearch={{
             applications,
             onAdd: addApplication,

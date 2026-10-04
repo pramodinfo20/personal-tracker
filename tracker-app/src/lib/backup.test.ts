@@ -11,6 +11,7 @@ import {
   type Backup,
 } from './backup'
 import type { CustomQuest } from './customQuests'
+import type { Goal } from './goals'
 import { DEFAULT_HUNTER, type Hunter } from './hunterState'
 import type { JobApplication } from './jobApplications'
 
@@ -73,11 +74,16 @@ const JOBS: JobApplication[] = [
   { id: 'job_1', company: 'Siemens', role: 'Data Engineer', dateApplied: '2026-10-02', status: 'interview', notes: 'Referral from Anna', link: 'https://jobs.siemens.com/123', createdAt: '2026-10-02T09:00:00.000Z' },
   { id: 'job_2', company: 'Bosch', role: '', dateApplied: '2026-09-20', status: 'rejected', createdAt: '2026-09-20T09:00:00.000Z' },
 ]
+const GOALS: Goal[] = [
+  { id: 'goal_1', title: 'Reach B2 German', category: 'learning', targetDate: '2026-12-31', status: 'in_progress', createdAt: '2026-10-01T09:00:00.000Z' },
+  { id: 'goal_2', title: 'Run 10K', category: 'exercise', status: 'done', createdAt: '2026-09-01T09:00:00.000Z' },
+]
 const SAVED = {
   [BACKUP_KEYS.hunter]: JSON.stringify(HUNTER),
   [BACKUP_KEYS.customQuests]: JSON.stringify(QUESTS),
   [BACKUP_KEYS.theme]: JSON.stringify('light'),
   [BACKUP_KEYS.jobApplications]: JSON.stringify(JOBS),
+  [BACKUP_KEYS.trackedGoals]: JSON.stringify(GOALS),
 }
 const NOW = new Date('2026-10-03T12:00:00.000Z')
 
@@ -88,7 +94,7 @@ describe('buildBackup', () => {
       app: BACKUP_APP,
       version: BACKUP_VERSION,
       exportedAt: '2026-10-03T12:00:00.000Z',
-      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light', jobApplications: JOBS },
+      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light', jobApplications: JOBS, trackedGoals: GOALS },
     })
   })
 
@@ -252,6 +258,35 @@ describe('job applications in backups', () => {
   })
 })
 
+describe('goals in backups', () => {
+  it('survive export -> restore unchanged', () => {
+    const parsed = parseBackup(JSON.stringify(buildBackup(memoryStore(SAVED), NOW)))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    const fresh = memoryStore()
+    applyBackup(parsed.backup, fresh)
+    expect(JSON.parse(fresh.getItem(BACKUP_KEYS.trackedGoals)!)).toEqual(GOALS)
+  })
+
+  it('a backup from before the tracker restores with no goals', () => {
+    const { [BACKUP_KEYS.trackedGoals]: _goals, ...older } = SAVED
+    const backup = buildBackup(memoryStore(older), NOW)!
+    expect('trackedGoals' in backup.data).toBe(false)
+    const target = memoryStore(SAVED)
+    applyBackup(backup, target)
+    expect(target.getItem(BACKUP_KEYS.trackedGoals)).toBeNull()
+  })
+
+  it('rejects a backup whose goals are damaged', () => {
+    const backup = buildBackup(memoryStore(SAVED), NOW)!
+    const tampered = { ...backup, data: { ...backup.data, trackedGoals: [{ ...GOALS[0], status: 'someday' }] } }
+    expect(parseBackup(JSON.stringify(tampered))).toEqual({
+      ok: false,
+      reason: 'That backup is damaged (invalid goal status).',
+    })
+  })
+})
+
 describe('profile photo in backups', () => {
   it('survives export -> restore byte for byte', () => {
     const exported = JSON.stringify(buildBackup(memoryStore(SAVED), NOW))
@@ -319,8 +354,6 @@ describe('every persisted key is backed up', () => {
       if (path.includes('.test.')) continue
       for (const m of (text as string).matchAll(/['"`](p26_[a-z0-9_]+)['"`]/g)) used.add(m[1])
     }
-    // p26_goals appears only in a comment about the legacy app's storage.
-    used.delete('p26_goals')
     expect([...used].sort()).toEqual(Object.values(BACKUP_KEYS).sort())
   })
 })
