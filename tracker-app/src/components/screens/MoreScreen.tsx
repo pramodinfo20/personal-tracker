@@ -9,7 +9,6 @@ import { ScreenBackground } from '../ui'
 // Trackers that haven't been rebuilt in this app yet.
 const COMING_SOON = [
   { icon: '📊', label: 'Calendar' },
-  { icon: '✈️', label: 'Travel' },
 ]
 
 export interface MoreScreenProps {
