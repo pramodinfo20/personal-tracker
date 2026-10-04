@@ -1,5 +1,6 @@
-import type { UndoResult } from '../../hooks/useHunter'
+import type { SummonResult, UndoResult } from '../../hooks/useHunter'
 import type { Hunter } from '../../lib/hunterState'
+import { ticketState } from '../../lib/lottery'
 import {
   GateCard,
   HunterStatusPanel,
@@ -16,6 +17,8 @@ export interface LevelUpScreenProps {
   onGateExpire: () => void
   onManageQuests: () => void
   onUndoActivity: (entryId: number) => UndoResult
+  /** Spend a ticket on a companion draw (useHunter's summon). */
+  onSummon: () => SummonResult | null
 }
 
 // The full Hunter Status detail view — stats, monster companions, gate management,
@@ -29,6 +32,7 @@ export function LevelUpScreen({
   onGateExpire,
   onManageQuests,
   onUndoActivity,
+  onSummon,
 }: LevelUpScreenProps) {
   return (
     // The gate backdrop — this tab is where gates are started and cleared.
@@ -42,6 +46,8 @@ export function LevelUpScreen({
           level={hunter.level || 1}
           unlockedMilestones={hunter.unlockedShadows ?? []}
           recruited={hunter.recruitedCompanions}
+          tickets={ticketState(hunter)}
+          onSummon={onSummon}
         />
         <GateCard
           hunter={hunter}

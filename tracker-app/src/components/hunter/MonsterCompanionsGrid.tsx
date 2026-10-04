@@ -1,21 +1,31 @@
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
+import type { SummonResult } from '../../hooks/useHunter'
 import { cn } from '../../lib/cn'
 import {
   COMPANION_RANKS,
   RANK_ACCESS_LEVEL,
   RANK_TIER,
+  accessibleRanks,
   companionsOfRank,
   hasRankAccess,
   nextLockedRank,
   type CompanionRank,
 } from '../../lib/companions'
-import { Badge, Card, TIER_CLASSES } from '../ui'
+import { claimsToNextTicket, type TicketState } from '../../lib/lottery'
+import { Badge, Button, Card, TIER_CLASSES } from '../ui'
+import { SummonSheet } from './SummonSheet'
 
 export interface MonsterCompanionsGridProps {
   level: number
   /** Milestone levels reached so far (Hunter.unlockedShadows). */
   unlockedMilestones: number[]
-  /** Ids of companions already recruited. Nothing recruits yet — the draw comes later. */
+  /** Ids of companions recruited through the lottery. */
   recruited?: string[]
+  /** Summon tickets and progress toward the next one. Omit (with onSummon) to hide summoning. */
+  tickets?: TicketState
+  /** Spend a ticket on a draw (useHunter's summon). */
+  onSummon?: () => SummonResult | null
 }
 
 // SS shares S's colour (five tier colours, six ranks); a gold rim sets it apart.
@@ -26,12 +36,17 @@ const SS_RIM = 'ring-1 ring-tier-gold/70'
 //   accessible rank  — its cards in the rank's colour; a companion not yet
 //                      recruited is a "?" card (there to be found)
 //   recruited        — the companion's icon and name
+// The Summon button opens the draw (SummonSheet), where tickets are spent.
 export function MonsterCompanionsGrid({
   level,
   unlockedMilestones,
   recruited = [],
+  tickets,
+  onSummon,
 }: MonsterCompanionsGridProps) {
+  const [summoning, setSummoning] = useState(false)
   const next = nextLockedRank(level, unlockedMilestones)
+  const toNext = tickets ? claimsToNextTicket(tickets) : 0
 
   return (
     <Card title="Monster Companions" icon="🐾">
@@ -44,6 +59,23 @@ export function MonsterCompanionsGrid({
           : 'Every rank is open to you.'}
       </p>
 
+      {tickets && onSummon && (
+        <div className="hud-inset mb-4 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5">
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-text-primary">
+              <span aria-hidden="true">🎟️ </span>
+              {tickets.tickets} {tickets.tickets === 1 ? 'ticket' : 'tickets'}
+            </div>
+            <div className="text-[11px] text-text-secondary">
+              Next in {toNext} {toNext === 1 ? 'claim' : 'claims'}
+            </div>
+          </div>
+          <Button type="button" onClick={() => setSummoning(true)} className="shrink-0">
+            Summon
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {COMPANION_RANKS.map((rank) => (
           <RankRow
@@ -54,6 +86,20 @@ export function MonsterCompanionsGrid({
           />
         ))}
       </div>
+
+      {/* Portalled to <body> so the sheet covers the bottom tab bar. */}
+      {summoning &&
+        tickets &&
+        onSummon &&
+        createPortal(
+          <SummonSheet
+            tickets={tickets}
+            ranks={accessibleRanks(level, unlockedMilestones)}
+            onSummon={onSummon}
+            onClose={() => setSummoning(false)}
+          />,
+          document.body,
+        )}
     </Card>
   )
 }

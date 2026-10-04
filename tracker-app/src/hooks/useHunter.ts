@@ -35,7 +35,14 @@ import {
   type ClaimableQuest,
   type XPTier,
 } from '../lib/quests'
-import { COMPANION_MILESTONES } from '../lib/companions'
+import { COMPANION_MILESTONES, type Companion } from '../lib/companions'
+import {
+  drawCompanion,
+  drawableRanks,
+  ticketState,
+  ticketsAfterClaim,
+  ticketsAfterUndo,
+} from '../lib/lottery'
 import { today } from '../lib/format'
 import {
   focusStatsForGoals,
@@ -86,6 +93,12 @@ const backfillDailyXP = (log: LogEntry[]): Record<string, number> => {
     totals[key] = (totals[key] || 0) + entry.xp
   }
   return totals
+}
+
+export interface SummonResult {
+  companion: Companion
+  /** Already recruited before this draw — nothing new was added. */
+  duplicate: boolean
 }
 
 export interface LevelUpEvent {
@@ -196,7 +209,21 @@ export function useHunter() {
           50,
         )
       }
-      return { ...h, xp, level, statPoints, stats, log, unlockedShadows, dailyXP, dailyStatXP }
+      // Every call here is a quest claim (fixed, custom or a logged
+      // activity), so this is where summon tickets are earned.
+      const ticketing = ticketsAfterClaim(ticketState(h), dailyXP, entry.date.slice(0, 10))
+      return {
+        ...h,
+        xp,
+        level,
+        statPoints,
+        stats,
+        log,
+        unlockedShadows,
+        dailyXP,
+        dailyStatXP,
+        ...ticketing,
+      }
     })
   }
 
@@ -272,10 +299,44 @@ export function useHunter() {
         entryStat,
         liveEntry.xp,
       )
-      return { ...h, xp, level, statPoints, stats, log, dailyXP, dailyStatXP, ...alsoRevert(h) }
+      return {
+        ...h,
+        xp,
+        level,
+        statPoints,
+        stats,
+        log,
+        dailyXP,
+        dailyStatXP,
+        // The undone claim stops counting toward the next ticket; tickets
+        // already earned are kept.
+        ...ticketsAfterUndo(ticketState(h)),
+        ...alsoRevert(h),
+      }
     })
 
     return { ok: true }
+  }
+
+  // Spend one ticket on a draw. The companion is picked here, from the
+  // ranks the hunter has access to right now, and only then written — so
+  // the result shown is exactly the result saved. Returns null (and spends
+  // nothing) with no ticket or no rank unlocked yet.
+  const summon = (): SummonResult | null => {
+    if ((hunter.tickets ?? 0) < 1) return null
+    const companion = drawCompanion(drawableRanks(hunter))
+    if (!companion) return null
+    const duplicate = (hunter.recruitedCompanions ?? []).includes(companion.id)
+    setHunter((h) => {
+      if ((h.tickets ?? 0) < 1) return h
+      const recruited = h.recruitedCompanions ?? []
+      return {
+        ...h,
+        tickets: (h.tickets ?? 0) - 1,
+        recruitedCompanions: recruited.includes(companion.id) ? recruited : [...recruited, companion.id],
+      }
+    })
+    return { companion, duplicate }
   }
 
   // Undo a quest claimed earlier TODAY (respects the same midnight-reset
@@ -465,6 +526,7 @@ export function useHunter() {
     claimCustomQuest,
     undoQuestClaim,
     undoLogActivity,
+    summon,
     setFixedQuestEnabled,
     logActivity,
     renameHunter,

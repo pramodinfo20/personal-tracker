@@ -81,8 +81,19 @@ export interface Hunter {
    * access (lib/companions.ts) and is kept so existing saves load unchanged.
    */
   unlockedShadows: number[]
-  /** Ids of recruited companions. Nothing writes this yet — recruiting is a later phase. */
+  /** Ids of companions recruited through the lottery (lib/lottery.ts). */
   recruitedCompanions?: string[]
+  /**
+   * Summon tickets in hand. Earn-only: one per 5 quest claims plus a bonus
+   * at every 7-day streak (lib/lottery.ts) — there is no other source.
+   */
+  tickets?: number
+  /** Quest claims counted toward tickets (an undo takes one back off). */
+  claimCount?: number
+  /** Tickets already awarded for claims — so claim/undo/claim can't earn one twice. */
+  claimTicketsAwarded?: number
+  /** UTC day the last streak-bonus ticket was awarded (at most one a day). */
+  lastStreakTicketDate?: string
   activeGate: ActiveGate | null
   clearedGates: string[]
   logCount: number
