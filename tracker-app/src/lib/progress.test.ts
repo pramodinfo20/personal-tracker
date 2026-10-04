@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { LogEntry, StatKey } from './hunterState'
 import {
   RADAR_MIN_DOMAIN_MAX,
+  currentStreak,
   dailyXPSeries,
   daysActiveInRange,
   formatDayLabel,
@@ -227,5 +228,65 @@ describe('statRadarDomainMax', () => {
     const max = statRadarDomainMax(statRadarData({ STR: 10, AGI: 10, INT: 10, PER: 10, VIT: 10 }))
     expect(max).toBe(20)
     expect(10 / max).toBeLessThan(0.8)
+  })
+})
+
+describe('currentStreak', () => {
+  // "Today" is 4 Oct 2026 (UTC).
+  const NOW = new Date('2026-10-04T15:00:00.000Z')
+
+  it('is 0 before any XP has ever been earned', () => {
+    expect(currentStreak({}, NOW)).toBe(0)
+  })
+
+  it('fresh streak: the very first day XP is earned, it is 1', () => {
+    expect(currentStreak({ '2026-10-04': 15 }, NOW)).toBe(1)
+  })
+
+  it('continuing streak: counts every consecutive day up to today', () => {
+    const dailyXP = { '2026-10-04': 20, '2026-10-03': 45, '2026-10-02': 10, '2026-10-01': 30 }
+    expect(currentStreak(dailyXP, NOW)).toBe(4)
+  })
+
+  it('today not yet logged: still counts the run that ended yesterday', () => {
+    const dailyXP = { '2026-10-03': 45, '2026-10-02': 10, '2026-10-01': 30 }
+    expect(currentStreak(dailyXP, NOW)).toBe(3)
+    // ...and earning XP today extends that same run rather than restarting it.
+    expect(currentStreak({ ...dailyXP, '2026-10-04': 5 }, NOW)).toBe(4)
+  })
+
+  it('broken by a missed day: only the run after the gap counts', () => {
+    const dailyXP = {
+      '2026-10-04': 20,
+      '2026-10-03': 45,
+      // 2 Oct missed
+      '2026-10-01': 30,
+      '2026-09-30': 30,
+      '2026-09-29': 30,
+    }
+    expect(currentStreak(dailyXP, NOW)).toBe(2)
+  })
+
+  it('two days missed (today and yesterday): the streak is gone', () => {
+    expect(currentStreak({ '2026-10-02': 45, '2026-10-01': 30 }, NOW)).toBe(0)
+  })
+
+  it('a 0-XP day (e.g. a failed gate) is a missed day, not part of a streak', () => {
+    expect(currentStreak({ '2026-10-04': 20, '2026-10-03': 0, '2026-10-02': 30 }, NOW)).toBe(1)
+    expect(currentStreak({ '2026-10-04': 0, '2026-10-03': 30, '2026-10-02': 30 }, NOW)).toBe(2)
+    expect(currentStreak({ '2026-10-04': 0 }, NOW)).toBe(0)
+  })
+
+  it('runs across month and year boundaries', () => {
+    const dailyXP = { '2027-01-01': 10, '2026-12-31': 10, '2026-12-30': 10 }
+    expect(currentStreak(dailyXP, new Date('2027-01-01T08:00:00.000Z'))).toBe(3)
+  })
+
+  it('handles a long streak', () => {
+    const dailyXP: Record<string, number> = {}
+    for (let i = 0; i < 400; i++) {
+      dailyXP[new Date(Date.UTC(2026, 9, 4 - i)).toISOString().slice(0, 10)] = 10
+    }
+    expect(currentStreak(dailyXP, NOW)).toBe(400)
   })
 })

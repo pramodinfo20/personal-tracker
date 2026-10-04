@@ -8,15 +8,16 @@ export interface ProgressSummaryProps {
 }
 
 // Three at-a-glance numbers above the chart: total XP in range, how many of
-// those days had any activity, and the current streak (the same streak
-// already surfaced on Today — not recomputed here, just displayed).
+// those days had any activity, and the current streak (currentStreak in
+// lib/progress.ts — the same number the header and Today show).
 export function ProgressSummary({ totalXP, daysActive, range, streak }: ProgressSummaryProps) {
   const daysInRange = RANGE_DAYS[range]
   return (
     <div className="grid grid-cols-3 gap-2">
       <SummaryStat label="Total XP" value={totalXP.toLocaleString()} />
       <SummaryStat label="Days Active" value={`${daysActive}/${daysInRange}`} />
-      <SummaryStat label="Streak" value={streak > 0 ? `🔥 ${streak}` : '—'} />
+      {/* Always a real number: 0 when there is no streak (yet, or any more). */}
+      <SummaryStat label="Streak" value={streak > 0 ? `🔥 ${streak}` : '0'} />
     </div>
   )
 }

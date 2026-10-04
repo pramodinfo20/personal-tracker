@@ -143,6 +143,31 @@ export const daysActiveInRange = (
   return keys.reduce((count, key) => count + (key in dailyXP ? 1 : 0), 0)
 }
 
+// Current streak: consecutive days with XP earned, counting back from
+// today. A day counts only if it earned something (a 0-XP entry, e.g. a
+// failed gate, doesn't). If today has no XP yet the count starts from
+// yesterday — not having acted yet today doesn't break a streak; only a
+// full missed day does. So the first day XP is ever earned the streak is 1.
+//
+// Derived from dailyXP every time rather than kept as a counter: it can't
+// drift, it's right after an undo, and it doesn't depend on the app having
+// been opened on any particular day.
+export const currentStreak = (dailyXP: Record<string, number>, end: Date = new Date()): number => {
+  const earned = (daysAgo: number): boolean => {
+    const key = dateKey(
+      new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - daysAgo)),
+    )
+    return (dailyXP[key] ?? 0) > 0
+  }
+  let daysAgo = earned(0) ? 0 : 1
+  let streak = 0
+  while (earned(daysAgo)) {
+    streak += 1
+    daysAgo += 1
+  }
+  return streak
+}
+
 // 'weekday' -> "Sun" (chart x-axis ticks in the 7-point Week view).
 // 'short' -> "Mar 15" (Month view's sparser ticks, and the tooltip in
 // either view — parsed as UTC noon so no local-timezone day can shift it).

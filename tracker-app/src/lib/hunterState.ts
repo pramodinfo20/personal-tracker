@@ -49,6 +49,12 @@ export interface Hunter {
   stats: Record<StatKey, number>
   completedToday: Record<string, boolean>
   lastQuestDate: string
+  /**
+   * Legacy day counter, still written at day rollover but no longer shown
+   * anywhere: every streak on screen is currentStreak(dailyXP) from
+   * lib/progress.ts, which can't drift. Kept so existing saves and backups
+   * keep their shape.
+   */
   streak: number
   syncedDate: string | null
   log: LogEntry[]

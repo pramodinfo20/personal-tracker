@@ -3,6 +3,7 @@ import type { Hunter } from '../../lib/hunterState'
 import {
   RANGE_DAYS,
   dailyXPSeries,
+  currentStreak,
   daysActiveInRange,
   monthlyXPSeries,
   statBreakdown,
@@ -55,6 +56,7 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
   )
   const totalXP = useMemo(() => totalXPInRange(dailyXP, days), [dailyXP, days])
   const daysActive = useMemo(() => daysActiveInRange(dailyXP, days), [dailyXP, days])
+  const streak = useMemo(() => currentStreak(dailyXP), [dailyXP])
 
   return (
     // Generic art; its built-in dim (screenBackgroundProps) keeps the
@@ -73,7 +75,7 @@ export function ProgressScreen({ hunter }: ProgressScreenProps) {
           totalXP={totalXP}
           daysActive={daysActive}
           range={range}
-          streak={hunter.streak}
+          streak={streak}
         />
 
         <Card title="XP Earned" icon="📈">

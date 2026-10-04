@@ -1,6 +1,7 @@
 import { cn } from '../../lib/cn'
 import { STAT_META, type Hunter } from '../../lib/hunterState'
 import { rankForLevel, xpForLevel } from '../../lib/leveling'
+import { currentStreak } from '../../lib/progress'
 import { Badge, Card, ProgressBar } from '../ui'
 import { rankTierColor, statMilestoneTier } from './tierMapping'
 
@@ -12,6 +13,7 @@ export interface HunterStatusPanelProps {
 export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) {
   const rank = rankForLevel(hunter.level || 1)
   const need = xpForLevel(hunter.level || 1)
+  const streak = currentStreak(hunter.dailyXP ?? {})
 
   const rename = () => {
     const name = window.prompt('Hunter name:', hunter.name || '')
@@ -50,8 +52,8 @@ export function HunterStatusPanel({ hunter, onRename }: HunterStatusPanelProps) 
       <div className="mt-5">
         <div className="mb-1 text-xs font-bold text-accent-hover uppercase">EXP</div>
         <ProgressBar value={hunter.xp || 0} max={need} />
-        {hunter.streak > 0 && (
-          <div className="mt-2 text-xs font-bold text-warning">🔥 {hunter.streak} day streak</div>
+        {streak > 0 && (
+          <div className="mt-2 text-xs font-bold text-warning">🔥 {streak} day streak</div>
         )}
       </div>
 

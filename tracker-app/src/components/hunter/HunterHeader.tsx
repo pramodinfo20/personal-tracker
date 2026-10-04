@@ -1,6 +1,7 @@
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel, xpForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
+import { currentStreak } from '../../lib/progress'
 import { ProgressBar } from '../ui'
 import { Avatar } from './Avatar'
 import { glowClass, rankTierColor } from './tierMapping'
@@ -23,6 +24,7 @@ export interface HunterHeaderProps {
 export function HunterHeader({ hunter, onOpenProfile, showProgress = true }: HunterHeaderProps) {
   const rank = rankForLevel(hunter.level || 1)
   const need = xpForLevel(hunter.level || 1)
+  const streak = currentStreak(hunter.dailyXP ?? {})
 
   return (
     <header
@@ -53,13 +55,13 @@ export function HunterHeader({ hunter, onOpenProfile, showProgress = true }: Hun
             </div>
           )}
         </div>
-        {hunter.streak > 0 && (
+        {streak > 0 && (
           <div
             className="flex shrink-0 items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-bold text-warning shadow-[0_0_12px_-2px_rgb(245_158_11/0.5)]"
-            title={`${hunter.streak} day streak`}
+            title={`${streak} day streak`}
           >
             <span aria-hidden="true">🔥</span>
-            {hunter.streak}
+            {streak}
           </div>
         )}
         {showProgress && (

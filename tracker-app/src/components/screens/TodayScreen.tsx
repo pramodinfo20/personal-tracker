@@ -4,6 +4,7 @@ import { ONBOARDING_COPY, TODAY_COPY } from '../../lib/copy'
 import type { CustomQuest } from '../../lib/customQuests'
 import type { Hunter } from '../../lib/hunterState'
 import { today } from '../../lib/format'
+import { currentStreak } from '../../lib/progress'
 import { questEntries, visibleQuests } from '../../lib/questVisibility'
 import {
   allQuestsClaimed,
@@ -147,7 +148,7 @@ export function TodayScreen({
         )}
         {allDone && !showQuestsAnyway ? (
           <DayCompleteCard
-            streak={hunter.streak}
+            streak={currentStreak(hunter.dailyXP ?? {})}
             questCount={visibleFixed.length}
             xpToday={questXPOnDate(hunter.log, today(), visibleFixed)}
             onEditClaims={() => setShowQuestsAnyway(true)}
