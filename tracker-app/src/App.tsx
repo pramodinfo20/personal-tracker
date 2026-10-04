@@ -47,6 +47,7 @@ function AppShell() {
     claimCustomQuest,
     logActivity,
     renameHunter,
+    relabelQuestEntries,
     setPhoto,
     completeOnboarding,
     startGate,
@@ -61,6 +62,13 @@ function AppShell() {
   const { applications, addApplication, updateApplication, deleteApplication } = useJobApplications()
   const { goals, addGoal, updateGoal, setGoalStatus, deleteGoal } = useGoals()
   const trackers = { skills: useTracker(SKILLS), certs: useTracker(CERTS), projects: useTracker(PROJECTS) }
+
+  // Renaming a custom quest: the quest itself, and its claims already in
+  // the activity log, so the new name shows everywhere at once.
+  const renameCustomQuest = (id: string, name: string) => {
+    renameQuest(id, name)
+    relabelQuestEntries(id, name)
+  }
 
   // Setup's goals also seed starter quests for goals that have no built-in
   // quest behind them (e.g. Hydration -> Drinking Water) — through the
@@ -187,7 +195,7 @@ function AppShell() {
               : setQuestActive(entry.quest.id, enabled)
           }
           onAdd={addQuest}
-          onRename={renameQuest}
+          onRename={renameCustomQuest}
           onDelete={deleteQuest}
           onClose={() => setManageQuestsOpen(false)}
         />

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { cn } from '../../lib/cn'
 import { MANAGE_QUESTS_COPY } from '../../lib/copy'
 import { STAT_META } from '../../lib/hunterState'
 import type { QuestEntry } from '../../lib/questVisibility'
@@ -14,10 +15,17 @@ export interface ManageQuestsSheetProps {
   onSetEnabled: (entry: QuestEntry, enabled: boolean) => void
   /** Saves a new recurring quest from an ACTIVITY_LIBRARY id. */
   onAdd: (activityId: string) => void
+  /** Renames a CUSTOM quest (built-ins keep their names). Receives the trimmed name. */
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
   onClose: () => void
 }
+
+const QUEST_NAME_MAX = 40
+
+// Rename / Delete on a custom quest's row: real buttons, not fine print.
+const ROW_ACTION =
+  'cursor-pointer rounded-lg border border-border bg-backing/40 px-2.5 py-1.5 text-text-secondary hover:border-accent/60 hover:text-text-primary'
 
 // The one place to manage what shows on Today: every quest, built-in and
 // custom alike, with the same show/hide switch. Custom quests additionally
@@ -50,8 +58,9 @@ export function ManageQuestsSheet({
 
   const submitRename = (e: FormEvent, id: string) => {
     e.preventDefault()
-    if (!draftName.trim()) return
-    onRename(id, draftName)
+    const name = draftName.trim()
+    if (!name) return
+    onRename(id, name)
     setRenamingId(null)
   }
 
@@ -153,42 +162,63 @@ export function ManageQuestsSheet({
                     <form
                       key={entry.quest.id}
                       onSubmit={(e) => submitRename(e, entry.quest.id)}
-                      className="flex gap-2 p-3"
+                      className="p-3"
                     >
+                      <label
+                        htmlFor={`rename-${entry.quest.id}`}
+                        className="mb-1.5 block text-xs font-bold text-text-secondary"
+                      >
+                        Quest name
+                      </label>
+                      {/* text-base: a smaller font makes iOS zoom the page on focus. */}
                       <input
+                        id={`rename-${entry.quest.id}`}
                         value={draftName}
                         onChange={(e) => setDraftName(e.target.value)}
-                        aria-label="Quest name"
-                        maxLength={40}
+                        maxLength={QUEST_NAME_MAX}
                         autoFocus
-                        className="min-w-0 flex-1 rounded-lg border border-border bg-backing/40 px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                        className="w-full rounded-lg border border-border bg-backing/40 px-3 py-2 text-base text-text-primary focus:border-accent focus:outline-none"
                       />
-                      <Button type="button" variant="secondary" onClick={() => setRenamingId(null)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={!draftName.trim()}>
-                        Save
-                      </Button>
+                      <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
+                        <span>{draftName.trim() ? 'Its XP tiers stay the same.' : 'A name is required.'}</span>
+                        <span>
+                          {draftName.length}/{QUEST_NAME_MAX}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setRenamingId(null)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={!draftName.trim()} className="flex-1">
+                          Save
+                        </Button>
+                      </div>
                     </form>
                   ) : (
                     <div key={entry.quest.id} className="flex flex-col gap-2 px-3 py-2.5">
                       {row(entry)}
                       {/* Actions get their own row so a long quest name never
                           gets crushed into a narrow column at mobile widths. */}
-                      <div className="flex items-center justify-end gap-3 text-[10px] font-bold uppercase">
+                      <div className="flex items-center justify-end gap-2 text-xs font-bold">
                         <button
                           type="button"
                           onClick={() => startRename(entry)}
-                          className="cursor-pointer text-text-secondary hover:text-accent-hover"
+                          aria-label={`Rename ${entry.quest.label}`}
+                          className={ROW_ACTION}
                         >
-                          Rename
+                          <span aria-hidden="true">✏️</span> Rename
                         </button>
                         {confirmDeleteId === entry.quest.id ? (
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => setConfirmDeleteId(null)}
-                              className="cursor-pointer text-text-secondary hover:text-text-primary"
+                              className={ROW_ACTION}
                             >
                               Cancel
                             </button>
@@ -198,18 +228,19 @@ export function ManageQuestsSheet({
                                 onDelete(entry.quest.id)
                                 setConfirmDeleteId(null)
                               }}
-                              className="cursor-pointer text-warning hover:text-warning/80"
+                              className={cn(ROW_ACTION, 'border-warning/60 text-warning hover:text-warning')}
                             >
-                              Confirm
+                              Confirm delete
                             </button>
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(entry.quest.id)}
-                            className="cursor-pointer text-text-secondary hover:text-warning"
+                            aria-label={`Delete ${entry.quest.label}`}
+                            className={ROW_ACTION}
                           >
-                            Delete
+                            <span aria-hidden="true">🗑️</span> Delete
                           </button>
                         )}
                       </div>

@@ -60,20 +60,50 @@ describe('ManageQuestsSheet', () => {
     expect(handlers.onSetEnabled).toHaveBeenLastCalledWith(entries[2], true)
   })
 
-  it('keeps rename and delete (with confirm) for custom quests only', () => {
-    const { handlers } = setup()
-    // Exactly one Rename/Delete pair: built-ins can't be renamed or deleted.
-    expect(screen.getAllByRole('button', { name: 'Rename' })).toHaveLength(1)
-    expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(1)
+  it('each custom quest has a visible Rename and Delete button; built-ins have neither', () => {
+    setup()
+    // Exactly one pair: built-ins can't be renamed or deleted.
+    expect(screen.getAllByRole('button', { name: /^Rename / })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(1)
+    const rename = screen.getByRole('button', { name: 'Rename Drinking Water' })
+    expect(rename.textContent).toContain('Rename')
+    for (const q of DAILY_QUESTS) {
+      expect(screen.queryByRole('button', { name: `Rename ${q.label}` })).toBeNull()
+    }
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rename' }))
-    fireEvent.change(screen.getByLabelText('Quest name'), { target: { value: 'Hydrate' } })
+  it('rename: opens prefilled, saves the trimmed name', () => {
+    const { handlers } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Rename Drinking Water' }))
+    const input = screen.getByLabelText('Quest name') as HTMLInputElement
+    expect(input.value).toBe('Drinking Water')
+    expect(input.maxLength).toBe(40)
+    fireEvent.change(input, { target: { value: '  Hydrate  ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(handlers.onRename).toHaveBeenCalledWith('cq_w', 'Hydrate')
+    expect(screen.queryByLabelText('Quest name')).toBeNull()
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+  it('rename: a blank name cannot be saved, and Cancel changes nothing', () => {
+    const { handlers } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Rename Drinking Water' }))
+    fireEvent.change(screen.getByLabelText('Quest name'), { target: { value: '   ' } })
+    expect((screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('A name is required.')).toBeTruthy()
+    fireEvent.submit(screen.getByLabelText('Quest name').closest('form')!)
+    expect(handlers.onRename).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByLabelText('Quest name')).toBeNull()
+    expect(handlers.onRename).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Rename Drinking Water' })).toBeTruthy()
+  })
+
+  it('delete still asks first', () => {
+    const { handlers } = setup()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Drinking Water' }))
     expect(handlers.onDelete).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(handlers.onDelete).toHaveBeenCalledWith('cq_w')
   })
 

@@ -397,6 +397,20 @@ export function useHunter() {
     setHunter((h) => ({ ...h, hiddenQuestIds: toggleHiddenQuest(h.hiddenQuestIds, questId, enabled) }))
   }
 
+  // A renamed custom quest should read the same everywhere, including the
+  // claims already in Recent Activity. Entries are matched by questId (what
+  // undo uses too), so this changes their label and nothing else — not XP,
+  // stat, tier or date.
+  const relabelQuestEntries = (questId: string, label: string) => {
+    const trimmed = label.trim()
+    if (!trimmed) return
+    setHunter((h) =>
+      (h.log || []).some((e) => e.questId === questId && e.label !== trimmed)
+        ? { ...h, log: h.log.map((e) => (e.questId === questId ? { ...e, label: trimmed } : e)) }
+        : h,
+    )
+  }
+
   const renameHunter = (name: string) => {
     const trimmed = name.trim()
     // A blank name would make the onboarding gate (hunter.name === '') true
@@ -538,6 +552,7 @@ export function useHunter() {
     setFixedQuestEnabled,
     logActivity,
     renameHunter,
+    relabelQuestEntries,
     setPhoto,
     completeOnboarding,
     startGate: startGateAction,
