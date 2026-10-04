@@ -1,20 +1,34 @@
+import { useState } from 'react'
+import { JobSearchScreen, type JobSearchScreenProps } from '../jobs/JobSearchScreen'
 import { ScreenBackground } from '../ui'
 
-const MORE_ITEMS = [
+// Trackers that haven't been rebuilt in this app yet.
+const COMING_SOON = [
   { icon: '🎯', label: 'Goals' },
   { icon: '🧠', label: 'Skills' },
   { icon: '📊', label: 'Calendar' },
   { icon: '📜', label: 'Certs' },
   { icon: '🛠️', label: 'Projects' },
   { icon: '✈️', label: 'Travel' },
-  { icon: '💼', label: 'Job Search' },
 ]
 
+export interface MoreScreenProps {
+  /** Everything the Job Search tracker needs (it opens inside this tab). */
+  jobSearch: Omit<JobSearchScreenProps, 'onBack'>
+}
+
 // Houses everything that isn't part of the core Today / Level Up loop.
-// None of these trackers have been rebuilt yet in this app (only the
-// hunter/gamification system has), so they're listed as coming soon rather
-// than linking to screens that don't exist.
-export function MoreScreen() {
+// Job Search is built and opens from here; the rest are listed as coming
+// soon rather than linking to screens that don't exist.
+export function MoreScreen({ jobSearch }: MoreScreenProps) {
+  const [view, setView] = useState<'menu' | 'jobs'>('menu')
+
+  if (view === 'jobs') {
+    return <JobSearchScreen {...jobSearch} onBack={() => setView('menu')} />
+  }
+
+  const count = jobSearch.applications.length
+
   return (
     <ScreenBackground
       screen="generic"
@@ -26,7 +40,25 @@ export function MoreScreen() {
           Other trackers live here as they're rebuilt.
         </p>
         <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
-          {MORE_ITEMS.map((item) => (
+          <button
+            type="button"
+            onClick={() => setView('jobs')}
+            className="hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left"
+          >
+            <span className="flex items-center gap-3 text-sm font-bold text-text-primary">
+              <span className="text-lg" aria-hidden="true">
+                💼
+              </span>
+              Job Search
+            </span>
+            <span className="flex shrink-0 items-center gap-2 text-xs text-text-secondary">
+              {count > 0 && `${count} application${count === 1 ? '' : 's'}`}
+              <span className="text-xl" aria-hidden="true">
+                ›
+              </span>
+            </span>
+          </button>
+          {COMING_SOON.map((item) => (
             <div
               key={item.label}
               className="flex items-center justify-between gap-3 px-4 py-3.5"

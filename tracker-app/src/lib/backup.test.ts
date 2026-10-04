@@ -12,6 +12,7 @@ import {
 } from './backup'
 import type { CustomQuest } from './customQuests'
 import { DEFAULT_HUNTER, type Hunter } from './hunterState'
+import type { JobApplication } from './jobApplications'
 
 // A minimal in-memory Storage; `failOnSet` makes the Nth setItem throw, to
 // simulate storage failing part-way through a restore.
@@ -68,10 +69,15 @@ const QUESTS: CustomQuest[] = [
   { id: 'cq_w', name: 'Drinking Water', category: 'hydration', iconKey: 'droplet', statKey: 'VIT', tiers: [{ label: '1L', xp: 15 }, { label: '2L', xp: 25 }], active: true, activityId: 'water' },
   { id: 'cq_old', name: 'Morning Stretch', category: 'custom', iconKey: 'star', statKey: 'AGI', tiers: [{ label: 'Quick', xp: 7 }], active: false },
 ]
+const JOBS: JobApplication[] = [
+  { id: 'job_1', company: 'Siemens', role: 'Data Engineer', dateApplied: '2026-10-02', status: 'interview', notes: 'Referral from Anna', link: 'https://jobs.siemens.com/123', createdAt: '2026-10-02T09:00:00.000Z' },
+  { id: 'job_2', company: 'Bosch', role: '', dateApplied: '2026-09-20', status: 'rejected', createdAt: '2026-09-20T09:00:00.000Z' },
+]
 const SAVED = {
   [BACKUP_KEYS.hunter]: JSON.stringify(HUNTER),
   [BACKUP_KEYS.customQuests]: JSON.stringify(QUESTS),
   [BACKUP_KEYS.theme]: JSON.stringify('light'),
+  [BACKUP_KEYS.jobApplications]: JSON.stringify(JOBS),
 }
 const NOW = new Date('2026-10-03T12:00:00.000Z')
 
@@ -82,7 +88,7 @@ describe('buildBackup', () => {
       app: BACKUP_APP,
       version: BACKUP_VERSION,
       exportedAt: '2026-10-03T12:00:00.000Z',
-      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light' },
+      data: { hunter: HUNTER, customQuests: QUESTS, theme: 'light', jobApplications: JOBS },
     })
   })
 
@@ -211,6 +217,38 @@ describe('applyBackup is all-or-nothing', () => {
     const target = memoryStore({}, 2)
     expect(applyBackup(backup, target).ok).toBe(false)
     expect(target.snapshot()).toEqual({})
+  })
+})
+
+describe('job applications in backups', () => {
+  it('survive export -> restore unchanged', () => {
+    const parsed = parseBackup(JSON.stringify(buildBackup(memoryStore(SAVED), NOW)))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    const fresh = memoryStore()
+    applyBackup(parsed.backup, fresh)
+    expect(JSON.parse(fresh.getItem(BACKUP_KEYS.jobApplications)!)).toEqual(JOBS)
+  })
+
+  it('a backup from before the tracker restores with no applications, clearing any that were there', () => {
+    const { [BACKUP_KEYS.jobApplications]: _jobs, ...older } = SAVED
+    const backup = buildBackup(memoryStore(older), NOW)!
+    expect('jobApplications' in backup.data).toBe(false)
+    const target = memoryStore(SAVED)
+    applyBackup(backup, target)
+    expect(target.getItem(BACKUP_KEYS.jobApplications)).toBeNull()
+  })
+
+  it('rejects a backup whose applications are damaged', () => {
+    const backup = buildBackup(memoryStore(SAVED), NOW)!
+    const tampered = {
+      ...backup,
+      data: { ...backup.data, jobApplications: [{ ...JOBS[0], link: 'javascript:alert(1)' }] },
+    }
+    expect(parseBackup(JSON.stringify(tampered))).toEqual({
+      ok: false,
+      reason: 'That backup is damaged (invalid job application link).',
+    })
   })
 })
 

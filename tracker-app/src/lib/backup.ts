@@ -9,6 +9,7 @@
 import { isAvatarDataUrl } from './avatar'
 import type { CustomQuest } from './customQuests'
 import type { Hunter } from './hunterState'
+import { validateJobApplications, type JobApplication } from './jobApplications'
 import { isThemePreference, type ThemePreference } from './theme'
 
 export const BACKUP_APP = 'pramod-tracker'
@@ -21,6 +22,7 @@ export const BACKUP_KEYS = {
   hunter: 'p26_hunter',
   customQuests: 'p26_custom_quests',
   theme: 'p26_theme',
+  jobApplications: 'p26_job_applications',
 } as const
 
 export interface BackupData {
@@ -28,6 +30,8 @@ export interface BackupData {
   customQuests: CustomQuest[]
   /** Absent in the file = the user never chose one; restored as "follow the system". */
   theme?: ThemePreference
+  /** Absent in backups from before the Job Search tracker (and when none were ever saved). */
+  jobApplications?: JobApplication[]
 }
 
 export interface Backup {
@@ -57,6 +61,7 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
   if (validateHunter(hunter) !== null) return null
   const customQuests = readJson(store, BACKUP_KEYS.customQuests)
   const theme = readJson(store, BACKUP_KEYS.theme)
+  const jobs = readJson(store, BACKUP_KEYS.jobApplications)
   return {
     app: BACKUP_APP,
     version: BACKUP_VERSION,
@@ -65,6 +70,7 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
       hunter: hunter as Hunter,
       customQuests: validateCustomQuests(customQuests) === null ? (customQuests as CustomQuest[]) : [],
       ...(isThemePreference(theme) ? { theme } : {}),
+      ...(validateJobApplications(jobs) === null ? { jobApplications: jobs as JobApplication[] } : {}),
     },
   }
 }
@@ -151,6 +157,10 @@ export const parseBackup = (text: string): ParseResult => {
   if (raw.data.theme !== undefined && !isThemePreference(raw.data.theme)) {
     return { ok: false, reason: 'That backup is damaged (invalid theme).' }
   }
+  if (raw.data.jobApplications !== undefined) {
+    const jobsProblem = validateJobApplications(raw.data.jobApplications)
+    if (jobsProblem) return { ok: false, reason: `That backup is damaged (${jobsProblem}).` }
+  }
   return {
     ok: true,
     backup: {
@@ -161,6 +171,9 @@ export const parseBackup = (text: string): ParseResult => {
         hunter: raw.data.hunter as Hunter,
         customQuests: (raw.data.customQuests ?? []) as CustomQuest[],
         ...(raw.data.theme !== undefined ? { theme: raw.data.theme as ThemePreference } : {}),
+        ...(raw.data.jobApplications !== undefined
+          ? { jobApplications: raw.data.jobApplications as JobApplication[] }
+          : {}),
       },
     },
   }
@@ -180,6 +193,11 @@ export const applyBackup = (backup: Backup, store: Store): ApplyResult => {
       store.setItem(BACKUP_KEYS.theme, JSON.stringify(backup.data.theme))
     } else {
       store.removeItem(BACKUP_KEYS.theme)
+    }
+    if (backup.data.jobApplications !== undefined) {
+      store.setItem(BACKUP_KEYS.jobApplications, JSON.stringify(backup.data.jobApplications))
+    } else {
+      store.removeItem(BACKUP_KEYS.jobApplications)
     }
     return { ok: true }
   } catch {

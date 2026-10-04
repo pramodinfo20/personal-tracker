@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useState } from 'react'
 import { useCustomQuests } from './hooks/useCustomQuests'
 import { useHunter } from './hooks/useHunter'
+import { useJobApplications } from './hooks/useJobApplications'
 import { ThemeProvider } from './hooks/useTheme'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
@@ -12,6 +13,7 @@ import {
   ProfileSheet,
 } from './components/hunter'
 import { OnboardingFlow } from './components/onboarding'
+import { HUNT_QUEST_ID, huntQuest } from './lib/jobApplications'
 import { starterActivitiesForGoals, type OnboardingResult } from './lib/onboarding'
 import { questEntries } from './lib/questVisibility'
 
@@ -52,6 +54,7 @@ function AppShell() {
     dismissGateCleared,
   } = useHunter()
   const { customQuests, addQuest, renameQuest, setQuestActive, deleteQuest } = useCustomQuests()
+  const { applications, addApplication, updateApplication, deleteApplication } = useJobApplications()
 
   // Setup's goals also seed starter quests for goals that have no built-in
   // quest behind them (e.g. Hydration -> Drinking Water) — through the
@@ -123,7 +126,19 @@ function AppShell() {
           <ProgressScreen hunter={hunter} />
         </Suspense>
       )}
-      {tab === 'more' && <MoreScreen />}
+      {tab === 'more' && (
+        <MoreScreen
+          jobSearch={{
+            applications,
+            onAdd: addApplication,
+            onUpdate: updateApplication,
+            onDelete: deleteApplication,
+            huntClaimedToday: Boolean(hunter.completedToday?.[HUNT_QUEST_ID]),
+            // The ordinary quest claim — same path as tapping the card on Today.
+            onClaimHunt: (tier) => claimQuest(huntQuest(), tier),
+          }}
+        />
+      )}
 
       <BottomTabBar active={tab} onChange={setTab} />
 

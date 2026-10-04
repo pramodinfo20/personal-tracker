@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env (Firebase config etc.) — never committed; see .env.example
+.env
+.env.*
+!.env.example
