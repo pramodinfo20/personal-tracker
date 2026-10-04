@@ -6,6 +6,7 @@
 // is written, and if a write fails part-way the keys already written are
 // rolled back — a bad file or a full disk can't leave a half-restored save.
 
+import { isAvatarDataUrl } from './avatar'
 import type { CustomQuest } from './customQuests'
 import type { Hunter } from './hunterState'
 import { isThemePreference, type ThemePreference } from './theme'
@@ -105,6 +106,7 @@ export const validateHunter = (h: unknown): string | null => {
   }
   if (h.dailyXP !== undefined && !isObject(h.dailyXP)) return 'invalid XP history'
   if (h.hiddenQuestIds !== undefined && !Array.isArray(h.hiddenQuestIds)) return 'invalid hidden quests'
+  if (h.photo !== undefined && !isAvatarDataUrl(h.photo)) return 'invalid profile photo'
   return null
 }
 

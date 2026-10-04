@@ -1,8 +1,8 @@
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel, xpForLevel } from '../../lib/leveling'
-import { avatarInitial } from '../../lib/profile'
 import { cn } from '../../lib/cn'
 import { ProgressBar } from '../ui'
+import { Avatar } from './Avatar'
 import { glowClass, rankTierColor } from './tierMapping'
 
 export interface HunterHeaderProps {
@@ -35,14 +35,13 @@ export function HunterHeader({ hunter, onOpenProfile, showProgress = true }: Hun
       )}
     >
       <div className="mx-auto flex max-w-3xl items-center gap-3">
-        {/* Initial-letter placeholder until profile photos exist. */}
         <button
           type="button"
           onClick={onOpenProfile}
           aria-label="Open profile"
-          className="hud-icon hud-pressable h-10 w-10 cursor-pointer text-lg font-extrabold text-text-primary"
+          className="hud-pressable shrink-0 cursor-pointer rounded-full"
         >
-          {avatarInitial(hunter.name)}
+          <Avatar name={hunter.name} photo={hunter.photo} className="h-10 w-10 text-lg" />
         </button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-text-primary">

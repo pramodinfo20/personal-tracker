@@ -1,9 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
-import { avatarInitial, formatJoinDate, joinDateFor, profileDetails } from '../../lib/profile'
+import { resizeToAvatar } from '../../lib/avatar'
+import { formatJoinDate, joinDateFor, profileDetails } from '../../lib/profile'
 import { Badge, Button, ScreenBackground, ThemeToggle } from '../ui'
+import { Avatar } from './Avatar'
 import { BackupSection } from './BackupSection'
 import { DevTestingPanel, type DevActions } from './DevTestingPanel'
 import { glowClass, rankTierColor } from './tierMapping'
@@ -11,6 +13,8 @@ import { glowClass, rankTierColor } from './tierMapping'
 export interface ProfileSheetProps {
   hunter: Hunter
   onRename: (name: string) => void
+  /** Save an already-resized photo (lib/avatar.ts), or null to remove it. */
+  onSetPhoto: (photo: string | null) => void
   dev: DevActions
   /** Opens the Manage Quests screen (the caller closes this sheet). */
   onManageQuests: () => void
@@ -24,7 +28,6 @@ export interface ProfileSheetProps {
 const COMING_SOON = [
   { icon: '🔔', label: 'Notifications' },
   { icon: '☁️', label: 'Account & cloud sync' },
-  { icon: '📷', label: 'Profile photo' },
 ]
 
 // Opened from the header avatar on every screen: a glass bottom sheet over
@@ -33,6 +36,7 @@ const COMING_SOON = [
 export function ProfileSheet({
   hunter,
   onRename,
+  onSetPhoto,
   dev,
   onManageQuests,
   onRetakeSetup,
@@ -44,6 +48,31 @@ export function ProfileSheet({
   const [name, setName] = useState(hunter.name)
   const trimmed = name.trim()
   const nameChanged = trimmed.length > 0 && trimmed !== hunter.name
+
+  const photoInput = useRef<HTMLInputElement>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState<string | null>(null)
+
+  const pickPhoto = () => photoInput.current?.click()
+
+  // The picked file is shrunk to a small square JPEG before it goes
+  // anywhere near the save — the original is never stored.
+  const onPhotoChosen = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // so picking the same file again still fires
+    if (!file) return
+    setPhotoError(null)
+    setPhotoBusy(true)
+    const result = await resizeToAvatar(file)
+    setPhotoBusy(false)
+    if (result.ok) onSetPhoto(result.dataUrl)
+    else setPhotoError(result.reason)
+  }
+
+  const removePhoto = () => {
+    setPhotoError(null)
+    onSetPhoto(null)
+  }
 
   const saveName = (e: FormEvent) => {
     e.preventDefault()
@@ -76,12 +105,28 @@ export function ProfileSheet({
           </div>
 
           <div className="flex items-center gap-4">
-            <div
-              className="hud-icon h-16 w-16 text-2xl font-extrabold text-text-primary"
-              aria-hidden="true"
+            <button
+              type="button"
+              onClick={pickPhoto}
+              aria-label={hunter.photo ? 'Change profile photo' : 'Add profile photo'}
+              className="hud-pressable relative shrink-0 cursor-pointer rounded-full"
             >
-              {avatarInitial(hunter.name)}
-            </div>
+              <Avatar name={hunter.name} photo={hunter.photo} className="h-16 w-16 text-2xl" />
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full border border-border-strong bg-surface-2 text-xs"
+              >
+                📷
+              </span>
+            </button>
+            <input
+              ref={photoInput}
+              type="file"
+              accept="image/*"
+              aria-label="Profile photo file"
+              className="hidden"
+              onChange={onPhotoChosen}
+            />
             <div className="min-w-0">
               <div className="truncate text-lg font-extrabold text-text-primary">{hunter.name}</div>
               <div className="text-xs font-bold text-text-secondary">Level {hunter.level || 1}</div>
@@ -146,6 +191,26 @@ export function ProfileSheet({
                 </Button>
               </div>
             </form>
+            <div className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-text-secondary">📷 Profile photo</span>
+                <span className="flex shrink-0 gap-2">
+                  {hunter.photo && (
+                    <Button type="button" variant="secondary" onClick={removePhoto}>
+                      Remove
+                    </Button>
+                  )}
+                  <Button type="button" variant="secondary" onClick={pickPhoto} disabled={photoBusy}>
+                    {photoBusy ? 'Working…' : hunter.photo ? 'Change' : 'Add photo'}
+                  </Button>
+                </span>
+              </div>
+              {photoError && (
+                <p role="alert" className="mt-2 text-xs font-bold text-warning">
+                  {photoError}
+                </p>
+              )}
+            </div>
             <button
               type="button"
               onClick={onRetakeSetup}

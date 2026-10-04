@@ -37,6 +37,7 @@ function AppShell() {
     claimCustomQuest,
     logActivity,
     renameHunter,
+    setPhoto,
     completeOnboarding,
     startGate,
     completeGateTask,
@@ -120,6 +121,7 @@ function AppShell() {
         <ProfileSheet
           hunter={hunter}
           onRename={renameHunter}
+          onSetPhoto={setPhoto}
           dev={dev}
           onManageQuests={() => {
             setProfileOpen(false)

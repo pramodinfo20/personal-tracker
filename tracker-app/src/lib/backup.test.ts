@@ -31,6 +31,9 @@ const memoryStore = (initial: Record<string, string> = {}, failOnSet?: number) =
   }
 }
 
+// Stands in for a resized profile photo (a small JPEG data URL).
+const PHOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJ=='
+
 // A full, realistic save: every kind of state the app persists.
 const HUNTER: Hunter = {
   ...DEFAULT_HUNTER,
@@ -59,6 +62,7 @@ const HUNTER: Hunter = {
   heightCm: 178,
   weightKg: 74,
   joinedAt: '2026-09-01T00:00:00.000Z',
+  photo: PHOTO,
 }
 const QUESTS: CustomQuest[] = [
   { id: 'cq_w', name: 'Drinking Water', category: 'hydration', iconKey: 'droplet', statKey: 'VIT', tiers: [{ label: '1L', xp: 15 }, { label: '2L', xp: 25 }], active: true, activityId: 'water' },
@@ -207,6 +211,39 @@ describe('applyBackup is all-or-nothing', () => {
     const target = memoryStore({}, 2)
     expect(applyBackup(backup, target).ok).toBe(false)
     expect(target.snapshot()).toEqual({})
+  })
+})
+
+describe('profile photo in backups', () => {
+  it('survives export -> restore byte for byte', () => {
+    const exported = JSON.stringify(buildBackup(memoryStore(SAVED), NOW))
+    const parsed = parseBackup(exported)
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    const fresh = memoryStore()
+    applyBackup(parsed.backup, fresh)
+    expect((JSON.parse(fresh.getItem(BACKUP_KEYS.hunter)!) as Hunter).photo).toBe(PHOTO)
+  })
+
+  it('a save with no photo round-trips with no photo', () => {
+    const { photo: _photo, ...noPhoto } = HUNTER
+    const store = memoryStore({ ...SAVED, [BACKUP_KEYS.hunter]: JSON.stringify(noPhoto) })
+    const parsed = parseBackup(JSON.stringify(buildBackup(store, NOW)))
+    expect(parsed.ok && 'photo' in parsed.backup.data.hunter).toBe(false)
+  })
+
+  it.each([
+    ['not a string', 42],
+    ['a web URL', 'https://example.com/me.jpg'],
+    ['a script URL', 'javascript:alert(1)'],
+    ['a non-image data URL', 'data:text/html;base64,PGgxPmhpPC9oMT4='],
+    ['an SVG (can carry script)', 'data:image/svg+xml;base64,PHN2Zy8+'],
+    ['an oversized image', `data:image/jpeg;base64,${'A'.repeat(300_000)}`],
+  ])('rejects a backup whose photo is %s', (_name, photo) => {
+    const backup = { ...buildBackup(memoryStore(SAVED), NOW)! }
+    const tampered = { ...backup, data: { ...backup.data, hunter: { ...HUNTER, photo } } }
+    const parsed = parseBackup(JSON.stringify(tampered))
+    expect(parsed).toEqual({ ok: false, reason: 'That backup is damaged (invalid profile photo).' })
   })
 })
 

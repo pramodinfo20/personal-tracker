@@ -33,6 +33,33 @@ const teardown = () => {
   localStorage.clear()
 }
 
+describe('useHunter — profile photo', () => {
+  beforeEach(setup)
+  afterEach(teardown)
+  const PHOTO = 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+  const saved = () => JSON.parse(localStorage.getItem(KEY)!) as Hunter
+
+  it('is persisted on the save, and removing it drops the field entirely', () => {
+    seed({ xp: 40 })
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.setPhoto(PHOTO))
+    expect(result.current.hunter.photo).toBe(PHOTO)
+    expect(saved().photo).toBe(PHOTO)
+
+    act(() => result.current.setPhoto(null))
+    expect('photo' in saved()).toBe(false)
+    expect(saved().xp).toBe(40)
+  })
+
+  it('ignores anything that is not a resized photo', () => {
+    seed({ photo: PHOTO })
+    const { result } = renderHook(() => useHunter())
+    act(() => result.current.setPhoto('https://example.com/me.jpg'))
+    act(() => result.current.setPhoto(`data:image/jpeg;base64,${'A'.repeat(300_000)}`))
+    expect(saved().photo).toBe(PHOTO)
+  })
+})
+
 describe('useHunter — Log Activity undo', () => {
   beforeEach(setup)
   afterEach(teardown)

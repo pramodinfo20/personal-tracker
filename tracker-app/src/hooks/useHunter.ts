@@ -25,6 +25,7 @@ import {
 } from '../lib/hunterState'
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
 import { findActivity } from '../lib/activities'
+import { isAvatarDataUrl } from '../lib/avatar'
 import { customQuestToClaimable, type CustomQuest } from '../lib/customQuests'
 import {
   DAILY_LOG_CAP,
@@ -343,6 +344,17 @@ export function useHunter() {
     setHunter((h) => ({ ...h, name: trimmed }))
   }
 
+  // Set the profile photo (an already-resized data URL from lib/avatar.ts),
+  // or pass null to go back to the letter avatar. Anything that isn't a
+  // valid avatar is ignored rather than stored.
+  const setPhoto = (photo: string | null) => {
+    if (photo !== null && !isAvatarDataUrl(photo)) return
+    setHunter((h) => {
+      const { photo: _old, ...rest } = h
+      return photo === null ? rest : { ...rest, photo }
+    })
+  }
+
   // Setup (first launch, or "Retake setup" from Profile) lands as one atomic
   // update. The chosen goals set the STARTING visibility of the fixed quests
   // through the same hiddenQuestIds field Manage Quests edits — nothing
@@ -457,6 +469,7 @@ export function useHunter() {
     setFixedQuestEnabled,
     logActivity,
     renameHunter,
+    setPhoto,
     completeOnboarding,
     startGate: startGateAction,
     completeGateTask,

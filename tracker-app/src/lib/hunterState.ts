@@ -89,6 +89,12 @@ export interface Hunter {
   goals?: ActivityCategoryKey[]
   /** ISO timestamp of finishing onboarding. Absent for hunters who onboarded before this was tracked — see joinDateFor in lib/profile.ts. */
   joinedAt?: string
+  /**
+   * Profile photo: a small square JPEG data URL produced by resizeToAvatar
+   * (lib/avatar.ts). Absent = the letter avatar. Lives on the save itself,
+   * so it's backed up and restored with everything else.
+   */
+  photo?: string
 }
 
 export const DEFAULT_HUNTER: Hunter = {
