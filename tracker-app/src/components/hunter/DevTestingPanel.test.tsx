@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_HUNTER, type Hunter } from '../../lib/hunterState'
-import { DevTestingPanel, type DevActions } from './DevTestingPanel'
+import { DevTestingPanel, LIVE_WARNING, type DevActions } from './DevTestingPanel'
 
 const HUNTER: Hunter = { ...DEFAULT_HUNTER, name: 'Tester', level: 12, unlockedShadows: [5, 10], tickets: 2 }
 
@@ -66,5 +66,25 @@ describe('DevTestingPanel', () => {
     expect(current).toContain('2 ticket(s)')
     expect(current).toContain('0-day streak')
     expect(current).toContain('ranks open: D C')
+  })
+
+  it('on a live build shows the real-data warning, open or collapsed; never on a dev build', () => {
+    const dev: DevActions = {
+      resetHunter: vi.fn(),
+      jumpToLevel: vi.fn(),
+      clearGateHistory: vi.fn(),
+      grantTickets: vi.fn(),
+      setStreak: vi.fn(),
+    }
+    const { rerender } = render(<DevTestingPanel hunter={HUNTER} dev={dev} onClose={vi.fn()} live />)
+    expect(screen.getByRole('alert').textContent).toContain(LIVE_WARNING)
+    expect(LIVE_WARNING).toBe(
+      'Live build — these tools overwrite your real saved data (Set streak fabricates history). Use a separate browser profile/incognito, or Download Backup first.',
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Dev Testing/ }))
+    expect(screen.getByRole('alert').textContent).toContain(LIVE_WARNING)
+
+    rerender(<DevTestingPanel hunter={HUNTER} dev={dev} onClose={vi.fn()} />)
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 })

@@ -17,7 +17,12 @@ export interface DevTestingPanelProps {
   dev: DevActions
   /** Closes the containing Profile sheet — needed after a full reset. */
   onClose: () => void
+  /** A live (production) build: show the "this is your real data" warning. */
+  live?: boolean
 }
+
+export const LIVE_WARNING =
+  'Live build — these tools overwrite your real saved data (Set streak fabricates history). Use a separate browser profile/incognito, or Download Backup first.'
 
 const BUTTON =
   'cursor-pointer rounded-md border border-dashed border-border-strong px-2.5 py-1.5 text-[10px] font-bold text-text-secondary hover:text-text-primary'
@@ -57,14 +62,15 @@ function NumberAction({ id, label, button, initial, min, onApply }: NumberAction
 }
 
 // ── DEV TESTING ONLY — ported from pramod-2026-tracker.html's throwaway
-// debug panel. Rendered by ProfileSheet only under import.meta.env.DEV, so
-// it never ships in a production build. Delete this file (and useHunter's
+// debug panel. Rendered by ProfileSheet only when isDevToolsEnabled()
+// (lib/devToolsGate.ts): dev builds, or a live build with the env flag on
+// in a browser that has been unlocked. Delete this file (and useHunter's
 // `dev`, and lib/devTools.ts) when it's no longer needed.
 //
 // To test the companion lottery end to end in under a minute:
 //   Set level 12  ->  Grant tickets  ->  Level Up tab -> Summon.
 // For the streak bonus: Set streak 7, then claim any quest on Today.
-export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) {
+export function DevTestingPanel({ hunter, dev, onClose, live = false }: DevTestingPanelProps) {
   const [devOpen, setDevOpen] = useState(false)
 
   const resetHunter = () => {
@@ -91,6 +97,15 @@ export function DevTestingPanel({ hunter, dev, onClose }: DevTestingPanelProps) 
         <span aria-hidden="true">{devOpen ? '▾' : '▸'}</span>
         🛠 Dev Testing — not part of the app
       </button>
+      {/* Always visible on a live build, open or collapsed. */}
+      {live && (
+        <p
+          role="alert"
+          className="mt-2 rounded-md border border-warning/60 bg-warning/10 px-2.5 py-2 text-[11px] font-bold text-warning"
+        >
+          ⚠️ {LIVE_WARNING}
+        </p>
+      )}
       {devOpen && (
         <div className="mt-2.5 flex flex-col gap-2.5 border-t border-dashed border-border-strong pt-2.5">
           <p className="text-[10px] text-text-muted">

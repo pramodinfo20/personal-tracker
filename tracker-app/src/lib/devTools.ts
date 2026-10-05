@@ -1,7 +1,7 @@
 // DEV TESTING ONLY — the state edits behind the Dev Testing panel
-// (components/hunter/DevTestingPanel.tsx), which ProfileSheet renders only
-// under import.meta.env.DEV, so none of this is reachable in a production
-// build. These write the save directly and bypass the real XP, claim and
+// (components/hunter/DevTestingPanel.tsx). The panel and these actions are
+// both gated by isDevToolsEnabled() in lib/devToolsGate.ts: dev builds, or a
+// live build with the env flag on in a browser that has been unlocked. These write the save directly and bypass the real XP, claim and
 // ticket rules on purpose: they exist to set up a situation in seconds
 // (a level, some tickets, a streak) so the real logic can then be exercised.
 

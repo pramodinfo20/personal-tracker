@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
+import { isDevToolsEnabled, isLiveBuild } from '../../lib/devToolsGate'
 import { resizeToAvatar } from '../../lib/avatar'
 import { formatJoinDate, joinDateFor, profileDetails } from '../../lib/profile'
 import { Badge, Button, ScreenBackground, ThemeToggle } from '../ui'
@@ -262,10 +263,12 @@ export function ProfileSheet({
             <BackupSection current={hunter} />
           </div>
 
-          {/* Dev Testing is compiled out of production builds entirely —
-              import.meta.env.DEV is a build-time constant, so Vite drops this
-              branch (and DevTestingPanel with it) from `vite build` output. */}
-          {import.meta.env.DEV && <DevTestingPanel hunter={hunter} dev={dev} onClose={onClose} />}
+          {/* Dev Testing: dev builds, or a live build made with
+              VITE_ENABLE_DEV_TOOLS=true in a browser unlocked via ?devtools=1.
+              The same isDevToolsEnabled() guards the actions in useHunter. */}
+          {isDevToolsEnabled() && (
+            <DevTestingPanel hunter={hunter} dev={dev} onClose={onClose} live={isLiveBuild()} />
+          )}
         </div>
       </div>
     </ScreenBackground>

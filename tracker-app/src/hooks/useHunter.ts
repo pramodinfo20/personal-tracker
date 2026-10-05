@@ -26,6 +26,7 @@ import {
 import { applyXPGain, rankForLevel, reverseXPGain, type RankInfo } from '../lib/leveling'
 import { findActivity } from '../lib/activities'
 import { devGrantTickets, devSetLevel, devSetStreak } from '../lib/devTools'
+import { isDevToolsEnabled } from '../lib/devToolsGate'
 import { isAvatarDataUrl } from '../lib/avatar'
 import { customQuestToClaimable, type CustomQuest } from '../lib/customQuests'
 import {
@@ -525,12 +526,12 @@ export function useHunter() {
   // debug panel. Writes hunter state directly; never goes through
   // applyXPGain/grantXP/claimQuest or the real gate-progress logic.
   //
-  // The panel that calls these only renders under import.meta.env.DEV. As a
-  // second lock, every action is also a no-op outside a dev build, so
-  // nothing in production can grant tickets or set a level even if it
-  // somehow got hold of this object.
+  // The panel that calls these only renders when isDevToolsEnabled() (see
+  // lib/devToolsGate.ts). As a second lock, every action checks the SAME
+  // helper and is a no-op otherwise, so nothing can grant tickets or set a
+  // level even if it somehow got hold of this object.
   const devEdit = (edit: (h: Hunter) => Hunter) => {
-    if (import.meta.env.DEV) setHunter(edit)
+    if (isDevToolsEnabled()) setHunter(edit)
   }
   const dev = {
     // Wipes everything, including the name — so onboarding shows again.
