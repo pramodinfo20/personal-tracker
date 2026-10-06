@@ -1,7 +1,7 @@
 // Aggregation for the Progress screen. No new tracking — everything here is
 // derived from state already written elsewhere. Day boundaries use the same
-// UTC convention as today()/nextResetAt() in format.ts, so "today" here
-// always matches "today" on the Today screen.
+// local calendar convention as today()/nextResetAt() in format.ts, so
+// "today" here always matches "today" on the Today screen.
 //
 // Nothing here reads hunter.log — it's capped at 40 entries (LOG_LIMIT in
 // useHunter.ts) for Recent Activity display, so it isn't a reliable source
@@ -12,22 +12,23 @@
 
 import { STAT_META, type StatKey } from './hunterState'
 import { unattributedXP, type DailyStatXP } from './statHistory'
+import { localDateKey } from './format'
 
 export type RangeKey = 'week' | 'month' | 'year'
 
 export const RANGE_DAYS: Record<RangeKey, number> = { week: 7, month: 30, year: 365 }
 export const RANGE_LABELS: Record<RangeKey, string> = { week: 'Week', month: 'Month', year: 'Year' }
 
-const dateKey = (d: Date): string => d.toISOString().slice(0, 10)
+const keyToLocalDate = (key: string): Date => {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
 
-// The last `days` UTC date keys (YYYY-MM-DD), oldest first, ending at `end`.
+// The last `days` local date keys (YYYY-MM-DD), oldest first, ending at `end`.
 export const lastNDateKeys = (days: number, end: Date = new Date()): string[] => {
-  const y = end.getUTCFullYear()
-  const m = end.getUTCMonth()
-  const d = end.getUTCDate()
   const keys: string[] = []
   for (let i = days - 1; i >= 0; i--) {
-    keys.push(dateKey(new Date(Date.UTC(y, m, d - i))))
+    keys.push(localDateKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - i)))
   }
   return keys
 }
@@ -154,9 +155,7 @@ export const daysActiveInRange = (
 // been opened on any particular day.
 export const currentStreak = (dailyXP: Record<string, number>, end: Date = new Date()): number => {
   const earned = (daysAgo: number): boolean => {
-    const key = dateKey(
-      new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate() - daysAgo)),
-    )
+    const key = localDateKey(new Date(end.getFullYear(), end.getMonth(), end.getDate() - daysAgo))
     return (dailyXP[key] ?? 0) > 0
   }
   let daysAgo = earned(0) ? 0 : 1
@@ -170,11 +169,10 @@ export const currentStreak = (dailyXP: Record<string, number>, end: Date = new D
 
 // 'weekday' -> "Sun" (chart x-axis ticks in the 7-point Week view).
 // 'short' -> "Mar 15" (Month view's sparser ticks, and the tooltip in
-// either view — parsed as UTC noon so no local-timezone day can shift it).
+// either view).
 export const formatDayLabel = (dateKey: string, style: 'weekday' | 'short' = 'short'): string => {
-  const d = new Date(`${dateKey}T12:00:00.000Z`)
+  const d = keyToLocalDate(dateKey)
   return d.toLocaleDateString('en-US', {
-    timeZone: 'UTC',
     ...(style === 'weekday' ? { weekday: 'short' } : { month: 'short', day: 'numeric' }),
   })
 }
@@ -182,8 +180,9 @@ export const formatDayLabel = (dateKey: string, style: 'weekday' | 'short' = 'sh
 // "2026-03" -> "Mar '26" for the Year chart's x-axis ticks and tooltip —
 // carries the year since the trailing window can span the same month twice.
 export const formatMonthLabel = (monthKey: string): string => {
-  const d = new Date(`${monthKey}-01T12:00:00.000Z`)
-  const label = d.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', year: '2-digit' })
+  const [y, m] = monthKey.split('-').map(Number)
+  const d = new Date(y, m - 1, 1)
+  const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
   return label.replace(' ', " '")
 }
 

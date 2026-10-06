@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_HUNTER, STAT_META } from './hunterState'
+import { today } from './format'
 
 describe('DEFAULT_HUNTER', () => {
   it('matches the shape from pramod-2026-tracker.html', () => {
@@ -19,7 +20,7 @@ describe('DEFAULT_HUNTER', () => {
       logCount: 0,
       focusStats: [],
     })
-    expect(DEFAULT_HUNTER.lastQuestDate).toBe(new Date().toISOString().split('T')[0])
+    expect(DEFAULT_HUNTER.lastQuestDate).toBe(today())
   })
 })
 

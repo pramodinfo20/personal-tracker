@@ -6,12 +6,11 @@
 // (a level, some tickets, a streak) so the real logic can then be exercised.
 
 import { COMPANION_MILESTONES } from './companions'
+import { localDateKey } from './format'
 import type { Hunter } from './hunterState'
 
-const utcKey = (now: Date, daysAgo: number): string =>
-  new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysAgo))
-    .toISOString()
-    .slice(0, 10)
+const localKey = (now: Date, daysAgo: number): string =>
+  localDateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo))
 
 const wholeNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, Math.floor(Number(value) || 0)))
@@ -53,11 +52,11 @@ export const devSetStreak = (h: Hunter, days: number, now: Date = new Date()): H
   const n = wholeNumber(days, 0, 3650)
   const dailyXP = { ...(h.dailyXP ?? {}) }
   for (let i = 0; i < n; i++) {
-    const key = utcKey(now, i)
+    const key = localKey(now, i)
     if (!((dailyXP[key] ?? 0) > 0)) dailyXP[key] = DEV_STREAK_DAY_XP
   }
-  delete dailyXP[utcKey(now, n)]
-  if (n === 0) delete dailyXP[utcKey(now, 1)]
+  delete dailyXP[localKey(now, n)]
+  if (n === 0) delete dailyXP[localKey(now, 1)]
   const { lastStreakTicketDate: _cleared, ...rest } = h
   return { ...rest, dailyXP }
 }

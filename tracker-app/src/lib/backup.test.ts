@@ -86,7 +86,7 @@ const CERT_ITEMS = [
   { id: 'certs_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'AWS Cloud Practitioner', issuer: 'Amazon', dateEarned: '2025-03-01', expiryDate: '2028-03-01', link: 'https://aws.amazon.com/verify/abc' },
 ] as TrackerItem[]
 const PROJECT_ITEMS = [
-  { id: 'projects_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'Tracker app', description: 'Solo-Leveling habit PWA', status: 'in_progress' },
+  { id: 'projects_1', createdAt: '2026-10-01T09:00:00.000Z', title: 'Tracker app', description: 'Real-life progression PWA', status: 'in_progress' },
 ] as TrackerItem[]
 const SAVED = {
   [BACKUP_KEYS.hunter]: JSON.stringify(HUNTER),
@@ -200,6 +200,18 @@ describe('parseBackup rejects anything that is not a usable backup', () => {
     ['missing stats', withHunter({ stats: { STR: 1 } }), /invalid stats/],
     ['a log that is not a list', withHunter({ log: 'nope' }), /invalid activity log/],
     ['a malformed log entry', withHunter({ log: [{ label: 'x' }] }), /invalid activity log entry/],
+    ['a log entry with an unknown stat', withHunter({ log: [{ ...HUNTER.log[0], stat: 'LUCK' }] }), /invalid activity log entry/],
+    ['negative daily XP', withHunter({ dailyXP: { '2026-10-03': -1 } }), /invalid XP history/],
+    ['malformed daily stat XP', withHunter({ dailyStatXP: { '2026-10-03': { STR: 10, LUCK: 2 } } }), /invalid stat history/],
+    ['an active gate with an unknown template', withHunter({ activeGate: { templateId: 'gate_x', tier: 'X', name: 'X', startedAt: 1, expiresAt: 2, completedTasks: {} } }), /invalid active gate/],
+    ['an active gate with a bogus task', withHunter({ activeGate: { templateId: 'gate_e', tier: 'E', name: 'E-Rank Gate', startedAt: 1, expiresAt: 2, completedTasks: { nope: true } } }), /invalid active gate/],
+    ['unknown cleared gate', withHunter({ clearedGates: ['gate_x'] }), /invalid cleared gates/],
+    ['unknown companion id', withHunter({ recruitedCompanions: ['not_real'] }), /invalid companions/],
+    ['unknown companion milestone', withHunter({ unlockedShadows: [6] }), /invalid companion milestones/],
+    ['negative ticket count', withHunter({ tickets: -1 }), /invalid ticket count/],
+    ['bad streak ticket date', withHunter({ lastStreakTicketDate: 'yesterday' }), /invalid ticket count/],
+    ['unknown focus stat', withHunter({ focusStats: ['STR', 'LUCK'] }), /invalid focus stats/],
+    ['unknown onboarding goal', withHunter({ goals: ['exercise', 'wizardry'] }), /invalid onboarding goals/],
     ['custom quests that are not a list', JSON.stringify({ ...valid(), data: { ...valid().data, customQuests: {} } }), /invalid custom quests/],
     ['a custom quest with a non-numeric tier XP', JSON.stringify({ ...valid(), data: { ...valid().data, customQuests: [{ ...QUESTS[0], tiers: [{ label: '1L', xp: '15' }] }] } }), /invalid custom quest tier/],
     ['an unknown theme value', JSON.stringify({ ...valid(), data: { ...valid().data, theme: 'sepia' } }), /invalid theme/],

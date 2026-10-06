@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { formatCountdown, formatCountdownCompact, nextResetAt, today } from './format'
+import {
+  dateKeyForTimezoneOffset,
+  formatCountdown,
+  formatCountdownCompact,
+  isDateKey,
+  localDateKey,
+  nextResetAt,
+  today,
+} from './format'
 
 describe('formatCountdown', () => {
   it('formats zero and sub-second remainders as 00:00:00', () => {
@@ -20,8 +28,31 @@ describe('formatCountdown', () => {
 
 describe('today', () => {
   it('returns the current date as YYYY-MM-DD', () => {
-    expect(today()).toBe(new Date().toISOString().split('T')[0])
+    expect(today()).toBe(localDateKey())
     expect(today()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+})
+
+describe('localDateKey', () => {
+  it('uses the runtime local calendar day', () => {
+    expect(localDateKey(new Date(2026, 9, 5, 23, 59))).toBe('2026-10-05')
+    expect(localDateKey(new Date(2026, 9, 6, 0, 1))).toBe('2026-10-06')
+  })
+
+  it('models a positive timezone such as Asia/Kolkata', () => {
+    expect(dateKeyForTimezoneOffset(new Date('2026-10-05T18:29:00.000Z'), 330)).toBe('2026-10-05')
+    expect(dateKeyForTimezoneOffset(new Date('2026-10-05T18:31:00.000Z'), 330)).toBe('2026-10-06')
+  })
+
+  it('models a negative timezone west of UTC', () => {
+    expect(dateKeyForTimezoneOffset(new Date('2026-10-06T06:59:00.000Z'), -420)).toBe('2026-10-05')
+    expect(dateKeyForTimezoneOffset(new Date('2026-10-06T07:01:00.000Z'), -420)).toBe('2026-10-06')
+  })
+
+  it('validates real YYYY-MM-DD keys', () => {
+    expect(isDateKey('2026-02-28')).toBe(true)
+    expect(isDateKey('2026-02-30')).toBe(false)
+    expect(isDateKey('2026-2-3')).toBe(false)
   })
 })
 
@@ -43,14 +74,14 @@ describe('formatCountdownCompact', () => {
 })
 
 describe('nextResetAt', () => {
-  it('returns the next UTC midnight after the given time', () => {
-    const noon = Date.UTC(2026, 0, 15, 12, 0, 0)
-    expect(nextResetAt(noon)).toBe(Date.UTC(2026, 0, 16, 0, 0, 0))
+  it('returns the next local midnight after the given time', () => {
+    const noon = new Date(2026, 0, 15, 12, 0, 0).getTime()
+    expect(nextResetAt(noon)).toBe(new Date(2026, 0, 16, 0, 0, 0).getTime())
   })
 
   it('rolls into the next day even a millisecond after midnight', () => {
-    const justAfterMidnight = Date.UTC(2026, 0, 15, 0, 0, 0, 1)
-    expect(nextResetAt(justAfterMidnight)).toBe(Date.UTC(2026, 0, 16, 0, 0, 0))
+    const justAfterMidnight = new Date(2026, 0, 15, 0, 0, 0, 1).getTime()
+    expect(nextResetAt(justAfterMidnight)).toBe(new Date(2026, 0, 16, 0, 0, 0).getTime())
   })
 
   it('defaults to now when no timestamp is given', () => {

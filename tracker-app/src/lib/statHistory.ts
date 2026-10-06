@@ -13,11 +13,10 @@
 
 import type { LogEntry } from './hunterState'
 import type { StatKey } from './types'
+import { dateKeyFromTimestamp } from './format'
 
 export type StatBucket = StatKey | 'GATE'
 export type DailyStatXP = Record<string, Partial<Record<StatBucket, number>>>
-
-const dayKey = (isoDate: string): string => isoDate.slice(0, 10)
 
 export const addDailyStatXP = (
   history: DailyStatXP | undefined,
@@ -25,7 +24,7 @@ export const addDailyStatXP = (
   bucket: StatBucket,
   amount: number,
 ): DailyStatXP => {
-  const key = dayKey(date)
+  const key = dateKeyFromTimestamp(date)
   const day = history?.[key] ?? {}
   return { ...history, [key]: { ...day, [bucket]: (day[bucket] ?? 0) + amount } }
 }
@@ -37,7 +36,7 @@ export const subtractDailyStatXP = (
   bucket: StatBucket,
   amount: number,
 ): DailyStatXP => {
-  const key = dayKey(date)
+  const key = dateKeyFromTimestamp(date)
   const day = history?.[key]
   if (!day) return history ?? {}
   return { ...history, [key]: { ...day, [bucket]: Math.max(0, (day[bucket] ?? 0) - amount) } }

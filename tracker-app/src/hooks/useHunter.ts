@@ -45,7 +45,7 @@ import {
   ticketsAfterClaim,
   ticketsAfterUndo,
 } from '../lib/lottery'
-import { today } from '../lib/format'
+import { dateKeyFromTimestamp, today } from '../lib/format'
 import {
   focusStatsForGoals,
   hiddenQuestIdsForGoals,
@@ -67,7 +67,7 @@ const addDailyXP = (
   date: string,
   amount: number,
 ): Record<string, number> => {
-  const key = date.slice(0, 10)
+  const key = dateKeyFromTimestamp(date)
   const base = dailyXP || {}
   return { ...base, [key]: (base[key] || 0) + amount }
 }
@@ -79,7 +79,7 @@ const subtractDailyXP = (
   date: string,
   amount: number,
 ): Record<string, number> => {
-  const key = date.slice(0, 10)
+  const key = dateKeyFromTimestamp(date)
   const base = dailyXP || {}
   return { ...base, [key]: (base[key] || 0) - amount }
 }
@@ -91,7 +91,7 @@ const subtractDailyXP = (
 const backfillDailyXP = (log: LogEntry[]): Record<string, number> => {
   const totals: Record<string, number> = {}
   for (const entry of log) {
-    const key = entry.date.slice(0, 10)
+    const key = dateKeyFromTimestamp(entry.date)
     totals[key] = (totals[key] || 0) + entry.xp
   }
   return totals
@@ -213,7 +213,7 @@ export function useHunter() {
       }
       // Every call here is a quest claim (fixed, custom or a logged
       // activity), so this is where summon tickets are earned.
-      const ticketing = ticketsAfterClaim(ticketState(h), dailyXP, entry.date.slice(0, 10))
+      const ticketing = ticketsAfterClaim(ticketState(h), dailyXP, dateKeyFromTimestamp(entry.date))
       return {
         ...h,
         xp,
@@ -369,7 +369,7 @@ export function useHunter() {
       (h) => {
         const entry = (h.log || []).find((e) => e.id === entryId)
         if (!entry || !isLoggedActivity(entry)) return { reason: 'Nothing to undo.' }
-        if (entry.date.slice(0, 10) !== today()) return { reason: "That wasn't logged today." }
+        if (dateKeyFromTimestamp(entry.date) !== today()) return { reason: "That wasn't logged today." }
         return { entry }
       },
       (h) => ({ logCount: Math.max(0, (h.logCount || 0) - 1) }),

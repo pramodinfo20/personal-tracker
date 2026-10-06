@@ -5,14 +5,13 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from './App'
 import { DEFAULT_HUNTER, type Hunter } from './lib/hunterState'
+import { today } from './lib/format'
 
 const HUNTER_KEY = 'p26_hunter'
 const QUESTS_KEY = 'p26_custom_quests'
 
 const stored = (): Hunter => JSON.parse(localStorage.getItem(HUNTER_KEY)!)
 const button = (name: RegExp | string) => screen.getByRole('button', { name })
-const today = () => new Date().toISOString().split('T')[0]
-
 // A fresh install starts on the intro splash; tap through it to reach setup.
 const launchFresh = () => {
   render(<App />)

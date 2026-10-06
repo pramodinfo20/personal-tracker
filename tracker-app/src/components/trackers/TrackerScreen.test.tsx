@@ -147,11 +147,11 @@ describe('Projects', () => {
     render(<Harness def={PROJECTS} />)
     fireEvent.click(button('Add project'))
     fill('Project (required)', 'Tracker app')
-    fill('One-line description (optional)', 'Solo-Leveling habit PWA')
+    fill('One-line description (optional)', 'Real-life progression PWA')
     fill('Link (optional)', 'github.com/pramod/tracker')
     fireEvent.click(inSheet('Add project'))
     expect(button('Edit Tracker app').textContent).toContain('Planning')
-    expect(button('Edit Tracker app').textContent).toContain('Solo-Leveling habit PWA')
+    expect(button('Edit Tracker app').textContent).toContain('Real-life progression PWA')
     expect(screen.getByRole('link', { name: /Open link/ }).getAttribute('href')).toBe(
       'https://github.com/pramod/tracker',
     )

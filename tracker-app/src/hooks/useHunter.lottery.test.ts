@@ -5,6 +5,7 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COMPANIONS, RANK_ACCESS_LEVEL } from '../lib/companions'
 import { DEFAULT_HUNTER, type Hunter } from '../lib/hunterState'
+import { localDateKey } from '../lib/format'
 import { DAILY_QUESTS } from '../lib/quests'
 import { findActivity } from '../lib/activities'
 import { useHunter } from './useHunter'
@@ -12,7 +13,7 @@ import { useHunter } from './useHunter'
 const KEY = 'p26_hunter'
 const NOW = new Date('2026-10-04T12:00:00.000Z')
 const TODAY = '2026-10-04'
-const dayKey = (daysAgo: number) => new Date(Date.UTC(2026, 9, 4 - daysAgo)).toISOString().slice(0, 10)
+const dayKey = (daysAgo: number) => localDateKey(new Date(2026, 9, 4 - daysAgo))
 
 const seed = (over: Partial<Hunter> = {}) =>
   localStorage.setItem(

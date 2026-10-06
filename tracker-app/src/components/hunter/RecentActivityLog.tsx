@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
-import { today } from '../../lib/format'
+import { dateKeyFromTimestamp, today } from '../../lib/format'
 import type { LogEntry } from '../../lib/hunterState'
 import { isLoggedActivity } from '../../lib/quests'
 import { Card } from '../ui'
@@ -55,7 +55,7 @@ export function RecentActivityLog({ log, limit = 10, onUndoActivity }: RecentAct
         <div className="divide-y divide-border">
           {entries.map((e) => {
             const undoable =
-              !!onUndoActivity && isLoggedActivity(e) && e.date.slice(0, 10) === todayKey
+              !!onUndoActivity && isLoggedActivity(e) && dateKeyFromTimestamp(e.date) === todayKey
             const blockedReason = blocked?.id === e.id ? blocked.reason : null
             return (
               <div key={e.id} className="py-2 text-xs">

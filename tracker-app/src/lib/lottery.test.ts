@@ -13,6 +13,7 @@ import {
   ticketsAfterUndo,
   type TicketState,
 } from './lottery'
+import { localDateKey } from './format'
 
 // Deterministic RNG (mulberry32) so the distribution test never flakes.
 const seeded = (seed: number) => () => {
@@ -29,7 +30,7 @@ const START: TicketState = ticketState({})
 /** dailyXP with XP on each of the last `n` days up to today. */
 const streakOf = (n: number): Record<string, number> =>
   Object.fromEntries(
-    Array.from({ length: n }, (_, i) => [new Date(Date.UTC(2026, 9, 4 - i)).toISOString().slice(0, 10), 20]),
+    Array.from({ length: n }, (_, i) => [localDateKey(new Date(2026, 9, 4 - i)), 20]),
   )
 const claim = (s: TicketState, dailyXP = streakOf(1)) => ticketsAfterClaim(s, dailyXP, TODAY, NOW)
 const claims = (n: number, s: TicketState = START, dailyXP = streakOf(1)) => {

@@ -1,8 +1,9 @@
 // The Calendar view: an activity heatmap over hunter.dailyXP — one cell per
-// day, shaded by that day's XP. No data of its own. Days are the same UTC
-// date keys dailyXP and the Progress screen use (see lib/progress.ts), so a
-// cell always matches the day the XP was recorded under.
+// day, shaded by that day's XP. No data of its own. Days are the same local
+// date keys dailyXP and the Progress screen use, so a cell always matches
+// the day the XP was recorded under.
 
+import { localDateKey } from './format'
 import { formatDayLabel } from './progress'
 
 /** Weeks shown at once (~12 weeks = one page). */
@@ -11,7 +12,7 @@ export const WEEKS_PER_PAGE = 12
 export const HEAT_LEVELS = 4
 
 export interface HeatCell {
-  /** UTC "YYYY-MM-DD". */
+  /** Local "YYYY-MM-DD". */
   date: string
   xp: number
   /** 0..HEAT_LEVELS. */
@@ -33,15 +34,17 @@ export interface HeatPage {
   activeDays: number
 }
 
-const keyOf = (d: Date): string => d.toISOString().slice(0, 10)
-const utcDate = (key: string): Date => new Date(`${key}T12:00:00.000Z`)
+const localDate = (key: string): Date => {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
 const addDays = (key: string, n: number): string => {
-  const d = utcDate(key)
-  d.setUTCDate(d.getUTCDate() + n)
-  return keyOf(d)
+  const d = localDate(key)
+  d.setDate(d.getDate() + n)
+  return localDateKey(d)
 }
 /** Monday of the week containing this day. */
-const mondayOf = (key: string): string => addDays(key, -((utcDate(key).getUTCDay() + 6) % 7))
+const mondayOf = (key: string): string => addDays(key, -((localDate(key).getDay() + 6) % 7))
 
 // The XP that counts as "full intensity": a strong day, not the single
 // best one — the 90th percentile of days that earned anything. One huge day
@@ -69,7 +72,7 @@ export const heatmapPage = (
   page: number,
   now: Date = new Date(),
 ): HeatPage => {
-  const todayKey = keyOf(now)
+  const todayKey = localDateKey(now)
   const peak = peakDailyXP(dailyXP)
   const lastMonday = addDays(mondayOf(todayKey), -7 * WEEKS_PER_PAGE * page)
   const firstMonday = addDays(lastMonday, -7 * (WEEKS_PER_PAGE - 1))
@@ -103,7 +106,7 @@ export const heatmapPage = (
     const labelKey = w === 0 || month === sunday.slice(0, 7) ? monday : sunday
     monthLabels.push(
       startsMonth
-        ? utcDate(labelKey).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short' })
+        ? localDate(labelKey).toLocaleDateString('en-US', { month: 'short' })
         : '',
     )
   }
@@ -119,18 +122,17 @@ export const heatmapPage = (
 export const maxHeatmapPage = (dailyXP: Record<string, number>, now: Date = new Date()): number => {
   const keys = Object.keys(dailyXP).sort()
   if (keys.length === 0) return 0
-  const firstMondayOfPage0 = addDays(mondayOf(keyOf(now)), -7 * (WEEKS_PER_PAGE - 1))
+  const firstMondayOfPage0 = addDays(mondayOf(localDateKey(now)), -7 * (WEEKS_PER_PAGE - 1))
   const earliest = keys[0]
   if (earliest >= firstMondayOfPage0) return 0
   const daysBefore = Math.round(
-    (utcDate(firstMondayOfPage0).getTime() - utcDate(earliest).getTime()) / 86_400_000,
+    (localDate(firstMondayOfPage0).getTime() - localDate(earliest).getTime()) / 86_400_000,
   )
   return Math.ceil(daysBefore / (7 * WEEKS_PER_PAGE))
 }
 
 const withYear = (key: string): string =>
-  utcDate(key).toLocaleDateString('en-US', {
-    timeZone: 'UTC',
+  localDate(key).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -142,8 +144,7 @@ export const formatPageRange = (page: HeatPage): string =>
 
 /** "Sat, Oct 3, 2026" */
 export const formatFullDay = (key: string): string =>
-  utcDate(key).toLocaleDateString('en-US', {
-    timeZone: 'UTC',
+  localDate(key).toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

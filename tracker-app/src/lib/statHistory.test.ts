@@ -7,12 +7,15 @@ import {
   unattributedXP,
 } from './statHistory'
 
+const localIso = (day: number, hour: number, minute = 0): string =>
+  new Date(2026, 9, day, hour, minute).toISOString()
+
 describe('addDailyStatXP', () => {
-  it('accumulates per stat within a day, keyed by the UTC date', () => {
-    let h = addDailyStatXP(undefined, '2026-10-03T08:00:00.000Z', 'STR', 25)
-    h = addDailyStatXP(h, '2026-10-03T21:00:00.000Z', 'STR', 20)
-    h = addDailyStatXP(h, '2026-10-03T21:30:00.000Z', 'INT', 10)
-    h = addDailyStatXP(h, '2026-10-04T00:10:00.000Z', 'STR', 5)
+  it('accumulates per stat within a local day', () => {
+    let h = addDailyStatXP(undefined, localIso(3, 8), 'STR', 25)
+    h = addDailyStatXP(h, localIso(3, 21), 'STR', 20)
+    h = addDailyStatXP(h, localIso(3, 21, 30), 'INT', 10)
+    h = addDailyStatXP(h, localIso(4, 0, 10), 'STR', 5)
     expect(h).toEqual({ '2026-10-03': { STR: 45, INT: 10 }, '2026-10-04': { STR: 5 } })
   })
 

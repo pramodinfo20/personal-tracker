@@ -10,6 +10,7 @@ import { findActivity } from '../lib/activities'
 import type { CustomQuest } from '../lib/customQuests'
 import { DEFAULT_HUNTER, type Hunter, type LogEntry } from '../lib/hunterState'
 import { xpForLevel } from '../lib/leveling'
+import { today } from '../lib/format'
 import { DAILY_LOG_CAP, DAILY_QUESTS } from '../lib/quests'
 import { useHunter } from './useHunter'
 
@@ -550,7 +551,7 @@ describe('useHunter — profile/dev helpers', () => {
       completedToday: { q_learn: true },
       // This block doesn't freeze the clock — use the real date so the
       // daily rollover doesn't clear the claim being checked.
-      lastQuestDate: new Date().toISOString().split('T')[0],
+      lastQuestDate: today(),
     })
     const { result } = renderHook(() => useHunter())
     act(() => result.current.completeOnboarding({ name: 'Tester', goals: ['career'] }))

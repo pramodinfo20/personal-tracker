@@ -7,9 +7,13 @@
 // rolled back — a bad file or a full disk can't leave a half-restored save.
 
 import { isAvatarDataUrl } from './avatar'
+import { COMPANION_MILESTONES, COMPANIONS } from './companions'
 import type { CustomQuest } from './customQuests'
+import { isDateKey, localDateKey } from './format'
+import { GATE_TEMPLATES } from './gates'
 import { validateGoals, type Goal } from './goals'
 import type { Hunter } from './hunterState'
+import { ACTIVITY_CATEGORIES } from './activities'
 import { validateJobApplications, type JobApplication } from './jobApplications'
 import { isThemePreference, type ThemePreference } from './theme'
 import { TRACKERS, validateTrackerItems, type TrackerItem } from './trackers'
@@ -105,13 +109,66 @@ export const backupFilename = (hunterName: string, date: Date = new Date()): str
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'hunter'
-  return `tracker-backup-${safe}-${date.toISOString().slice(0, 10)}.json`
+  return `tracker-backup-${safe}-${localDateKey(date)}.json`
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v)
 const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0
 const STATS = ['STR', 'VIT', 'INT', 'PER', 'AGI'] as const
+const STAT_BUCKETS = [...STATS, 'GATE'] as const
+const companionIds = new Set(COMPANIONS.map((c) => c.id))
+const gateIds = new Set(GATE_TEMPLATES.map((g) => g.id))
+const milestoneSet = new Set<number>(COMPANION_MILESTONES)
+const goalKeys = new Set<string>(ACTIVITY_CATEGORIES.map((c) => c.key))
+
+const isIntegerCount = (v: unknown): v is number => isCount(v) && Number.isInteger(v)
+const isStat = (v: unknown): boolean => (STATS as readonly unknown[]).includes(v)
+const isStatBucket = (v: unknown): boolean => (STAT_BUCKETS as readonly unknown[]).includes(v)
+
+const validateBooleanRecord = (v: unknown, label: string): string | null => {
+  if (!isObject(v)) return `invalid ${label}`
+  return Object.values(v).every((value) => typeof value === 'boolean') ? null : `invalid ${label}`
+}
+
+const validateCountRecord = (v: unknown, label: string): string | null => {
+  if (!isObject(v)) return `invalid ${label}`
+  for (const [key, value] of Object.entries(v)) {
+    if (!isDateKey(key) || !isCount(value)) return `invalid ${label}`
+  }
+  return null
+}
+
+const validateDailyStatXP = (v: unknown): string | null => {
+  if (!isObject(v)) return 'invalid stat history'
+  for (const [date, day] of Object.entries(v)) {
+    if (!isDateKey(date) || !isObject(day)) return 'invalid stat history'
+    for (const [bucket, amount] of Object.entries(day)) {
+      if (!isStatBucket(bucket) || !isCount(amount)) return 'invalid stat history'
+    }
+  }
+  return null
+}
+
+const validateStringArray = (v: unknown, label: string): string | null =>
+  Array.isArray(v) && v.every((item) => typeof item === 'string') ? null : `invalid ${label}`
+
+const validateActiveGate = (v: unknown): string | null => {
+  if (v === null) return null
+  if (!isObject(v)) return 'invalid active gate'
+  const template = GATE_TEMPLATES.find((g) => g.id === v.templateId)
+  if (!template) return 'invalid active gate'
+  if (v.tier !== template.tier || v.name !== template.name) return 'invalid active gate'
+  if (!isCount(v.startedAt) || !isCount(v.expiresAt) || v.expiresAt < v.startedAt) {
+    return 'invalid active gate'
+  }
+  if (!isObject(v.completedTasks)) return 'invalid active gate'
+  const taskIds = new Set(template.tasks.map((t) => t.id))
+  for (const [taskId, done] of Object.entries(v.completedTasks)) {
+    if (!taskIds.has(taskId) || typeof done !== 'boolean') return 'invalid active gate'
+  }
+  return null
+}
 
 // Returns why this isn't a usable hunter save, or null if it is. Checks the
 // fields the app can't run without; newer optional fields (hiddenQuestIds,
@@ -121,31 +178,89 @@ export const validateHunter = (h: unknown): string | null => {
   if (typeof h.name !== 'string' || !h.name.trim()) return 'hunter has no name'
   if (!isCount(h.level) || h.level < 1) return 'invalid level'
   if (!isCount(h.xp)) return 'invalid XP'
+  if (!isIntegerCount(h.statPoints)) return 'invalid stat points'
   if (!isObject(h.stats) || !STATS.every((s) => isCount((h.stats as Record<string, unknown>)[s]))) {
     return 'invalid stats'
   }
-  if (!isObject(h.completedToday)) return 'invalid quest state'
-  if (typeof h.lastQuestDate !== 'string') return 'invalid quest date'
+  const completedProblem = validateBooleanRecord(h.completedToday, 'quest state')
+  if (completedProblem) return completedProblem
+  if (!isDateKey(h.lastQuestDate)) return 'invalid quest date'
+  if (h.streak !== undefined && !isIntegerCount(h.streak)) return 'invalid streak'
   if (!Array.isArray(h.log)) return 'invalid activity log'
   for (const e of h.log) {
-    if (!isObject(e) || typeof e.date !== 'string' || typeof e.label !== 'string' || !isCount(e.xp)) {
+    if (
+      !isObject(e) ||
+      typeof e.date !== 'string' ||
+      Number.isNaN(new Date(e.date).getTime()) ||
+      typeof e.label !== 'string' ||
+      !isCount(e.xp) ||
+      !isStatBucket(e.stat)
+    ) {
       return 'invalid activity log entry'
     }
+    if (e.questId !== undefined && typeof e.questId !== 'string') return 'invalid activity log entry'
+    if (e.tier !== undefined && typeof e.tier !== 'string') return 'invalid activity log entry'
+    if (e.category !== undefined && typeof e.category !== 'string') return 'invalid activity log entry'
   }
-  if (h.dailyXP !== undefined && !isObject(h.dailyXP)) return 'invalid XP history'
-  if (h.hiddenQuestIds !== undefined && !Array.isArray(h.hiddenQuestIds)) return 'invalid hidden quests'
+  if (h.dailyXP !== undefined) {
+    const problem = validateCountRecord(h.dailyXP, 'XP history')
+    if (problem) return problem
+  }
+  if (h.dailyStatXP !== undefined) {
+    const problem = validateDailyStatXP(h.dailyStatXP)
+    if (problem) return problem
+  }
+  if (h.hiddenQuestIds !== undefined) {
+    const problem = validateStringArray(h.hiddenQuestIds, 'hidden quests')
+    if (problem) return problem
+  }
   if (h.photo !== undefined && !isAvatarDataUrl(h.photo)) return 'invalid profile photo'
   if (
     h.recruitedCompanions !== undefined &&
-    !(Array.isArray(h.recruitedCompanions) && h.recruitedCompanions.every((c) => typeof c === 'string'))
+    !(
+      Array.isArray(h.recruitedCompanions) &&
+      h.recruitedCompanions.every((c) => typeof c === 'string' && companionIds.has(c))
+    )
   ) {
     return 'invalid companions'
   }
-  for (const key of ['tickets', 'claimCount', 'claimTicketsAwarded'] as const) {
-    if (h[key] !== undefined && !(isCount(h[key]) && Number.isInteger(h[key]))) return 'invalid ticket count'
+  if (
+    h.unlockedShadows !== undefined &&
+    !(
+      Array.isArray(h.unlockedShadows) &&
+      h.unlockedShadows.every((m) => Number.isInteger(m) && milestoneSet.has(m))
+    )
+  ) {
+    return 'invalid companion milestones'
   }
-  if (h.lastStreakTicketDate !== undefined && typeof h.lastStreakTicketDate !== 'string') {
+  for (const key of ['tickets', 'claimCount', 'claimTicketsAwarded'] as const) {
+    if (h[key] !== undefined && !isIntegerCount(h[key])) return 'invalid ticket count'
+  }
+  if (h.lastStreakTicketDate !== undefined && !isDateKey(h.lastStreakTicketDate)) {
     return 'invalid ticket count'
+  }
+  if (h.activeGate !== undefined) {
+    const gateProblem = validateActiveGate(h.activeGate)
+    if (gateProblem) return gateProblem
+  }
+  if (
+    h.clearedGates !== undefined &&
+    !(Array.isArray(h.clearedGates) && h.clearedGates.every((g) => typeof g === 'string' && gateIds.has(g)))
+  ) {
+    return 'invalid cleared gates'
+  }
+  if (h.logCount !== undefined && !isIntegerCount(h.logCount)) return 'invalid log count'
+  if (h.focusStats !== undefined && !(Array.isArray(h.focusStats) && h.focusStats.every(isStat))) {
+    return 'invalid focus stats'
+  }
+  if (h.goals !== undefined && !(Array.isArray(h.goals) && h.goals.every((g) => typeof g === 'string' && goalKeys.has(g)))) {
+    return 'invalid onboarding goals'
+  }
+  for (const key of ['age', 'heightCm', 'weightKg'] as const) {
+    if (h[key] !== undefined && !isCount(h[key])) return 'invalid profile details'
+  }
+  if (h.joinedAt !== undefined && (typeof h.joinedAt !== 'string' || Number.isNaN(new Date(h.joinedAt).getTime()))) {
+    return 'invalid joined date'
   }
   return null
 }

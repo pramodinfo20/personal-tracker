@@ -5,6 +5,7 @@ import { useHunter } from '../hooks/useHunter'
 import { accessibleRanks } from './companions'
 import { DEV_STREAK_DAY_XP, devGrantTickets, devSetLevel, devSetStreak } from './devTools'
 import { DEFAULT_HUNTER, type Hunter } from './hunterState'
+import { localDateKey } from './format'
 import { currentStreak } from './progress'
 import { DAILY_QUESTS } from './quests'
 
@@ -63,7 +64,7 @@ describe('devSetStreak', () => {
 
   it('shortens a longer real streak to exactly N', () => {
     const dailyXP = Object.fromEntries(
-      Array.from({ length: 20 }, (_, i) => [new Date(Date.UTC(2026, 9, 4 - i)).toISOString().slice(0, 10), 40]),
+      Array.from({ length: 20 }, (_, i) => [localDateKey(new Date(2026, 9, 4 - i)), 40]),
     )
     const h = devSetStreak(hunter({ dailyXP }), 7, NOW)
     expect(currentStreak(h.dailyXP, NOW)).toBe(7)

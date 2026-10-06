@@ -7,6 +7,7 @@
 // use XPTier.
 
 import type { LogEntry } from './hunterState'
+import { dateKeyFromTimestamp } from './format'
 import type { StatKey } from './types'
 
 export interface XPTier {
@@ -122,7 +123,7 @@ export const questClaimEntry = (
   questId: string,
   dateKey: string,
 ): LogEntry | undefined =>
-  (log || []).find((e) => e.questId === questId && e.date.slice(0, 10) === dateKey)
+  (log || []).find((e) => e.questId === questId && dateKeyFromTimestamp(e.date) === dateKey)
 
 // What a day's claims of `quests` actually paid out (default: the fixed
 // DAILY_QUESTS, for DayCompleteCard) — replaces the old fixed "sum of every
@@ -135,7 +136,7 @@ export const questXPOnDate = (
 ): number => {
   const ids = new Set(quests.map((q) => q.id))
   return (log || [])
-    .filter((e) => e.questId && ids.has(e.questId) && e.date.slice(0, 10) === dateKey)
+    .filter((e) => e.questId && ids.has(e.questId) && dateKeyFromTimestamp(e.date) === dateKey)
     .reduce((sum, e) => sum + e.xp, 0)
 }
 

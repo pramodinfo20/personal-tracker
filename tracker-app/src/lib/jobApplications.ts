@@ -3,7 +3,10 @@
 // hooks/useJobApplications.ts, and claiming the Hunter Association quest
 // goes through useHunter's claimQuest like every other claim.
 
+import { isDateKey, localDateKey } from './format'
 import { DAILY_QUESTS, type ClaimableQuest, type XPTier } from './quests'
+
+export { isDateKey, localDateKey } from './format'
 
 export const JOB_STATUSES = ['applied', 'interview', 'offer', 'rejected'] as const
 export type JobStatus = (typeof JOB_STATUSES)[number]
@@ -37,21 +40,6 @@ export interface JobApplicationDraft {
   status: JobStatus
   notes: string
   link: string
-}
-
-const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/
-const pad = (n: number) => String(n).padStart(2, '0')
-
-// Today as a LOCAL "YYYY-MM-DD" — the day the user would say it is, which
-// is what "date applied" means. (Quest rollover uses UTC; see lib/format.ts.)
-export const localDateKey = (d: Date = new Date()): string =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-
-export const isDateKey = (v: unknown): v is string => {
-  if (typeof v !== 'string' || !DATE_KEY.test(v)) return false
-  const [y, m, d] = v.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
 }
 
 // A pasted link becomes a safe href or nothing: bare "example.com/job" gets

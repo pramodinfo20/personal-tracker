@@ -17,6 +17,7 @@ import {
   yAxisWidthFor,
 } from './progress'
 import { backfillDailyStatXP } from './statHistory'
+import { localDateKey } from './format'
 
 const END = new Date('2026-03-15T12:00:00.000Z') // a Sunday, mid-day UTC
 
@@ -285,7 +286,7 @@ describe('currentStreak', () => {
   it('handles a long streak', () => {
     const dailyXP: Record<string, number> = {}
     for (let i = 0; i < 400; i++) {
-      dailyXP[new Date(Date.UTC(2026, 9, 4 - i)).toISOString().slice(0, 10)] = 10
+      dailyXP[localDateKey(new Date(2026, 9, 4 - i))] = 10
     }
     expect(currentStreak(dailyXP, NOW)).toBe(400)
   })

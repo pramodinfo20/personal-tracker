@@ -5,6 +5,7 @@ import type { ActivityCategoryKey } from './activities'
 import type { ActiveGate } from './gates'
 import type { DailyStatXP } from './statHistory'
 import type { StatKey } from './types'
+import { today } from './format'
 
 export type { StatKey } from './types'
 
@@ -59,7 +60,7 @@ export interface Hunter {
   syncedDate: string | null
   log: LogEntry[]
   /**
-   * Uncapped per-day XP totals, keyed by the same UTC date string
+   * Uncapped per-day XP totals, keyed by the same local date string
    * today()/LogEntry.date use ("YYYY-MM-DD"). Updated alongside every
    * hunter.log write (grantXP, completeGateTask, handleGateExpire) so it
    * never loses history to the 40-entry log cap — this is what the
@@ -128,7 +129,7 @@ export const DEFAULT_HUNTER: Hunter = {
   statPoints: 0,
   stats: { STR: 10, VIT: 10, INT: 10, PER: 10, AGI: 10 },
   completedToday: {},
-  lastQuestDate: new Date().toISOString().split('T')[0],
+  lastQuestDate: today(),
   streak: 0,
   syncedDate: null,
   log: [],

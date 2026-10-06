@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: "Pramod's Tracker",
         short_name: 'Tracker',
-        description: 'A Solo-Leveling-style hunter/quest tracker for daily habits and goals.',
+        description: 'A gamified personal achievement tracker for daily habits and goals.',
         theme_color: THEME_COLOR,
         background_color: THEME_COLOR,
         display: 'standalone',
