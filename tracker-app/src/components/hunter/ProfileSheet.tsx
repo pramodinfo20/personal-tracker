@@ -24,13 +24,6 @@ export interface ProfileSheetProps {
   onClose: () => void
 }
 
-// Reserved slots for settings that don't exist yet — rendered disabled so
-// the layout has a home for them without pretending they work.
-const COMING_SOON = [
-  { icon: '🔔', label: 'Notifications' },
-  { icon: '☁️', label: 'Account & cloud sync' },
-]
-
 // Opened from the header avatar on every screen: a glass bottom sheet over
 // the profile backdrop (its own ScreenBackground in 'overlay' layout, in
 // place of a dimmed view of the current tab). Tapping the backdrop closes it.
@@ -232,24 +225,6 @@ export function ProfileSheet({
                 ›
               </span>
             </button>
-            {COMING_SOON.map((item) => (
-              <div
-                key={item.label}
-                aria-disabled="true"
-                className="flex items-center justify-between gap-3 px-4 py-3.5"
-              >
-                {/* Only the not-yet-built item itself is faded — the badge stays fully legible. */}
-                <span className="flex items-center gap-3 text-sm font-bold text-text-primary opacity-60">
-                  <span className="text-lg" aria-hidden="true">
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </span>
-                <span className="shrink-0 rounded-full border border-border bg-backing/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-text-secondary uppercase">
-                  Coming soon
-                </span>
-              </div>
-            ))}
           </div>
 
           <h3 className="mt-6 mb-2 text-xs font-bold tracking-wide text-text-secondary uppercase">

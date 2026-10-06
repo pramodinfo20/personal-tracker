@@ -96,7 +96,9 @@ describe('useHunter — summon', () => {
     const { result, unmount } = renderHook(() => useHunter())
     const r = draw(result)!
     expect(r.duplicate).toBe(false)
+    expect(r.echoShardsAwarded).toBe(0)
     expect(saved().tickets).toBe(1)
+    expect(saved().echoShards).toBe(0)
     expect(saved().recruitedCompanions).toEqual([r.companion.id])
     // Permanent: a fresh load of the app still has it.
     unmount()
@@ -131,13 +133,15 @@ describe('useHunter — summon', () => {
     for (const id of saved().recruitedCompanions!) expect(allowed).toContain(id)
   })
 
-  it('a companion already recruited comes back as a duplicate: ticket spent, nothing added', () => {
+  it('a companion already recruited comes back as a duplicate: ticket spent, Echo Shard granted', () => {
     const d = COMPANIONS.filter((c) => c.rank === 'D').map((c) => c.id)
-    seed({ level: 6, unlockedShadows: [5], tickets: 3, recruitedCompanions: d })
+    seed({ level: 6, unlockedShadows: [5], tickets: 3, echoShards: 4, recruitedCompanions: d })
     const { result } = renderHook(() => useHunter())
     const r = draw(result)!
     expect(r.duplicate).toBe(true)
+    expect(r.echoShardsAwarded).toBe(1)
     expect(saved().tickets).toBe(2)
+    expect(saved().echoShards).toBe(5)
     expect(saved().recruitedCompanions).toEqual(d)
   })
 

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { UndoResult } from '../../hooks/useHunter'
 import { ONBOARDING_COPY, TODAY_COPY } from '../../lib/copy'
 import type { CustomQuest } from '../../lib/customQuests'
-import type { Hunter } from '../../lib/hunterState'
-import { today } from '../../lib/format'
+import { STAT_META, type Hunter } from '../../lib/hunterState'
+import { dateKeyFromTimestamp, today } from '../../lib/format'
+import { xpForLevel } from '../../lib/leveling'
 import { currentStreak } from '../../lib/progress'
 import { questEntries, visibleQuests } from '../../lib/questVisibility'
 import {
@@ -91,6 +92,22 @@ export function TodayScreen({
   // "Day complete" = every built-in quest the user has left enabled is
   // claimed (never true when none are enabled).
   const allDone = allQuestsClaimed(hunter.completedToday, visibleFixed)
+  const firstRunHint = visible.length > 0 && (hunter.log?.length ?? 0) === 0
+  const latestFixedClaim = useMemo(() => {
+    const fixedIds = new Set(visibleFixed.map((q) => q.id))
+    return hunter.log.find((entry) => entry.questId && fixedIds.has(entry.questId) && dateKeyFromTimestamp(entry.date) === today())
+  }, [hunter.log, visibleFixed])
+  const xpToNextLevel = Math.max(0, xpForLevel(hunter.level || 1) - (hunter.xp || 0))
+  const nextLevel = (hunter.level || 1) + 1
+  const latestReward = latestFixedClaim
+    ? {
+        xp: latestFixedClaim.xp,
+        statLabel:
+          STAT_META.find((s) => s.key === latestFixedClaim.stat)?.label ?? latestFixedClaim.stat,
+        xpToNextLevel,
+        nextLevel,
+      }
+    : undefined
 
   // Custom cards render as ClaimableQuest; route the claim back through the
   // stored quest so claimCustomQuest can still check it's active.
@@ -126,6 +143,12 @@ export function TodayScreen({
           onGateExpire={onGateExpire}
         />
         <QuestsResetTimer />
+        {firstRunHint && (
+          <p className="rounded-full bg-backing/45 px-3 py-2 text-xs text-text-secondary">
+            Quests are real-life activities. Complete one to earn XP, raise a stat, and move toward
+            your next level.
+          </p>
+        )}
         {visible.length === 0 && (
           // Everything hidden: say so and offer the way back, rather than
           // leaving a blank screen.
@@ -151,6 +174,7 @@ export function TodayScreen({
             streak={currentStreak(hunter.dailyXP ?? {})}
             questCount={visibleFixed.length}
             xpToday={questXPOnDate(hunter.log, today(), visibleFixed)}
+            reward={latestReward}
             onEditClaims={() => setShowQuestsAnyway(true)}
           />
         ) : (
@@ -158,6 +182,8 @@ export function TodayScreen({
             quests={visibleFixed}
             completedToday={hunter.completedToday}
             log={hunter.log}
+            xpToNextLevel={xpToNextLevel}
+            nextLevel={nextLevel}
             onClaim={onClaimQuest}
             onUndo={onUndoQuest}
             enterOffset={3}
@@ -171,6 +197,8 @@ export function TodayScreen({
           quests={visibleCustom}
           completedToday={hunter.completedToday}
           log={hunter.log}
+          xpToNextLevel={xpToNextLevel}
+          nextLevel={nextLevel}
           onClaim={claimCustom}
           onUndo={onUndoQuest}
           enterOffset={3 + visibleFixed.length}

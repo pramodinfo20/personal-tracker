@@ -78,7 +78,9 @@ export function MoreScreen({ jobSearch, goals, trackers, calendar }: MoreScreenP
     >
       <div className="mx-auto max-w-3xl">
         <h1 className="text-xl font-extrabold text-text-primary">More</h1>
-        <p className="mt-1 mb-6 text-sm text-text-primary/80">Your other trackers and history.</p>
+        <p className="mt-1 mb-6 text-sm text-text-primary/80">
+          Track the real-life progress that supports your Hunter journey.
+        </p>
         <div className="hud-glass divide-y divide-hairline overflow-hidden rounded-2xl">
           {rows.map((t) => (
             <button

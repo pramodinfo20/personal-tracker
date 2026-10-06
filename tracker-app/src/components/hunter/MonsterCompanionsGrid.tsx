@@ -26,6 +26,8 @@ export interface MonsterCompanionsGridProps {
   recruited?: string[]
   /** Summon tickets and progress toward the next one. Omit (with onSummon) to hide summoning. */
   tickets?: TicketState
+  /** Duplicate-companion currency currently banked by the hunter. */
+  echoShards?: number
   /** Spend a ticket on a draw (useHunter's summon). */
   onSummon?: () => SummonResult | null
 }
@@ -41,6 +43,7 @@ export function MonsterCompanionsGrid({
   unlockedMilestones,
   recruited = [],
   tickets,
+  echoShards = 0,
   onSummon,
 }: MonsterCompanionsGridProps) {
   const [summoning, setSummoning] = useState(false)
@@ -68,6 +71,9 @@ export function MonsterCompanionsGrid({
             <div className="text-[11px] text-text-secondary">
               Next in {toNext} {toNext === 1 ? 'claim' : 'claims'}
             </div>
+            <div className="text-[11px] font-bold text-text-primary">
+              Echo Shards: <span data-testid="echo-shards-total">{echoShards}</span>
+            </div>
           </div>
           <Button type="button" onClick={() => setSummoning(true)} className="shrink-0">
             Summon
@@ -93,6 +99,7 @@ export function MonsterCompanionsGrid({
         createPortal(
           <SummonSheet
             tickets={tickets}
+            echoShards={echoShards}
             ranks={accessibleRanks(level, unlockedMilestones)}
             onSummon={onSummon}
             onClose={() => setSummoning(false)}

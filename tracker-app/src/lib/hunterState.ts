@@ -89,6 +89,8 @@ export interface Hunter {
    * at every 7-day streak (lib/lottery.ts) — there is no other source.
    */
   tickets?: number
+  /** Banked when a duplicate companion is summoned. Future upgrade/reward currency; no spending in v1. */
+  echoShards?: number
   /** Quest claims counted toward tickets (an undo takes one back off). */
   claimCount?: number
   /** Tickets already awarded for claims — so claim/undo/claim can't earn one twice. */
@@ -135,6 +137,7 @@ export const DEFAULT_HUNTER: Hunter = {
   log: [],
   dailyXP: {},
   unlockedShadows: [],
+  echoShards: 0,
   activeGate: null,
   clearedGates: [],
   logCount: 0,

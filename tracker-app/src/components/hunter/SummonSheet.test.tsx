@@ -13,10 +13,23 @@ const tickets = (n: number, claimCount = 2): TicketState => ({
   claimCount,
   claimTicketsAwarded: 0,
 })
-const result = (duplicate = false): SummonResult => ({ companion: WOLF, duplicate })
+const result = (duplicate = false): SummonResult => ({
+  companion: WOLF,
+  duplicate,
+  echoShardsAwarded: duplicate ? 1 : 0,
+})
 
 const mount = (n: number, ranks: CompanionRank[] = ['D', 'C'], onSummon = vi.fn(() => result())) => {
-  render(<SummonSheet tickets={tickets(n)} ranks={ranks} onSummon={onSummon} onClose={vi.fn()} rollMs={1500} />)
+  render(
+    <SummonSheet
+      tickets={tickets(n)}
+      echoShards={2}
+      ranks={ranks}
+      onSummon={onSummon}
+      onClose={vi.fn()}
+      rollMs={1500}
+    />,
+  )
   return onSummon
 }
 const summonButton = () => screen.getByRole('button', { name: /Summon|No tickets/ }) as HTMLButtonElement
@@ -31,6 +44,7 @@ describe('SummonSheet', () => {
   it('shows the ticket count, progress, and the odds for unlocked ranks only', () => {
     mount(2)
     expect(screen.getByTestId('ticket-count').textContent).toBe('2')
+    expect(screen.getByTestId('echo-shard-count').textContent).toBe('2')
     expect(screen.getByText('Next ticket in 3 claims')).toBeTruthy()
     const odds = within(screen.getByLabelText('Draw odds by rank')).getAllByRole('listitem')
     expect(odds.map((o) => o.textContent)).toEqual(['D 71%', 'C 29%'])
@@ -67,7 +81,7 @@ describe('SummonSheet', () => {
     mount(1, ['D'], vi.fn(() => result(true)))
     fireEvent.click(summonButton())
     act(() => void vi.advanceTimersByTime(1600))
-    expect(within(screen.getByTestId('summon-result')).getByText('You already have this one.')).toBeTruthy()
+    expect(within(screen.getByTestId('summon-result')).getByText('Duplicate converted into +1 Echo Shard.')).toBeTruthy()
     expect(screen.queryByText('New companion recruited!')).toBeNull()
   })
 
@@ -112,7 +126,7 @@ describe('SummonSheet — artwork', () => {
   it.each(COMPANIONS.map((c) => [c.name, c] as const))(
     '%s: the reveal shows its own art, with its rank\'s colour behind it',
     (_name, companion) => {
-      mount(1, [companion.rank], vi.fn(() => ({ companion, duplicate: false })))
+      mount(1, [companion.rank], vi.fn(() => ({ companion, duplicate: false, echoShardsAwarded: 0 })))
       fireEvent.click(summonButton())
       // The roll comes first: no art yet.
       expect(screen.queryByTestId('summon-art')).toBeNull()
@@ -131,7 +145,7 @@ describe('SummonSheet — artwork', () => {
 
   it('a companion with no file of its own falls back to its rank image', () => {
     const ghost = { ...COMPANIONS.find((c) => c.rank === 'A')!, art: 'no-such-file' }
-    mount(1, ['A'], vi.fn(() => ({ companion: ghost, duplicate: false })))
+    mount(1, ['A'], vi.fn(() => ({ companion: ghost, duplicate: false, echoShardsAwarded: 0 })))
     fireEvent.click(summonButton())
     act(() => void vi.advanceTimersByTime(1600))
     expect(screen.getByTestId('summon-art').getAttribute('src')).toMatch(/companion-a[^/]*\.jpg/)
@@ -143,10 +157,17 @@ describe('MonsterCompanionsGrid — summon entry point', () => {
 
   it('shows tickets and opens the Summon screen', () => {
     render(
-      <MonsterCompanionsGrid level={12} unlockedMilestones={[5, 10]} tickets={tickets(1, 4)} onSummon={vi.fn(() => null)} />,
+      <MonsterCompanionsGrid
+        level={12}
+        unlockedMilestones={[5, 10]}
+        tickets={tickets(1, 4)}
+        echoShards={3}
+        onSummon={vi.fn(() => null)}
+      />,
     )
     expect(screen.getByText('1 ticket')).toBeTruthy()
     expect(screen.getByText('Next in 1 claim')).toBeTruthy()
+    expect(screen.getByTestId('echo-shards-total').textContent).toBe('3')
     fireEvent.click(screen.getByRole('button', { name: 'Summon' }))
     expect(screen.getByRole('dialog', { name: 'Summon a companion' })).toBeTruthy()
   })

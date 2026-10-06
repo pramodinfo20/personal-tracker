@@ -47,6 +47,7 @@ export function LevelUpScreen({
           unlockedMilestones={hunter.unlockedShadows ?? []}
           recruited={hunter.recruitedCompanions}
           tickets={ticketState(hunter)}
+          echoShards={hunter.echoShards ?? 0}
           onSummon={onSummon}
         />
         <GateCard

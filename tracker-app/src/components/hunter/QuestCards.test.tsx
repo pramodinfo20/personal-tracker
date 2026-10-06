@@ -49,7 +49,7 @@ describe('QuestCards (restyled) — behavior unchanged', () => {
         onUndo={onUndo}
       />,
     )
-    expect(screen.getByText('+25 XP · 30 min')).toBeTruthy()
+    expect(screen.getByText('+25 XP · 30 min · Intelligence +1')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     expect(onUndo).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Yes, undo' }))

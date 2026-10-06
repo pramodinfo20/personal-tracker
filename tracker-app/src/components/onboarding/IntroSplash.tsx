@@ -64,6 +64,12 @@ export function IntroSplash({ onDone, durationMs = INTRO_MS }: IntroSplashProps)
         >
           {INTRO_COPY.headline}
         </span>
+        <span
+          className="intro-reveal mt-3 max-w-xs text-sm leading-relaxed text-text-secondary"
+          style={delay(700)}
+        >
+          {INTRO_COPY.subline}
+        </span>
         <span className="intro-reveal mt-10 text-xs text-text-secondary" style={delay(1000)}>
           Tap to continue
         </span>

@@ -233,7 +233,7 @@ export const validateHunter = (h: unknown): string | null => {
   ) {
     return 'invalid companion milestones'
   }
-  for (const key of ['tickets', 'claimCount', 'claimTicketsAwarded'] as const) {
+  for (const key of ['tickets', 'echoShards', 'claimCount', 'claimTicketsAwarded'] as const) {
     if (h[key] !== undefined && !isIntegerCount(h[key])) return 'invalid ticket count'
   }
   if (h.lastStreakTicketDate !== undefined && !isDateKey(h.lastStreakTicketDate)) {

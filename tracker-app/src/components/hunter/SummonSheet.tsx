@@ -15,6 +15,8 @@ import { Button, ScreenBackground } from '../ui'
 
 export interface SummonSheetProps {
   tickets: TicketState
+  /** Duplicate-companion currency currently banked by the hunter. */
+  echoShards?: number
   /** Ranks the hunter can draw from right now. */
   ranks: CompanionRank[]
   /** Spends a ticket and returns what was drawn (null if it couldn't). */
@@ -41,7 +43,7 @@ type Phase = { kind: 'idle' } | { kind: 'rolling'; result: SummonResult } | { ki
 // tickets, button and odds are on a glass panel at the bottom. The draw has
 // already happened (and been saved) by the time the roll starts; the
 // animation only delays showing it.
-export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_MS }: SummonSheetProps) {
+export function SummonSheet({ tickets, echoShards = 0, ranks, onSummon, onClose, rollMs = ROLL_MS }: SummonSheetProps) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
   const [rollIcon, setRollIcon] = useState('?')
   const timers = useRef<number[]>([])
@@ -175,7 +177,9 @@ export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_M
                   revealed.duplicate ? 'text-on-art/80' : 'rank-text-art',
                 )}
               >
-                {revealed.duplicate ? 'You already have this one.' : 'New companion recruited!'}
+                {revealed.duplicate
+                  ? `Duplicate converted into +${revealed.echoShardsAwarded} Echo Shard.`
+                  : 'New companion recruited!'}
               </p>
             </div>
           )}
@@ -185,11 +189,17 @@ export function SummonSheet({ tickets, ranks, onSummon, onClose, rollMs = ROLL_M
             art this dark, translucent light-theme glass turns grey and its
             text loses contrast. */}
         <div className="max-h-[45dvh] overflow-y-auto rounded-t-3xl border border-b-0 border-border-strong bg-bg-elevated p-5 pb-7 shadow-panel">
-          <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-secondary">
             <span>
               Tickets:{' '}
               <span className="font-mono text-sm font-bold text-text-primary" data-testid="ticket-count">
                 {tickets.tickets}
+              </span>
+            </span>
+            <span>
+              Echo Shards:{' '}
+              <span className="font-mono text-sm font-bold text-text-primary" data-testid="echo-shard-count">
+                {echoShards}
               </span>
             </span>
             <span>

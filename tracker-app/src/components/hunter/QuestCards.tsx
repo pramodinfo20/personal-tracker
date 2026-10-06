@@ -19,6 +19,8 @@ export interface QuestCardsProps {
   completedToday: Record<string, boolean>
   /** hunter.log — read to show which tier/XP each claimed-today quest was claimed at. */
   log: LogEntry[]
+  xpToNextLevel?: number
+  nextLevel?: number
   onClaim: (quest: ClaimableQuest, tier: XPTier) => void
   onUndo: (quest: ClaimableQuest) => UndoResult
   /** Where this list's entrance stagger starts (--i), so it cascades after whatever renders above it. */
@@ -55,6 +57,8 @@ export function QuestCards({
   quests,
   completedToday,
   log,
+  xpToNextLevel,
+  nextLevel,
   onClaim,
   onUndo,
   enterOffset = 0,
@@ -171,8 +175,11 @@ export function QuestCards({
 
         // Old (pre-tier) claims have xp but no tier label — show just the XP.
         const entry = questClaimEntry(log, q.id, today())
+        const statName = sm?.label ?? q.stat
         const claimedSummary = entry
-          ? `+${entry.xp} XP${entry.tier ? ` · ${entry.tier}` : ''}`
+          ? `+${entry.xp} XP${entry.tier ? ` · ${entry.tier}` : ''} · ${statName} +1${
+              xpToNextLevel !== undefined && nextLevel ? ` · ${xpToNextLevel} to Lv.${nextLevel}` : ''
+            }`
           : `${q.hint} · ${sm?.icon} ${q.stat}`
 
         return (
@@ -193,7 +200,7 @@ export function QuestCards({
                 {blockedReason ? (
                   <span className="mt-0.5 block text-xs font-bold text-warning">{blockedReason}</span>
                 ) : (
-                  <span className="mt-0.5 block truncate text-xs text-text-secondary">
+                  <span className="mt-0.5 block text-xs text-text-secondary">
                     {claimedSummary}
                   </span>
                 )}

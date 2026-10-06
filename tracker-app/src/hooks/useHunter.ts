@@ -101,6 +101,8 @@ export interface SummonResult {
   companion: Companion
   /** Already recruited before this draw — nothing new was added. */
   duplicate: boolean
+  /** Echo Shards granted when a duplicate is drawn. */
+  echoShardsAwarded: number
 }
 
 export interface LevelUpEvent {
@@ -332,13 +334,15 @@ export function useHunter() {
     setHunter((h) => {
       if ((h.tickets ?? 0) < 1) return h
       const recruited = h.recruitedCompanions ?? []
+      const alreadyRecruited = recruited.includes(companion.id)
       return {
         ...h,
         tickets: (h.tickets ?? 0) - 1,
-        recruitedCompanions: recruited.includes(companion.id) ? recruited : [...recruited, companion.id],
+        echoShards: alreadyRecruited ? (h.echoShards ?? 0) + 1 : (h.echoShards ?? 0),
+        recruitedCompanions: alreadyRecruited ? recruited : [...recruited, companion.id],
       }
     })
-    return { companion, duplicate }
+    return { companion, duplicate, echoShardsAwarded: duplicate ? 1 : 0 }
   }
 
   // Undo a quest claimed earlier TODAY (respects the same midnight-reset
