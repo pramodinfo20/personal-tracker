@@ -1,4 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import {
   applyBackup,
   backupFilename,
@@ -26,6 +28,15 @@ export interface BackupSectionProps {
 }
 
 const saveFile = (filename: string, text: string) => {
+  if (Capacitor.isNativePlatform()) {
+    return Filesystem.writeFile({
+      path: filename,
+      data: text,
+      directory: Directory.Documents,
+      encoding: Encoding.UTF8,
+    }).then(() => `Documents/${filename}`)
+  }
+
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
   const a = document.createElement('a')
   a.href = url
@@ -34,6 +45,7 @@ const saveFile = (filename: string, text: string) => {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
+  return Promise.resolve(filename)
 }
 
 // Download the whole save as one JSON file, and restore from such a file.
@@ -48,7 +60,7 @@ export function BackupSection({
   const [error, setError] = useState<string | null>(null)
   const [downloaded, setDownloaded] = useState<string | null>(null)
 
-  const download = () => {
+  const download = async () => {
     setError(null)
     const backup = buildBackup(localStorage)
     if (!backup) {
@@ -56,8 +68,11 @@ export function BackupSection({
       return
     }
     const filename = backupFilename(backup.data.hunter.name)
-    saveFile(filename, JSON.stringify(backup, null, 2))
-    setDownloaded(filename)
+    try {
+      setDownloaded(await saveFile(filename, JSON.stringify(backup, null, 2)))
+    } catch {
+      setError("Couldn't save the backup file on this device.")
+    }
   }
 
   const onFileChosen = async (e: ChangeEvent<HTMLInputElement>) => {
