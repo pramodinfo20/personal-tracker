@@ -39,6 +39,7 @@ export default defineConfig({
         // icons, manifest, activity art (png) and screen backgrounds
         // (jpg/webp) are precached too, for a real offline app shell.
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,webmanifest}'],
+        navigateFallbackDenylist: [/^\/privacy\.html$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
