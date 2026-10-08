@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { Capacitor } from '@capacitor/core'
 import type { Hunter } from '../../lib/hunterState'
 import { rankForLevel } from '../../lib/leveling'
 import { cn } from '../../lib/cn'
@@ -10,6 +11,17 @@ import { Avatar } from './Avatar'
 import { BackupSection } from './BackupSection'
 import { DevTestingPanel, type DevActions } from './DevTestingPanel'
 import { glowClass, rankTierColor } from './tierMapping'
+
+export const PRIVACY_POLICY_PATH = '/privacy.html'
+export const PRIVACY_POLICY_URL = 'https://personal-tracker-omega-ten.vercel.app/privacy.html'
+
+const openPrivacyPolicy = () => {
+  if (Capacitor.isNativePlatform()) {
+    window.open(PRIVACY_POLICY_URL, '_system', 'noopener,noreferrer')
+    return
+  }
+  window.open(PRIVACY_POLICY_PATH, '_blank', 'noopener,noreferrer')
+}
 
 export interface ProfileSheetProps {
   hunter: Hunter
@@ -223,6 +235,26 @@ export function ProfileSheet({
               </span>
               <span className="text-xl text-text-secondary" aria-hidden="true">
                 ›
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={openPrivacyPolicy}
+              className="hud-pressable flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3.5 text-left"
+            >
+              <span className="flex items-center gap-3">
+                <span className="text-lg" aria-hidden="true">
+                  🔒
+                </span>
+                <span>
+                  <span className="block text-sm font-bold text-text-primary">Privacy Policy</span>
+                  <span className="block text-xs text-text-secondary">
+                    How Personal Tracker handles local data
+                  </span>
+                </span>
+              </span>
+              <span className="text-xl text-text-secondary" aria-hidden="true">
+                ↗
               </span>
             </button>
           </div>
