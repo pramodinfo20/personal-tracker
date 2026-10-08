@@ -11,7 +11,7 @@ import { today } from '../../lib/format'
 import { formatDayLabel, statBreakdown, unattributedXPInRange } from '../../lib/progress'
 import type { DailyStatXP } from '../../lib/statHistory'
 import { StatBreakdown } from '../progress/StatBreakdown'
-import { ScreenBackground } from '../ui'
+import { NestedBackButton, ScreenBackground } from '../ui'
 
 export interface CalendarScreenProps {
   dailyXP: Record<string, number>
@@ -57,14 +57,8 @@ export function CalendarScreen({ dailyXP, dailyStatXP, onBack }: CalendarScreenP
     <ScreenBackground screen="generic" className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10">
       <div className="mx-auto flex max-w-3xl flex-col gap-4">
         <div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="cursor-pointer text-xs font-bold text-text-secondary hover:text-text-primary"
-          >
-            ‹ More
-          </button>
-          <h1 className="mt-2 text-xl font-extrabold text-text-primary">🗓️ Calendar</h1>
+          <NestedBackButton onClick={onBack} />
+          <h1 className="mt-3 text-xl font-extrabold text-text-primary">🗓️ Calendar</h1>
           <p className="mt-1 text-sm text-text-secondary">XP earned each day. Tap a day for details.</p>
         </div>
 

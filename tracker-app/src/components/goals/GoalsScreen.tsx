@@ -14,7 +14,7 @@ import {
   type GoalStatus,
 } from '../../lib/goals'
 import { formatAppliedDate } from '../../lib/jobApplications'
-import { ScreenBackground } from '../ui'
+import { NestedBackButton, ScreenBackground } from '../ui'
 import { FAB_CLASS } from '../ui/formStyles'
 import { GoalSheet } from './GoalSheet'
 import { GOAL_STATUS_PILL } from './statusPill'
@@ -47,14 +47,8 @@ export function GoalsScreen({ goals, onAdd, onUpdate, onSetStatus, onDelete, onB
   return (
     <ScreenBackground screen="generic" className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10">
       <div className="mx-auto max-w-3xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="cursor-pointer text-xs font-bold text-text-secondary hover:text-text-primary"
-        >
-          ‹ More
-        </button>
-        <h1 className="mt-2 text-xl font-extrabold text-text-primary">🎯 Goals</h1>
+        <NestedBackButton onClick={onBack} />
+        <h1 className="mt-3 text-xl font-extrabold text-text-primary">🎯 Goals</h1>
 
         <dl className="mt-4 mb-5 grid grid-cols-2 gap-3" aria-label="Goal counts">
           {[

@@ -7,9 +7,9 @@ import { ActivityPickerSheet } from './ActivityPickerSheet'
 
 // No input anywhere in the flow may accept a number — XP only ever comes
 // from the library's fixed tiers. The only text input is log mode's note.
-const expectNoXPInput = (container: HTMLElement) => {
-  expect(container.querySelectorAll('input[type="number"]')).toHaveLength(0)
-  for (const input of container.querySelectorAll('input')) {
+const expectNoXPInput = () => {
+  expect(document.body.querySelectorAll('input[type="number"]')).toHaveLength(0)
+  for (const input of document.body.querySelectorAll('input')) {
     expect(input.getAttribute('placeholder') ?? '').toMatch(/^Note/)
   }
 }
@@ -27,18 +27,24 @@ describe('ActivityPickerSheet', () => {
     expect(screen.getByText(/Step 1 of 3/)).toBeTruthy()
   })
 
+  it('keeps picker content in an internal safe-area-aware scroll region', () => {
+    render(<ActivityPickerSheet mode="recurring" onAddQuest={vi.fn()} onClose={vi.fn()} />)
+
+    const scrollRegion = screen.getByTestId('activity-picker-scroll')
+    expect(scrollRegion.className).toContain('overflow-y-auto')
+    expect(scrollRegion.className).toContain('env(safe-area-inset-bottom)')
+  })
+
   it('log mode: category -> activity -> tapping a tier claims that exact tier', () => {
     const onLog = vi.fn()
-    const { container } = render(
-      <ActivityPickerSheet mode="log" logCount={0} onLog={onLog} onClose={vi.fn()} />,
-    )
-    expectNoXPInput(container)
+    render(<ActivityPickerSheet mode="log" logCount={0} onLog={onLog} onClose={vi.fn()} />)
+    expectNoXPInput()
     click(/^Exercise/)
     expect(screen.getByText(/Step 2 of 3/)).toBeTruthy()
-    expectNoXPInput(container)
+    expectNoXPInput()
     click(/^Running/)
     expect(screen.getByText(/Step 3 of 3/)).toBeTruthy()
-    expectNoXPInput(container)
+    expectNoXPInput()
 
     fireEvent.change(screen.getByPlaceholderText(/^Note/), { target: { value: 'Riverside' } })
     click(/^10K/)

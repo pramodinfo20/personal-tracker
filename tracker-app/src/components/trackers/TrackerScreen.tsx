@@ -4,7 +4,7 @@ import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { TrackerList } from '../../hooks/useTracker'
 import { cn } from '../../lib/cn'
 import { sortTrackerItems, type TrackerDef, type TrackerDraft } from '../../lib/trackers'
-import { ScreenBackground } from '../ui'
+import { NestedBackButton, ScreenBackground } from '../ui'
 import { FAB_CLASS } from '../ui/formStyles'
 import { TrackerSheet } from './TrackerSheet'
 
@@ -35,14 +35,8 @@ export function TrackerScreen({ def, list, onBack }: TrackerScreenProps) {
   return (
     <ScreenBackground screen="generic" className="px-4 pt-6 pb-28 text-text-primary sm:px-6 sm:pt-10">
       <div className="mx-auto max-w-3xl">
-        <button
-          type="button"
-          onClick={onBack}
-          className="cursor-pointer text-xs font-bold text-text-secondary hover:text-text-primary"
-        >
-          ‹ More
-        </button>
-        <h1 className="mt-2 text-xl font-extrabold text-text-primary">
+        <NestedBackButton onClick={onBack} />
+        <h1 className="mt-3 text-xl font-extrabold text-text-primary">
           {def.icon} {def.title}
         </h1>
         <p className="mt-1 mb-5 text-sm text-text-secondary">
