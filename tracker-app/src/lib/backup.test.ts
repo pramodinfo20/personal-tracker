@@ -394,15 +394,16 @@ describe('validateHunter', () => {
 })
 
 describe('backupFilename', () => {
-  it('includes the hunter name and the date', () => {
-    expect(backupFilename('Pramod', NOW)).toBe('tracker-backup-pramod-2026-10-03.json')
+  it('uses a predictable app backup name with local date and time', () => {
+    expect(backupFilename('Pramod', new Date(2026, 9, 3, 9, 15))).toBe(
+      'personal-tracker-backup-2026-10-03-0915.json',
+    )
   })
 
-  it('makes awkward names filesystem-safe', () => {
-    expect(backupFilename('  Pramod K. / Über:Hunter  ', NOW)).toBe(
-      'tracker-backup-pramod-k-ber-hunter-2026-10-03.json',
+  it('does not put user names into the filename', () => {
+    expect(backupFilename('  Pramod K. / Über:Hunter  ', new Date(2026, 9, 3, 23, 5))).toBe(
+      'personal-tracker-backup-2026-10-03-2305.json',
     )
-    expect(backupFilename('🗡️', NOW)).toBe('tracker-backup-hunter-2026-10-03.json')
   })
 })
 

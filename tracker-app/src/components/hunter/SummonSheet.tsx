@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { SummonResult } from '../../hooks/useHunter'
 import { cn } from '../../lib/cn'
 import { companionArt } from '../../lib/companionArt'
@@ -47,6 +48,7 @@ export function SummonSheet({ tickets, echoShards = 0, ranks, onSummon, onClose,
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
   const [rollIcon, setRollIcon] = useState('?')
   const timers = useRef<number[]>([])
+  useAndroidBackAction(true, onClose, 200)
 
   useEffect(
     () => () => {

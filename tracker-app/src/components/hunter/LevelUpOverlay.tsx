@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { LevelUpEvent } from '../../hooks/useHunter'
 import { cn } from '../../lib/cn'
 import { LEVEL_UP_COPY } from '../../lib/copy'
@@ -11,6 +12,8 @@ export interface LevelUpOverlayProps {
 }
 
 export function LevelUpOverlay({ event, onDismiss }: LevelUpOverlayProps) {
+  useAndroidBackAction(true, onDismiss, 300)
+
   useEffect(() => {
     const t = setTimeout(onDismiss, 3000)
     return () => clearTimeout(t)

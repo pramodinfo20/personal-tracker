@@ -101,15 +101,12 @@ export const buildBackup = (store: Store, now: Date = new Date()): Backup | null
   }
 }
 
-// "tracker-backup-pramod-2026-10-03.json" — name made filesystem-safe.
-export const backupFilename = (hunterName: string, date: Date = new Date()): string => {
-  const safe =
-    hunterName
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'hunter'
-  return `tracker-backup-${safe}-${localDateKey(date)}.json`
+const timeKey = (date: Date): string =>
+  `${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`
+
+// "personal-tracker-backup-2026-10-03-0915.json" — stable and easy to find.
+export const backupFilename = (_hunterName: string, date: Date = new Date()): string => {
+  return `personal-tracker-backup-${localDateKey(date)}-${timeKey(date)}.json`
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> =>

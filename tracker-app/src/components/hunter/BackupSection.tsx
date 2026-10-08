@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import {
   applyBackup,
   backupFilename,
@@ -27,14 +28,31 @@ export interface BackupSectionProps {
   onRestored?: () => void
 }
 
-const saveFile = (filename: string, text: string) => {
+const BACKUP_FOLDER = 'Personal Tracker'
+const BACKUP_LOCATION = `Documents/${BACKUP_FOLDER}`
+
+const isNative = () => Capacitor.isNativePlatform()
+
+const saveFile = async (filename: string, text: string) => {
   if (Capacitor.isNativePlatform()) {
-    return Filesystem.writeFile({
-      path: filename,
-      data: text,
-      directory: Directory.Documents,
-      encoding: Encoding.UTF8,
-    }).then(() => `Documents/${filename}`)
+    try {
+      await Filesystem.writeFile({
+        path: `${BACKUP_FOLDER}/${filename}`,
+        data: text,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+        recursive: true,
+      })
+      return `${BACKUP_LOCATION}/${filename}`
+    } catch {
+      await Filesystem.writeFile({
+        path: filename,
+        data: text,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+      })
+      return `Documents/${filename}`
+    }
   }
 
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }))
@@ -45,7 +63,32 @@ const saveFile = (filename: string, text: string) => {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
-  return Promise.resolve(filename)
+  return filename
+}
+
+const textFromFileResult = async (data: string | Blob): Promise<string> =>
+  typeof data === 'string' ? data : data.text()
+
+const readLatestNativeBackup = async (): Promise<{ name: string; text: string } | null> => {
+  const entries = await Filesystem.readdir({
+    path: BACKUP_FOLDER,
+    directory: Directory.Documents,
+  })
+  const latest = entries.files
+    .filter(
+      (file) =>
+        file.type === 'file' &&
+        file.name.startsWith('personal-tracker-backup-') &&
+        file.name.endsWith('.json'),
+    )
+    .sort((a, b) => (b.mtime ?? 0) - (a.mtime ?? 0) || b.name.localeCompare(a.name))[0]
+  if (!latest) return null
+  const result = await Filesystem.readFile({
+    path: `${BACKUP_FOLDER}/${latest.name}`,
+    directory: Directory.Documents,
+    encoding: Encoding.UTF8,
+  })
+  return { name: latest.name, text: await textFromFileResult(result.data) }
 }
 
 // Download the whole save as one JSON file, and restore from such a file.
@@ -59,6 +102,8 @@ export function BackupSection({
   const [pending, setPending] = useState<Backup | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [downloaded, setDownloaded] = useState<string | null>(null)
+  const [restoringLatest, setRestoringLatest] = useState(false)
+  useAndroidBackAction(pending !== null, () => setPending(null), 200)
 
   const download = async () => {
     setError(null)
@@ -75,6 +120,16 @@ export function BackupSection({
     }
   }
 
+  const loadBackupText = (text: string) => {
+    const result = parseBackup(text)
+    if (!result.ok) {
+      setError(result.reason)
+      return
+    }
+    setError(null)
+    setPending(result.backup)
+  }
+
   const onFileChosen = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     // Reset so choosing the same file again still fires a change event.
@@ -82,13 +137,33 @@ export function BackupSection({
     if (!file) return
     setDownloaded(null)
     setPending(null)
-    const result = parseBackup(await file.text())
-    if (!result.ok) {
-      setError(result.reason)
-      return
-    }
+    loadBackupText(await file.text())
+  }
+
+  const restoreLatest = async () => {
     setError(null)
-    setPending(result.backup)
+    setDownloaded(null)
+    setPending(null)
+    setRestoringLatest(true)
+    try {
+      const latest = await readLatestNativeBackup()
+      if (!latest) {
+        setError(`No backup files found in ${BACKUP_LOCATION}.`)
+        return
+      }
+      loadBackupText(latest.text)
+    } catch {
+      setError(`Couldn't read backups from ${BACKUP_LOCATION}. Use Restore from file instead.`)
+    } finally {
+      setRestoringLatest(false)
+    }
+  }
+
+  const openPicker = () => {
+    setError(null)
+    setDownloaded(null)
+    setPending(null)
+    fileInput.current?.click()
   }
 
   const restore = () => {
@@ -112,9 +187,20 @@ export function BackupSection({
             Download backup
           </Button>
         )}
-        <Button type="button" variant="secondary" onClick={() => fileInput.current?.click()} className="flex-1">
+        <Button type="button" variant="secondary" onClick={openPicker} className="flex-1">
           Restore from file
         </Button>
+        {isNative() && (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={restoreLatest}
+            disabled={restoringLatest}
+            className="flex-1"
+          >
+            {restoringLatest ? 'Finding backup…' : 'Restore latest backup'}
+          </Button>
+        )}
         <input
           ref={fileInput}
           type="file"
@@ -130,6 +216,10 @@ export function BackupSection({
           Saved <span className="font-mono">{downloaded}</span> — keep it somewhere safe.
         </p>
       )}
+
+      <p className="mt-2 text-[11px] text-text-secondary">
+        Backups are normally saved in <span className="font-mono">{BACKUP_LOCATION}</span>.
+      </p>
 
       {error && (
         <p role="alert" className="mt-2 text-xs font-bold text-warning">

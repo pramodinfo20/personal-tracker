@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { TrackerList } from '../../hooks/useTracker'
 import { cn } from '../../lib/cn'
 import { sortTrackerItems, type TrackerDef, type TrackerDraft } from '../../lib/trackers'
@@ -20,6 +21,7 @@ type SheetState = { mode: 'add' } | { mode: 'edit'; id: string } | null
 // card shows coming from the tracker's definition (lib/trackers.ts).
 export function TrackerScreen({ def, list, onBack }: TrackerScreenProps) {
   const [sheet, setSheet] = useState<SheetState>(null)
+  useAndroidBackAction(sheet !== null, () => setSheet(null), 100)
   const sorted = useMemo(() => sortTrackerItems(list.items), [list.items])
   const editing = sheet?.mode === 'edit' ? list.items.find((i) => i.id === sheet.id) : undefined
   const now = new Date()

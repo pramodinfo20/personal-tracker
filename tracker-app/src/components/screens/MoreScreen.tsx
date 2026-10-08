@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import { CalendarScreen, type CalendarScreenProps } from '../calendar/CalendarScreen'
 import { GoalsScreen, type GoalsScreenProps } from '../goals/GoalsScreen'
 import { JobSearchScreen, type JobSearchScreenProps } from '../jobs/JobSearchScreen'
@@ -25,6 +26,7 @@ const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 // Every row opens its screen inside this tab.
 export function MoreScreen({ jobSearch, goals, trackers, calendar }: MoreScreenProps) {
   const [view, setView] = useState<View>('menu')
+  useAndroidBackAction(view !== 'menu', () => setView('menu'), 10)
 
   if (view === 'jobs') {
     return <JobSearchScreen {...jobSearch} onBack={() => setView('menu')} />

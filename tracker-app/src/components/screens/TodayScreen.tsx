@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { UndoResult } from '../../hooks/useHunter'
 import { ONBOARDING_COPY, TODAY_COPY } from '../../lib/copy'
 import type { CustomQuest } from '../../lib/customQuests'
@@ -73,6 +74,7 @@ export function TodayScreen({
   // quest list — this lets the player peek back at it (to undo a claim)
   // without losing the celebratory state on every future visit.
   const [showQuestsAnyway, setShowQuestsAnyway] = useState(false)
+  useAndroidBackAction(showQuestsAnyway, () => setShowQuestsAnyway(false), 10)
 
   // One visibility filter for every quest — fixed and custom alike (see
   // lib/questVisibility.ts). The two kinds are only split afterwards for

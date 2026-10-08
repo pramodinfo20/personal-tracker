@@ -5,6 +5,8 @@ import { useHunter } from './hooks/useHunter'
 import { useJobApplications } from './hooks/useJobApplications'
 import { useTracker } from './hooks/useTracker'
 import { ThemeProvider } from './hooks/useTheme'
+import { AndroidBackProvider } from './hooks/AndroidBackProvider'
+import { useAndroidBackAction } from './hooks/useAndroidBackAction'
 import { BottomTabBar, type Tab } from './components/nav/BottomTabBar'
 import { LevelUpScreen, MoreScreen, TodayScreen } from './components/screens'
 import {
@@ -99,6 +101,10 @@ function AppShell() {
     }
     setRetakeSetupOpen(false)
   }
+
+  useAndroidBackAction(retakeSetupOpen, () => setRetakeSetupOpen(false), 100)
+  useAndroidBackAction(manageQuestsOpen, () => setManageQuestsOpen(false), 100)
+  useAndroidBackAction(profileOpen, () => setProfileOpen(false), 100)
 
   // First launch only — hunter.name stays '' (the DEFAULT_HUNTER value)
   // until setup finishes (the name is required there), so an existing save
@@ -254,7 +260,9 @@ function AppShell() {
 function App() {
   return (
     <ThemeProvider>
-      <AppShell />
+      <AndroidBackProvider>
+        <AppShell />
+      </AndroidBackProvider>
     </ThemeProvider>
   )
 }

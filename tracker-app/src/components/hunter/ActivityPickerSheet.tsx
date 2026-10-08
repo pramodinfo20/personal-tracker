@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useClaimCelebration } from '../../hooks/useClaimCelebration'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import {
   ACTIVITY_CATEGORIES,
   activitiesIn,
@@ -59,6 +60,11 @@ export function ActivityPickerSheet(props: ActivityPickerSheetProps) {
     if (activity) setActivity(null)
     else setCategoryKey(null)
   }
+
+  useAndroidBackAction(true, () => {
+    if (step > 1) back()
+    else onClose()
+  }, 200)
 
   const logTier = (tier: XPTier) => {
     if (props.mode !== 'log' || !activity || capReached) return

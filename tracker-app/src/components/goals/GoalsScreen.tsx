@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import { cn } from '../../lib/cn'
 import {
   GOAL_STATUS_LABEL,
@@ -33,6 +34,7 @@ type SheetState = { mode: 'add' } | { mode: 'edit'; id: string } | null
 // as Job Search, plus a one-tap "mark done" on each card.
 export function GoalsScreen({ goals, onAdd, onUpdate, onSetStatus, onDelete, onBack }: GoalsScreenProps) {
   const [sheet, setSheet] = useState<SheetState>(null)
+  useAndroidBackAction(sheet !== null, () => setSheet(null), 100)
   const sorted = useMemo(() => sortGoals(goals), [goals])
   const counts = goalCounts(goals)
   const editing = sheet?.mode === 'edit' ? goals.find((g) => g.id === sheet.id) : undefined

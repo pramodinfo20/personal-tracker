@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import { cn } from '../../lib/cn'
 import {
   JOB_STATUS_LABEL,
@@ -44,6 +45,7 @@ export function JobSearchScreen({
   onBack,
 }: JobSearchScreenProps) {
   const [sheet, setSheet] = useState<SheetState>(null)
+  useAndroidBackAction(sheet !== null, () => setSheet(null), 100)
   const sorted = useMemo(() => sortApplications(applications), [applications])
   const stats = applicationStats(applications)
   const editing = sheet?.mode === 'edit' ? applications.find((a) => a.id === sheet.id) : undefined

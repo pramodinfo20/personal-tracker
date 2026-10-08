@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useAndroidBackAction } from '../../hooks/useAndroidBackAction'
 import type { GateClearedEvent } from '../../hooks/useHunter'
 
 export interface GateClearedOverlayProps {
@@ -7,6 +8,8 @@ export interface GateClearedOverlayProps {
 }
 
 export function GateClearedOverlay({ event, onDismiss }: GateClearedOverlayProps) {
+  useAndroidBackAction(true, onDismiss, 300)
+
   useEffect(() => {
     const t = setTimeout(onDismiss, 3000)
     return () => clearTimeout(t)

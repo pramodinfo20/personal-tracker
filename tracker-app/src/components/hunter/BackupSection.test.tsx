@@ -135,7 +135,7 @@ describe('BackupSection — download', () => {
     vi.restoreAllMocks()
   })
 
-  it('saves one JSON file named after the hunter and date, containing the whole save', async () => {
+  it('saves one predictable JSON file containing the whole save', async () => {
     let saved: Blob | undefined
     URL.createObjectURL = vi.fn((b: Blob) => {
       saved = b
@@ -150,7 +150,7 @@ describe('BackupSection — download', () => {
     render(<BackupSection current={CURRENT} onRestored={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Download backup' }))
 
-    expect(downloadName).toMatch(/^tracker-backup-current-\d{4}-\d{2}-\d{2}\.json$/)
+    expect(downloadName).toMatch(/^personal-tracker-backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$/)
     const parsed = JSON.parse(await saved!.text())
     expect(parsed).toMatchObject({
       app: BACKUP_APP,
